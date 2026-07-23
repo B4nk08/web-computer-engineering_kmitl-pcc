@@ -11,7 +11,17 @@ Backend: **Go (Gin + Gorm)** + PostgreSQL
 ├── frontend/          # Next.js
 ├── backend/           # Go Gin + Gorm
 ├── docs/
+├── .env               # env ไฟล์เดียวทั้งระบบ (ไม่ commit)
+├── .env.example
 └── docker-compose.yml
+```
+
+## Environment (ไฟล์เดียว)
+
+ใช้แค่ **`.env` ที่ root** — Docker / Frontend / Backend อ่านร่วมกัน
+
+```bash
+cp .env.example .env
 ```
 
 ## รันด้วย Docker
@@ -23,18 +33,16 @@ docker compose up --build
 - Frontend: http://localhost:3000  
 - Backend:  http://localhost:8080/health  
 - pgAdmin:  http://localhost:5050  
-  - Login: `admin@admin.com` / `admin`  
-  - ตอน Add Server ใช้ Host = `db`, Port = `5432`, User = `ce`, Password = `ce`, DB = `ce_web`  
-- Postgres จากเครื่อง (ถ้าใช้แอปอื่น): `localhost:5433` (user/pass = `ce`/`ce`) 
+  - Login: ตามค่าใน `.env` (`PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD`)  
+  - Add Server: Host=`db`, Port=`5432`, User/Pass/DB ตาม `POSTGRES_*`  
+- Postgres จากเครื่อง: `localhost:${POSTGRES_HOST_PORT}`
 
 ### รันแค่ Frontend
-ใน `docker-compose.yml` **comment** ส่วน `db` และ `backend` แล้วรัน:
 ```bash
 docker compose up --build frontend
 ```
 
 ### รันแค่ Backend (+ DB)
-**comment** ส่วน `frontend` แล้วรัน:
 ```bash
 docker compose up --build db backend
 ```
@@ -49,32 +57,13 @@ docker compose down
 ### Frontend
 ```bash
 cd frontend
-cp .env.example .env.local
 npm install
 npm run dev
 ```
 
 ### Backend
-ต้องมี Go 1.22+ และ PostgreSQL
-
 ```bash
 cd backend
-cp .env.example .env
 go mod tidy
 go run ./cmd/server
-```
-
-## Environment
-
-| ไฟล์ | ใช้เมื่อ |
-|------|----------|
-| `.env` | Docker Compose อ่านอัตโนมัติ |
-| `backend/.env` | รัน Go บนเครื่อง (นอก Docker) |
-| `frontend/.env` | รัน Next.js บนเครื่อง / build |
-
-คัดลอกจากตัวอย่างถ้ายังไม่มีไฟล์:
-```bash
-cp .env.example .env
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
 ```

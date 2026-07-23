@@ -1,5 +1,4 @@
 services:
-  # ---------- Database ----------
   db:
     image: postgres:16-alpine
     environment:
@@ -16,8 +15,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # ---------- pgAdmin (เว็บ) ----------
-  # เปิดที่ http://localhost:${PGADMIN_HOST_PORT}
   pgadmin:
     image: dpage/pgadmin4:8
     ports:
@@ -30,8 +27,6 @@ services:
       db:
         condition: service_healthy
 
-  # ---------- Backend (Go) ----------
-  # ถ้าจะรันแค่ Frontend ให้ comment block นี้ทั้งก้อน (และ db / pgadmin ด้วยถ้าไม่ใช้)
   backend:
     build:
       context: ./backend
@@ -40,15 +35,14 @@ services:
       - "${BACKEND_HOST_PORT}:${PORT}"
     environment:
       PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
+      # ใน Docker ใช้ host ชื่อ service `db` (ไม่ใช้ DATABASE_URL จาก .env ที่ชี้ localhost)
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       FRONTEND_URL: ${FRONTEND_URL}
-      GIN_MODE: ${GIN_MODE}
+      GIN_MODE: ${GIN_MODE:-release}
     depends_on:
       db:
         condition: service_healthy
 
-  # ---------- Frontend (Next.js) ----------
-  # ถ้าจะรันแค่ Backend ให้ comment block นี้ทั้งก้อน
   frontend:
     build:
       context: ./frontend

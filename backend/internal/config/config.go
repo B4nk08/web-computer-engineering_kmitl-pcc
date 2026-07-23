@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 )
@@ -14,7 +15,11 @@ type Config struct {
 }
 
 func Load() Config {
-	_ = godotenv.Load()
+	// โหลด .env จาก root โปรเจกต์ (ไฟล์เดียวทั้งระบบ)
+	_ = godotenv.Load(
+		".env",
+		filepath.Join("..", ".env"),
+	)
 
 	return Config{
 		Port:        getEnv("PORT", "8080"),
