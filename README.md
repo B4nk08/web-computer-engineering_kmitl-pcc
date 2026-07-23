@@ -64,8 +64,17 @@ go mod tidy
 go run ./cmd/server
 ```
 
-## เพิ่ม shadcn component
+## Environment
+
+| ไฟล์ | ใช้เมื่อ |
+|------|----------|
+| `.env` | Docker Compose อ่านอัตโนมัติ |
+| `backend/.env` | รัน Go บนเครื่อง (นอก Docker) |
+| `frontend/.env` | รัน Next.js บนเครื่อง / build |
+
+คัดลอกจากตัวอย่างถ้ายังไม่มีไฟล์:
 ```bash
-cd frontend
-npx shadcn@latest add <component>
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
