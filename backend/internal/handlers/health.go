@@ -8,18 +8,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type Handler struct {
-	DB *gorm.DB
+// HealthHandler ตรวจสถานะ service + database
+type HealthHandler struct {
+	db *gorm.DB
 }
 
-func New(db *gorm.DB) *Handler {
-	return &Handler{DB: db}
+func NewHealthHandler(db *gorm.DB) *HealthHandler {
+	return &HealthHandler{db: db}
 }
 
-func (h *Handler) Health(c *gin.Context) {
-	sqlDB, err := h.DB.DB()
+func (h *HealthHandler) Health(c *gin.Context) {
 	dbStatus := "ok"
-	if err != nil || sqlDB.Ping() != nil {
+	if sqlDB, err := h.db.DB(); err != nil || sqlDB.Ping() != nil {
 		dbStatus = "error"
 	}
 
