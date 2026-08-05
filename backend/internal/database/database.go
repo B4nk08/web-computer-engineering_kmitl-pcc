@@ -15,5 +15,10 @@ func Connect(cfg config.Config) (*gorm.DB, error) {
 }
 
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(models.All()...)
+	if err := db.AutoMigrate(models.All()...); err != nil {
+		return err
+	}
+	// AutoMigrate ไม่ลด NOT NULL ของคอลัมน์เดิม — อนุญาต anonymous quiz attempt
+	_ = db.Exec(`ALTER TABLE quiz_attempts ALTER COLUMN user_id DROP NOT NULL`).Error
+	return nil
 }

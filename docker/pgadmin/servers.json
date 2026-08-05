@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "CE Postgres",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "ce_web",
+      "Username": "ce",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    }
+  }
+}
