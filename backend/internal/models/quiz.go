@@ -74,13 +74,13 @@ func (q *QuizOption) BeforeCreate(tx *gorm.DB) error {
 func (QuizOption) TableName() string { return "quiz_options" }
 
 type QuizAttempt struct {
-	ID                uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	QuizID            uuid.UUID      `gorm:"type:uuid;not null;index" json:"quiz_id"`
-	UserID            uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	Answers           datatypes.JSON `gorm:"type:jsonb" json:"answers,omitempty"`
-	Result            datatypes.JSON `gorm:"type:jsonb" json:"result,omitempty"`
-	RecommendedTrack  *TrackGroup    `gorm:"type:varchar(32)" json:"recommended_track,omitempty"`
-	CompletedAt       *time.Time     `json:"completed_at,omitempty"`
+	ID               uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	QuizID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"quiz_id"`
+	UserID           *uuid.UUID     `gorm:"type:uuid;index" json:"user_id,omitempty"` // null ได้สำหรับ external แบบไม่ login
+	Answers          datatypes.JSON `gorm:"type:jsonb" json:"answers,omitempty"`
+	Result           datatypes.JSON `gorm:"type:jsonb" json:"result,omitempty"`
+	RecommendedTrack *TrackGroup    `gorm:"type:varchar(32)" json:"recommended_track,omitempty"`
+	CompletedAt      *time.Time     `json:"completed_at,omitempty"`
 }
 
 func (q *QuizAttempt) BeforeCreate(tx *gorm.DB) error {

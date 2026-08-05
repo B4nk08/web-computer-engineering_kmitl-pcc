@@ -170,6 +170,8 @@ func (s *authService) resolveRole(email string) models.UserRole {
 	switch entry.Role {
 	case models.WhitelistTeacher:
 		return models.RoleTeacher
+	case models.WhitelistAdmin:
+		return models.RoleAdmin
 	case models.WhitelistStudent:
 		return models.RoleStudent
 	default:

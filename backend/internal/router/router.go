@@ -14,6 +14,9 @@ type Dependencies struct {
 	Health  *handlers.HealthHandler
 	Auth    *handlers.AuthHandler
 	Content *handlers.ContentHandler
+	Quiz    *handlers.QuizHandler
+	Exam    *handlers.ExamHandler
+	Upload  *handlers.UploadHandler
 	Tokens  *tokenx.Manager
 }
 
@@ -42,23 +45,66 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 			auth.GET("/me", middleware.RequireAuth(deps.Tokens), deps.Auth.Me)
 		}
 
-		// Contents CRUD — แยกชนิดด้วย ?type=staff|video|...
 		contents := api.Group("/contents")
 		{
 			contents.GET("", deps.Content.List)
 			contents.GET("/:id", deps.Content.Get)
-
-			// ตอนนี้ยังไม่ล็อก auth — เปิด comment ด้านล่างเมื่อพร้อมบังคับ teacher
-			// write := contents.Group("")
-			// write.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher"))
-			// {
-			// 	write.POST("", deps.Content.Create)
-			// 	write.PUT("/:id", deps.Content.Update)
-			// 	write.DELETE("/:id", deps.Content.Delete)
-			// }
 			contents.POST("", deps.Content.Create)
 			contents.PUT("/:id", deps.Content.Update)
 			contents.DELETE("/:id", deps.Content.Delete)
+		}
+
+		// S3 presigned uploads (admin)
+		uploads := api.Group("/uploads")
+		{
+			uploads.POST("/presign", deps.Upload.Presign)
+		}
+
+		// ---------- Quiz ----------
+		quizzes := api.Group("/quizzes")
+		{
+			// public / play
+			quizzes.GET("", deps.Quiz.List)
+			quizzes.GET("/:id/play", deps.Quiz.Play)
+			quizzes.POST("/:id/attempts", deps.Quiz.SubmitAttempt)
+
+			// admin (เปิดไว้ก่อน — ใส่ auth ได้ทีหลัง)
+			// staff := quizzes.Group("")
+			// staff.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
+			quizzes.POST("", deps.Quiz.Create)
+			quizzes.GET("/:id", deps.Quiz.GetAdmin)
+			quizzes.PUT("/:id", deps.Quiz.Update)
+			quizzes.DELETE("/:id", deps.Quiz.Delete)
+			quizzes.POST("/:id/questions", deps.Quiz.AddQuestion)
+			quizzes.GET("/:id/attempts", deps.Quiz.ListAttempts)
+		}
+		quizQuestions := api.Group("/quiz-questions")
+		{
+			quizQuestions.PUT("/:id", deps.Quiz.UpdateQuestion)
+			quizQuestions.DELETE("/:id", deps.Quiz.DeleteQuestion)
+		}
+
+		// ---------- Exit Exam ----------
+		exams := api.Group("/exams")
+		{
+			// student flow
+			exams.POST("/start", deps.Exam.Start)
+			exams.POST("/attempts/:id/submit", deps.Exam.Submit)
+
+			// admin bank / settings / credentials / scores
+			exams.GET("/questions", deps.Exam.ListQuestions)
+			exams.POST("/questions", deps.Exam.CreateQuestion)
+			exams.PUT("/questions/:id", deps.Exam.UpdateQuestion)
+			exams.DELETE("/questions/:id", deps.Exam.DeleteQuestion)
+
+			exams.GET("/settings", deps.Exam.ListSettings)
+			exams.GET("/settings/:subject/:mode", deps.Exam.GetSetting)
+			exams.PUT("/settings", deps.Exam.UpsertSetting)
+
+			exams.GET("/credentials", deps.Exam.ListCredentials)
+			exams.POST("/credentials", deps.Exam.CreateCredential)
+
+			exams.GET("/attempts", deps.Exam.ListAttempts)
 		}
 	}
 

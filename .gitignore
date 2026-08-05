@@ -11,3 +11,4 @@ bin
 *.log
 coverage
 postgres_data
+docs/

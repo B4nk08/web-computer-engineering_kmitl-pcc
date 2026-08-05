@@ -23,6 +23,7 @@ const (
 	RoleExternal UserRole = "external"
 	RoleStudent  UserRole = "student"
 	RoleTeacher  UserRole = "teacher"
+	RoleAdmin    UserRole = "admin"
 )
 
 type User struct {
@@ -50,6 +51,7 @@ type WhitelistRole string
 const (
 	WhitelistStudent WhitelistRole = "student"
 	WhitelistTeacher WhitelistRole = "teacher"
+	WhitelistAdmin   WhitelistRole = "admin"
 )
 
 type CEWhitelist struct {

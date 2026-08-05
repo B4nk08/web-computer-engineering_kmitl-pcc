@@ -26,6 +26,14 @@ type Config struct {
 
 	// Google OAuth
 	GoogleClientID string
+
+	// AWS S3 (optional — upload disabled if empty)
+	AWSRegion          string
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
+	AWSS3Bucket        string
+	AWSS3PublicBaseURL string // CloudFront / custom domain (optional)
+	AWSEndpoint        string // MinIO / LocalStack (optional)
 }
 
 func Load() Config {
@@ -46,6 +54,13 @@ func Load() Config {
 		JWTExpireHours: getEnvInt("JWT_EXPIRE_HOURS", 72),
 
 		GoogleClientID: getEnv("GOOGLE_CLIENT_ID", ""),
+
+		AWSRegion:          getEnv("AWS_REGION", ""),
+		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
+		AWSSecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
+		AWSS3Bucket:        getEnv("AWS_S3_BUCKET", ""),
+		AWSS3PublicBaseURL: getEnv("AWS_S3_PUBLIC_BASE_URL", ""),
+		AWSEndpoint:        getEnv("AWS_ENDPOINT", ""),
 	}
 }
 
