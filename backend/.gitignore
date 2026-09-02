@@ -1,0 +1,2 @@
+# If you have a locally generated go.sum, keep it.
+# Docker build runs `go mod tidy` when go.sum is missing.
