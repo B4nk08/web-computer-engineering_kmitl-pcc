@@ -15,10 +15,10 @@ import (
 type ContentType string
 
 const (
-	ContentAboutUs      ContentType = "about_us"
-	ContentCurriculum   ContentType = "curriculum"
+	ContentPage         ContentType = "page"
 	ContentStaff        ContentType = "staff"
 	ContentStudentWork  ContentType = "student_work"
+	ContentVideo        ContentType = "video"
 	ContentCareerPath   ContentType = "career_path"
 	ContentAdmissions   ContentType = "admissions"
 )
@@ -26,9 +26,10 @@ const (
 type Content struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	Type        ContentType    `gorm:"type:varchar(32);not null;index" json:"type"`
+	Slug        *string        `gorm:"size:120;index" json:"slug,omitempty"`
 	Title       string         `gorm:"size:500" json:"title"`
 	Body        string         `gorm:"type:text" json:"body"`
-	FileURL     string         `gorm:"type:text" json:"file_url"` // S3 path/URL: image | video | pdf
+	ImageURL    string         `gorm:"type:text" json:"image_url"`
 	Extra       datatypes.JSON `gorm:"type:jsonb" json:"extra,omitempty"`
 	SortOrder   int            `gorm:"default:0" json:"sort_order"`
 	IsPublished bool           `gorm:"default:true" json:"is_published"`

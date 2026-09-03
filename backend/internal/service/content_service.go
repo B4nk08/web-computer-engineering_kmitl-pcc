@@ -16,11 +16,12 @@ var (
 	ErrContentNotFound    = errors.New("content not found")
 )
 
+// contentTypes ที่อนุญาต (ตรงกับ schema)
 var allowedContentTypes = map[models.ContentType]struct{}{
-	models.ContentAboutUs:     {},
-	models.ContentCurriculum:  {},
+	models.ContentPage:        {},
 	models.ContentStaff:       {},
 	models.ContentStudentWork: {},
+	models.ContentVideo:       {},
 	models.ContentCareerPath:  {},
 	models.ContentAdmissions:  {},
 }
@@ -54,9 +55,10 @@ func (s *contentService) Create(req dto.CreateContentRequest) (*dto.ContentRespo
 
 	content := &models.Content{
 		Type:        contentType,
+		Slug:        req.Slug,
 		Title:       req.Title,
 		Body:        req.Body,
-		FileURL:     req.FileURL,
+		ImageURL:    req.ImageURL,
 		Extra:       datatypes.JSON(req.Extra),
 		SortOrder:   req.SortOrder,
 		IsPublished: published,
@@ -96,6 +98,10 @@ func (s *contentService) List(filter dto.ContentFilter) ([]dto.ContentResponse, 
 		}
 		repoFilter.Type = &t
 	}
+	if filter.Slug != "" {
+		slug := filter.Slug
+		repoFilter.Slug = &slug
+	}
 	if filter.PublishedOnly {
 		published := true
 		repoFilter.IsPublished = &published
@@ -119,14 +125,17 @@ func (s *contentService) Update(id uuid.UUID, req dto.UpdateContentRequest) (*dt
 		return nil, err
 	}
 
+	if req.Slug != nil {
+		content.Slug = req.Slug
+	}
 	if req.Title != nil {
 		content.Title = *req.Title
 	}
 	if req.Body != nil {
 		content.Body = *req.Body
 	}
-	if req.FileURL != nil {
-		content.FileURL = *req.FileURL
+	if req.ImageURL != nil {
+		content.ImageURL = *req.ImageURL
 	}
 	if req.Extra != nil {
 		content.Extra = datatypes.JSON(req.Extra)
@@ -137,6 +146,7 @@ func (s *contentService) Update(id uuid.UUID, req dto.UpdateContentRequest) (*dt
 	if req.IsPublished != nil {
 		wasPublished := content.IsPublished
 		content.IsPublished = *req.IsPublished
+		// เผยแพร่ครั้งแรก → ตั้ง published_at
 		if *req.IsPublished && !wasPublished {
 			now := time.Now().UTC()
 			content.PublishedAt = &now

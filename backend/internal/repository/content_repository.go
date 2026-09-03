@@ -9,6 +9,7 @@ import (
 // ContentListFilter เงื่อนไขค้นหาใน DB
 type ContentListFilter struct {
 	Type        *models.ContentType
+	Slug        *string
 	IsPublished *bool
 }
 
@@ -45,6 +46,9 @@ func (r *contentRepository) List(filter ContentListFilter) ([]models.Content, er
 
 	if filter.Type != nil {
 		q = q.Where("type = ?", *filter.Type)
+	}
+	if filter.Slug != nil && *filter.Slug != "" {
+		q = q.Where("slug = ?", *filter.Slug)
 	}
 	if filter.IsPublished != nil {
 		q = q.Where("is_published = ?", *filter.IsPublished)

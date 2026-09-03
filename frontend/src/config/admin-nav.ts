@@ -7,17 +7,16 @@ import {
   GraduationCap,
   Newspaper,
   ScrollText,
-  UserCog,
   Users,
   Video,
 } from "lucide-react";
 
 export type ContentType =
-  | "about_us"
-  | "curriculum"
+  | "page"
   | "staff"
   | "student_work"
   | "news"
+  | "video"
   | "admissions"
   | "career_path"
   | "quiz"
@@ -25,13 +24,12 @@ export type ContentType =
 
 export type StaffRole = "admin" | "teacher";
 
-export type AdminNavGroupId = "public" | "external" | "system";
+export type AdminNavGroupId = "public" | "external";
 
 export type AdminNavItem = {
   title: string;
   href: string;
-  /** ใส่เฉพาะหน้าที่ใช้ ContentManager (CRUD ตาราง contents) — หน้า custom อื่น ๆ ไม่ต้องใส่ */
-  type?: ContentType;
+  type: ContentType;
   description: string;
   icon: LucideIcon;
   /** ถ้าไม่ระบุ = ทั้ง admin และ teacher เห็น */
@@ -54,7 +52,7 @@ export const adminNavGroups: AdminNavGroup[] = [
       {
         title: "ข้อมูลหลักสูตร",
         href: "/admin/curriculum",
-        type: "curriculum",
+        type: "page",
         description: "เพิ่ม แก้ไข หรือลบข้อมูลหลักสูตร",
         icon: BookOpen,
       },
@@ -80,10 +78,10 @@ export const adminNavGroups: AdminNavGroup[] = [
         icon: Newspaper,
       },
       {
-        title: "เกี่ยวกับเรา",
+        title: "รูปหรือวิดีโอแนะนำ",
         href: "/admin/media",
-        type: "about_us",
-        description: "วิดีโอ รูปภาพ และคำอธิบายสั้น ๆ หน้า About Us",
+        type: "video",
+        description: "เพิ่ม แก้ไข หรือลบรูปหรือวิดีโอแนะนำ",
         icon: Video,
       },
     ],
@@ -117,22 +115,10 @@ export const adminNavGroups: AdminNavGroup[] = [
       {
         title: "Exit Exam",
         href: "/admin/exit-exam",
-        description: "จัดการกลุ่มข้อสอบและคลังคำถาม Exit Exam",
+        type: "exit_exam",
+        description: "จัดการ Exit Exam",
         icon: ScrollText,
         roles: ["teacher"],
-      },
-    ],
-  },
-  {
-    id: "system",
-    label: "System",
-    items: [
-      {
-        title: "รายชื่อผู้มีสิทธิ์เข้าใช้งาน",
-        href: "/admin/whitelist",
-        description: "เพิ่มรายชื่อทีละคน หรือนำเข้าไฟล์ CSV เข้า ce_whitelist",
-        icon: UserCog,
-        roles: ["admin", "teacher"],
       },
     ],
   },
@@ -146,7 +132,5 @@ export function canAccessNavItem(item: AdminNavItem, role: StaffRole): boolean {
 }
 
 export function findAdminNavItem(href: string): AdminNavItem | undefined {
-  return adminNavGroups
-    .flatMap((group) => group.items)
-    .find((item) => item.href === href);
+  return adminNavGroups.flatMap((group) => group.items).find((item) => item.href === href);
 }

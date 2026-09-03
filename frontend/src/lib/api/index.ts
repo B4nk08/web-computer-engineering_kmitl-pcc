@@ -1,4 +1,4 @@
-export { apiClient, apiFormClient, getApiBaseUrl, ApiError } from "./client";
+export { apiClient, getApiBaseUrl, ApiError } from "./client";
 export { endpoints } from "./endpoints";
 export { getAccessToken, setAccessToken } from "./token";
 export { uploadFileToS3, presignUpload } from "./upload";

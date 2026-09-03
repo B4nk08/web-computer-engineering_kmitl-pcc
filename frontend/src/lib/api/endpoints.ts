@@ -3,18 +3,8 @@ export const endpoints = {
   auth: {
     register: "/api/auth/register",
     login: "/api/auth/login",
-    token: "/api/auth/token",
-    getToken: "/api/auth/get-token",
     google: "/api/auth/google",
     me: "/api/auth/me",
-  },
-  students: {
-    list: "/api/students",
-  },
-  whitelist: {
-    create: "/api/whitelist",
-    importPreview: "/api/whitelist/import/preview",
-    importCommit: "/api/whitelist/import/commit",
   },
   contents: {
     list: "/api/contents",
@@ -31,8 +21,6 @@ export const endpoints = {
   exams: {
     start: "/api/exams/start",
     submit: (id: string) => `/api/exams/attempts/${id}/submit`,
-    subjects: "/api/exams/subjects",
-    subjectById: (id: string) => `/api/exams/subjects/${id}`,
     questions: "/api/exams/questions",
     questionById: (id: string) => `/api/exams/questions/${id}`,
     settings: "/api/exams/settings",

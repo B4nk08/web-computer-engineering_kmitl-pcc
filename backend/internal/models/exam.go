@@ -27,27 +27,6 @@ const (
 	AttemptExpired    AttemptStatus = "expired"
 )
 
-// ExamSubject กลุ่มวิชาของ exit exam (เช่น iot, software, network, programming)
-// เพิ่ม/แก้ไข/ปิดใช้งานได้จาก admin — ไม่ผูกกับ Go const แบบเดิมแล้ว
-type ExamSubject struct {
-	ID          uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	Code        string     `gorm:"uniqueIndex;size:32;not null" json:"code"`
-	Name        string     `gorm:"size:120;not null" json:"name"`
-	Description string     `gorm:"type:text" json:"description"`
-	SortOrder   int        `gorm:"default:0" json:"sort_order"`
-	IsActive    bool       `gorm:"default:true" json:"is_active"`
-	CreatedBy   *uuid.UUID `gorm:"type:uuid;index" json:"created_by,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-}
-
-func (e *ExamSubject) BeforeCreate(tx *gorm.DB) error {
-	ensureUUID(&e.ID)
-	return nil
-}
-
-func (ExamSubject) TableName() string { return "exam_subjects" }
-
 type ExamQuestion struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	Subject      TrackGroup     `gorm:"type:varchar(32);not null;index" json:"subject"`
@@ -71,16 +50,16 @@ func (ExamQuestion) TableName() string { return "exam_questions" }
 
 // ExamSetting — ตั้งค่าการสอบต่อ subject+mode (ไม่จัดชุดข้อตายตัว)
 type ExamSetting struct {
-	ID               uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
-	Subject          TrackGroup `gorm:"type:varchar(32);not null;uniqueIndex:idx_exam_settings_subject_mode" json:"subject"`
-	Mode             ExamMode   `gorm:"type:varchar(16);not null;uniqueIndex:idx_exam_settings_subject_mode" json:"mode"`
-	QuestionCount    int        `gorm:"not null" json:"question_count"`
-	TimeLimitMinutes *int       `json:"time_limit_minutes,omitempty"`
-	IsEnabled        bool       `gorm:"default:true" json:"is_enabled"`
-	StartsAt         *time.Time `json:"starts_at,omitempty"`
-	EndsAt           *time.Time `json:"ends_at,omitempty"`
-	UpdatedBy        *uuid.UUID `gorm:"type:uuid;index" json:"updated_by,omitempty"`
-	UpdatedAt        time.Time  `json:"updated_at"`
+	ID                uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
+	Subject           TrackGroup `gorm:"type:varchar(32);not null;uniqueIndex:idx_exam_settings_subject_mode" json:"subject"`
+	Mode              ExamMode   `gorm:"type:varchar(16);not null;uniqueIndex:idx_exam_settings_subject_mode" json:"mode"`
+	QuestionCount     int        `gorm:"not null" json:"question_count"`
+	TimeLimitMinutes  *int       `json:"time_limit_minutes,omitempty"`
+	IsEnabled         bool       `gorm:"default:true" json:"is_enabled"`
+	StartsAt          *time.Time `json:"starts_at,omitempty"`
+	EndsAt            *time.Time `json:"ends_at,omitempty"`
+	UpdatedBy         *uuid.UUID `gorm:"type:uuid;index" json:"updated_by,omitempty"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
 func (e *ExamSetting) BeforeCreate(tx *gorm.DB) error {

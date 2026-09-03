@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"io"
 	"strings"
 	"time"
 
@@ -12,14 +11,13 @@ import (
 )
 
 var (
-	ErrUploadNotConfigured   = errors.New("s3 upload is not configured")
-	ErrInvalidUploadKind     = errors.New("invalid upload kind")
-	ErrInvalidUploadMIMEType = errors.New("content type not allowed for this kind")
+	ErrUploadNotConfigured    = errors.New("s3 upload is not configured")
+	ErrInvalidUploadKind      = errors.New("invalid upload kind")
+	ErrInvalidUploadMIMEType  = errors.New("content type not allowed for this kind")
 )
 
 type UploadService interface {
 	Presign(ctx context.Context, req dto.PresignUploadRequest) (*dto.PresignUploadResponse, error)
-	Put(ctx context.Context, kind, filename, contentType string, body io.Reader) (fileURL string, err error)
 	Configured() bool
 }
 
@@ -62,36 +60,6 @@ var allowedTypes = map[string]map[string]struct{}{
 	},
 }
 
-func KindFromContentType(contentType string) string {
-	ct := strings.ToLower(strings.TrimSpace(contentType))
-	switch {
-	case strings.HasPrefix(ct, "image/"):
-		return "image"
-	case strings.HasPrefix(ct, "video/"):
-		return "video"
-	case ct == "application/pdf":
-		return "pdf"
-	default:
-		return "file"
-	}
-}
-
-func (s *uploadService) validate(kind, contentType string) error {
-	kind = strings.ToLower(strings.TrimSpace(kind))
-	if kind == "" {
-		kind = "file"
-	}
-	allowed, ok := allowedTypes[kind]
-	if !ok {
-		return ErrInvalidUploadKind
-	}
-	ct := strings.ToLower(strings.TrimSpace(contentType))
-	if _, ok := allowed[ct]; !ok {
-		return ErrInvalidUploadMIMEType
-	}
-	return nil
-}
-
 func (s *uploadService) Presign(ctx context.Context, req dto.PresignUploadRequest) (*dto.PresignUploadResponse, error) {
 	if !s.Configured() {
 		return nil, ErrUploadNotConfigured
@@ -101,10 +69,14 @@ func (s *uploadService) Presign(ctx context.Context, req dto.PresignUploadReques
 	if kind == "" {
 		kind = "file"
 	}
-	if err := s.validate(kind, req.ContentType); err != nil {
-		return nil, err
+	allowed, ok := allowedTypes[kind]
+	if !ok {
+		return nil, ErrInvalidUploadKind
 	}
 	ct := strings.ToLower(strings.TrimSpace(req.ContentType))
+	if _, ok := allowed[ct]; !ok {
+		return nil, ErrInvalidUploadMIMEType
+	}
 
 	expires := 15 * time.Minute
 	result, err := s.s3.PresignPut(ctx, kind, req.Filename, ct, expires)
@@ -118,22 +90,4 @@ func (s *uploadService) Presign(ctx context.Context, req dto.PresignUploadReques
 		ContentType: ct,
 		ExpiresIn:   int(expires.Seconds()),
 	}, nil
-}
-
-func (s *uploadService) Put(ctx context.Context, kind, filename, contentType string, body io.Reader) (string, error) {
-	if !s.Configured() {
-		return "", ErrUploadNotConfigured
-	}
-	if kind == "" {
-		kind = KindFromContentType(contentType)
-	}
-	if err := s.validate(kind, contentType); err != nil {
-		return "", err
-	}
-	ct := strings.ToLower(strings.TrimSpace(contentType))
-	result, err := s.s3.PutObject(ctx, kind, filename, ct, body)
-	if err != nil {
-		return "", err
-	}
-	return result.FileURL, nil
 }

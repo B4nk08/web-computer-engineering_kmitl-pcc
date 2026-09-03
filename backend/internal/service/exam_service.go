@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,33 +17,21 @@ import (
 )
 
 var (
-	ErrInvalidTrackGroup       = errors.New("invalid subject/track")
-	ErrInvalidExamMode         = errors.New("invalid exam mode")
-	ErrExamQuestionNotFound    = errors.New("exam question not found")
-	ErrExamSettingNotFound     = errors.New("exam setting not found")
-	ErrExamSettingDisabled     = errors.New("exam setting is disabled")
-	ErrExamNotEnoughQuestions  = errors.New("not enough active questions")
-	ErrExamCredentialInvalid   = errors.New("invalid exam credential")
-	ErrExamCredentialUsed      = errors.New("exam credential already used")
-	ErrExamCredentialExpired   = errors.New("exam credential expired")
-	ErrExamAttemptNotFound     = errors.New("exam attempt not found")
-	ErrExamAttemptClosed       = errors.New("exam attempt already submitted or expired")
-	ErrExamOutsideWindow       = errors.New("exam is outside allowed time window")
-	ErrExamSubjectNotFound     = errors.New("exam subject not found")
-	ErrExamSubjectExists       = errors.New("exam subject code already exists")
-	ErrExamSubjectNameRequired = errors.New("exam subject name is required")
-	ErrInvalidExamSubjectCode  = errors.New("invalid exam subject code (a-z, 0-9, _, - only, 2-32 chars)")
-	ErrExamSubjectDisabled     = errors.New("exam subject is disabled")
+	ErrInvalidTrackGroup      = errors.New("invalid subject/track")
+	ErrInvalidExamMode        = errors.New("invalid exam mode")
+	ErrExamQuestionNotFound   = errors.New("exam question not found")
+	ErrExamSettingNotFound    = errors.New("exam setting not found")
+	ErrExamSettingDisabled    = errors.New("exam setting is disabled")
+	ErrExamNotEnoughQuestions = errors.New("not enough active questions")
+	ErrExamCredentialInvalid  = errors.New("invalid exam credential")
+	ErrExamCredentialUsed     = errors.New("exam credential already used")
+	ErrExamCredentialExpired  = errors.New("exam credential expired")
+	ErrExamAttemptNotFound    = errors.New("exam attempt not found")
+	ErrExamAttemptClosed      = errors.New("exam attempt already submitted or expired")
+	ErrExamOutsideWindow      = errors.New("exam is outside allowed time window")
 )
 
-var examSubjectCodePattern = regexp.MustCompile(`^[a-z0-9_-]{2,32}$`)
-
 type ExamService interface {
-	CreateSubject(req dto.CreateExamSubjectRequest, createdBy *uuid.UUID) (*dto.ExamSubjectResponse, error)
-	UpdateSubject(id uuid.UUID, req dto.UpdateExamSubjectRequest) (*dto.ExamSubjectResponse, error)
-	ListSubjects(includeInactive bool) ([]dto.ExamSubjectResponse, error)
-	DeactivateSubject(id uuid.UUID) error
-
 	CreateQuestion(req dto.CreateExamQuestionRequest, createdBy *uuid.UUID) (*dto.ExamQuestionAdminResponse, error)
 	ListQuestions(filter dto.ExamQuestionFilter) ([]dto.ExamQuestionAdminResponse, error)
 	UpdateQuestion(id uuid.UUID, req dto.UpdateExamQuestionRequest) (*dto.ExamQuestionAdminResponse, error)
@@ -71,137 +57,13 @@ func NewExamService(exams repository.ExamRepository) ExamService {
 	return &examService{exams: exams}
 }
 
-func normalizeSubjectCode(v string) string {
-	return strings.ToLower(strings.TrimSpace(v))
-}
-
-// resolveSubject ตรวจว่า code มีอยู่จริงใน exam_subjects (ไม่สนว่า active หรือไม่ —
-// ใช้กับงานฝั่ง admin เช่น จัดการคลังข้อสอบ/settings ที่ยังต้องแก้ไขได้แม้กลุ่มถูกปิดใช้งานชั่วคราว)
-func (s *examService) resolveSubject(code string) (models.TrackGroup, error) {
-	normalized := normalizeSubjectCode(code)
-	if normalized == "" {
+func parseTrackGroup(v string) (models.TrackGroup, error) {
+	switch models.TrackGroup(v) {
+	case models.TrackIoT, models.TrackSoftware, models.TrackNetwork, models.TrackProgramming:
+		return models.TrackGroup(v), nil
+	default:
 		return "", ErrInvalidTrackGroup
 	}
-	subj, err := s.exams.FindSubjectByCode(normalized)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return "", ErrInvalidTrackGroup
-		}
-		return "", err
-	}
-	return models.TrackGroup(subj.Code), nil
-}
-
-// resolveActiveSubject เหมือน resolveSubject แต่บังคับว่ากลุ่มต้อง is_active=true —
-// ใช้ตอนนักศึกษาจะเริ่มสอบจริง (StartAttempt) กันไม่ให้เริ่มสอบกลุ่มที่ปิดใช้งานไปแล้ว
-func (s *examService) resolveActiveSubject(code string) (models.TrackGroup, error) {
-	normalized := normalizeSubjectCode(code)
-	if normalized == "" {
-		return "", ErrInvalidTrackGroup
-	}
-	subj, err := s.exams.FindSubjectByCode(normalized)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return "", ErrInvalidTrackGroup
-		}
-		return "", err
-	}
-	if !subj.IsActive {
-		return "", ErrExamSubjectDisabled
-	}
-	return models.TrackGroup(subj.Code), nil
-}
-
-func toSubjectResponse(s *models.ExamSubject) dto.ExamSubjectResponse {
-	return dto.NewExamSubjectResponse(s)
-}
-
-func (s *examService) CreateSubject(req dto.CreateExamSubjectRequest, createdBy *uuid.UUID) (*dto.ExamSubjectResponse, error) {
-	code := normalizeSubjectCode(req.Code)
-	if !examSubjectCodePattern.MatchString(code) {
-		return nil, ErrInvalidExamSubjectCode
-	}
-	name := strings.TrimSpace(req.Name)
-	if name == "" {
-		return nil, ErrExamSubjectNameRequired
-	}
-
-	if _, err := s.exams.FindSubjectByCode(code); err == nil {
-		return nil, ErrExamSubjectExists
-	} else if !errors.Is(err, repository.ErrNotFound) {
-		return nil, err
-	}
-
-	subj := &models.ExamSubject{
-		Code:        code,
-		Name:        name,
-		Description: strings.TrimSpace(req.Description),
-		SortOrder:   req.SortOrder,
-		IsActive:    true,
-		CreatedBy:   createdBy,
-	}
-	if err := s.exams.CreateSubject(subj); err != nil {
-		return nil, err
-	}
-	res := toSubjectResponse(subj)
-	return &res, nil
-}
-
-func (s *examService) UpdateSubject(id uuid.UUID, req dto.UpdateExamSubjectRequest) (*dto.ExamSubjectResponse, error) {
-	subj, err := s.exams.FindSubjectByID(id)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return nil, ErrExamSubjectNotFound
-		}
-		return nil, err
-	}
-	if req.Name != nil {
-		name := strings.TrimSpace(*req.Name)
-		if name == "" {
-			return nil, ErrExamSubjectNameRequired
-		}
-		subj.Name = name
-	}
-	if req.Description != nil {
-		subj.Description = strings.TrimSpace(*req.Description)
-	}
-	if req.SortOrder != nil {
-		subj.SortOrder = *req.SortOrder
-	}
-	if req.IsActive != nil {
-		subj.IsActive = *req.IsActive
-	}
-	if err := s.exams.UpdateSubject(subj); err != nil {
-		return nil, err
-	}
-	res := toSubjectResponse(subj)
-	return &res, nil
-}
-
-func (s *examService) ListSubjects(includeInactive bool) ([]dto.ExamSubjectResponse, error) {
-	items, err := s.exams.ListSubjects(includeInactive)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]dto.ExamSubjectResponse, 0, len(items))
-	for i := range items {
-		out = append(out, toSubjectResponse(&items[i]))
-	}
-	return out, nil
-}
-
-// DeactivateSubject soft-delete — set is_active=false เท่านั้น ไม่ลบแถวจริง
-// เพราะ exam_questions/exam_settings/exam_credentials/exam_attempts อาจอ้างอิง code นี้อยู่แล้ว
-func (s *examService) DeactivateSubject(id uuid.UUID) error {
-	subj, err := s.exams.FindSubjectByID(id)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return ErrExamSubjectNotFound
-		}
-		return err
-	}
-	subj.IsActive = false
-	return s.exams.UpdateSubject(subj)
 }
 
 func parseExamMode(v string) (models.ExamMode, error) {
@@ -245,7 +107,7 @@ func toAdminQuestion(q *models.ExamQuestion) dto.ExamQuestionAdminResponse {
 }
 
 func (s *examService) CreateQuestion(req dto.CreateExamQuestionRequest, createdBy *uuid.UUID) (*dto.ExamQuestionAdminResponse, error) {
-	subject, err := s.resolveSubject(req.Subject)
+	subject, err := parseTrackGroup(req.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +142,7 @@ func (s *examService) CreateQuestion(req dto.CreateExamQuestionRequest, createdB
 func (s *examService) ListQuestions(filter dto.ExamQuestionFilter) ([]dto.ExamQuestionAdminResponse, error) {
 	repoFilter := repository.ExamQuestionListFilter{IsActive: filter.IsActive}
 	if filter.Subject != "" {
-		subject, err := s.resolveSubject(filter.Subject)
+		subject, err := parseTrackGroup(filter.Subject)
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +208,7 @@ func (s *examService) DeleteQuestion(id uuid.UUID) error {
 }
 
 func (s *examService) UpsertSetting(req dto.UpsertExamSettingRequest, updatedBy *uuid.UUID) (*dto.ExamSettingResponse, error) {
-	subject, err := s.resolveSubject(req.Subject)
+	subject, err := parseTrackGroup(req.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +270,7 @@ func (s *examService) ListSettings() ([]dto.ExamSettingResponse, error) {
 }
 
 func (s *examService) GetSetting(subject, mode string) (*dto.ExamSettingResponse, error) {
-	subj, err := s.resolveSubject(subject)
+	subj, err := parseTrackGroup(subject)
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +303,7 @@ func randomPassword(n int) (string, error) {
 }
 
 func (s *examService) CreateCredential(req dto.CreateExamCredentialRequest) (*dto.ExamCredentialResponse, error) {
-	subject, err := s.resolveSubject(req.Subject)
+	subject, err := parseTrackGroup(req.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +362,7 @@ func (s *examService) CreateCredential(req dto.CreateExamCredentialRequest) (*dt
 func (s *examService) ListCredentials(subject string) ([]dto.ExamCredentialResponse, error) {
 	var subjPtr *models.TrackGroup
 	if subject != "" {
-		subj, err := s.resolveSubject(subject)
+		subj, err := parseTrackGroup(subject)
 		if err != nil {
 			return nil, err
 		}
@@ -543,7 +405,7 @@ func shuffleQuestions(items []models.ExamQuestion) {
 }
 
 func (s *examService) StartAttempt(req dto.StartExamRequest, userID *uuid.UUID) (*dto.ExamAttemptStartResponse, error) {
-	subject, err := s.resolveActiveSubject(req.Subject)
+	subject, err := parseTrackGroup(req.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -729,7 +591,7 @@ func (s *examService) ListAttempts(subject, mode string) ([]dto.ExamAttemptAdmin
 	var subjPtr *models.TrackGroup
 	var modePtr *models.ExamMode
 	if subject != "" {
-		subj, err := s.resolveSubject(subject)
+		subj, err := parseTrackGroup(subject)
 		if err != nil {
 			return nil, err
 		}

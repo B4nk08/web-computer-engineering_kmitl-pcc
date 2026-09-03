@@ -64,30 +64,6 @@ export async function apiClient<T>(
   return parseEnvelope<T>(response);
 }
 
-/** multipart/form-data — อย่าตั้ง Content-Type เอง ให้ browser ใส่ boundary */
-export async function apiFormClient<T>(
-  path: string,
-  options: {
-    method?: string;
-    formData: FormData;
-    token?: string | null;
-    query?: RequestOptions["query"];
-  }
-): Promise<T> {
-  const authToken = options.token === undefined ? getAccessToken() : options.token;
-
-  const response = await fetch(buildUrl(path, options.query), {
-    method: options.method ?? "POST",
-    headers: {
-      Accept: "application/json",
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-    },
-    body: options.formData,
-  });
-
-  return parseEnvelope<T>(response);
-}
-
 export function getApiBaseUrl() {
   return API_BASE;
 }

@@ -66,20 +66,16 @@ func main() {
 	quizService := service.NewQuizService(quizRepo)
 	examService := service.NewExamService(examRepo)
 	uploadService := service.NewUploadService(s3Client)
-	studentService := service.NewStudentService(whitelistRepo)
-	whitelistService := service.NewWhitelistService(whitelistRepo)
 
 	// handlers
 	deps := router.Dependencies{
-		Health:    handlers.NewHealthHandler(db),
-		Auth:      handlers.NewAuthHandler(authService, userRepo),
-		Content:   handlers.NewContentHandler(contentService, uploadService),
-		Quiz:      handlers.NewQuizHandler(quizService),
-		Exam:      handlers.NewExamHandler(examService),
-		Upload:    handlers.NewUploadHandler(uploadService),
-		Students:  handlers.NewStudentHandler(studentService),
-		Whitelist: handlers.NewWhitelistHandler(whitelistService),
-		Tokens:    tokens,
+		Health:  handlers.NewHealthHandler(db),
+		Auth:    handlers.NewAuthHandler(authService, userRepo),
+		Content: handlers.NewContentHandler(contentService),
+		Quiz:    handlers.NewQuizHandler(quizService),
+		Exam:    handlers.NewExamHandler(examService),
+		Upload:  handlers.NewUploadHandler(uploadService),
+		Tokens:  tokens,
 	}
 
 	r := router.Setup(cfg, deps)

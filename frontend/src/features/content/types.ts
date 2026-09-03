@@ -4,10 +4,10 @@ export type { ContentType };
 
 /** Types ที่ backend `/api/contents` รองรับแล้ว */
 export const API_CONTENT_TYPES = [
-  "about_us",
-  "curriculum",
+  "page",
   "staff",
   "student_work",
+  "video",
   "career_path",
   "admissions",
 ] as const;
@@ -22,10 +22,10 @@ export function isApiContentType(type: ContentType): type is ApiContentType {
 export type ContentDto = {
   id: string;
   type: string;
+  slug?: string | null;
   title: string;
   body: string;
-  file_url: string;
-  file_name?: string;
+  image_url: string;
   extra?: unknown;
   sort_order: number;
   is_published: boolean;
@@ -39,9 +39,7 @@ export type ContentItem = {
   id: string;
   title: string;
   type: ContentType;
-  fileUrl?: string;
-  /** เช่น ตำแหน่งบุคลากร จาก extra */
-  subtitle?: string;
+  slug?: string | null;
   isPublished: boolean;
   updatedAt: string;
 };
@@ -50,13 +48,15 @@ export type ContentListParams = {
   type: ContentType;
   isPublished?: boolean;
   publishedOnly?: boolean;
+  slug?: string;
 };
 
 export type CreateContentInput = {
   type: ApiContentType;
   title: string;
+  slug?: string;
   body?: string;
-  file_url?: string;
+  image_url?: string;
   extra?: unknown;
   sort_order?: number;
   is_published?: boolean;
@@ -64,8 +64,9 @@ export type CreateContentInput = {
 
 export type UpdateContentInput = {
   title?: string;
+  slug?: string | null;
   body?: string;
-  file_url?: string;
+  image_url?: string;
   extra?: unknown;
   sort_order?: number;
   is_published?: boolean;

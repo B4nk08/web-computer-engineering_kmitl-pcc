@@ -13,12 +13,6 @@ type ExamQuestionListFilter struct {
 }
 
 type ExamRepository interface {
-	CreateSubject(s *models.ExamSubject) error
-	UpdateSubject(s *models.ExamSubject) error
-	FindSubjectByID(id uuid.UUID) (*models.ExamSubject, error)
-	FindSubjectByCode(code string) (*models.ExamSubject, error)
-	ListSubjects(includeInactive bool) ([]models.ExamSubject, error)
-
 	CreateQuestion(q *models.ExamQuestion) error
 	FindQuestionByID(id uuid.UUID) (*models.ExamQuestion, error)
 	ListQuestions(filter ExamQuestionListFilter) ([]models.ExamQuestion, error)
@@ -48,42 +42,6 @@ type examRepository struct {
 
 func NewExamRepository(db *gorm.DB) ExamRepository {
 	return &examRepository{db: db}
-}
-
-func (r *examRepository) CreateSubject(s *models.ExamSubject) error {
-	return r.db.Create(s).Error
-}
-
-func (r *examRepository) UpdateSubject(s *models.ExamSubject) error {
-	return r.db.Save(s).Error
-}
-
-func (r *examRepository) FindSubjectByID(id uuid.UUID) (*models.ExamSubject, error) {
-	var s models.ExamSubject
-	if err := r.db.First(&s, "id = ?", id).Error; err != nil {
-		return nil, translate(err)
-	}
-	return &s, nil
-}
-
-func (r *examRepository) FindSubjectByCode(code string) (*models.ExamSubject, error) {
-	var s models.ExamSubject
-	if err := r.db.Where("code = ?", code).First(&s).Error; err != nil {
-		return nil, translate(err)
-	}
-	return &s, nil
-}
-
-func (r *examRepository) ListSubjects(includeInactive bool) ([]models.ExamSubject, error) {
-	q := r.db.Model(&models.ExamSubject{})
-	if !includeInactive {
-		q = q.Where("is_active = true")
-	}
-	var items []models.ExamSubject
-	if err := q.Order("sort_order ASC, name ASC").Find(&items).Error; err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 func (r *examRepository) CreateQuestion(q *models.ExamQuestion) error {

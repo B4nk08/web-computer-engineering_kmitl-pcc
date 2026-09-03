@@ -7,46 +7,6 @@ import (
 	"github.com/kmitl-pcc/ce-web/backend/internal/models"
 )
 
-// CreateExamSubjectRequest เพิ่มกลุ่มวิชาใหม่ (code ห้ามแก้ทีหลัง เพราะถูกอ้างอิงใน exam_questions/exam_settings)
-type CreateExamSubjectRequest struct {
-	Code        string `json:"code" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	SortOrder   int    `json:"sort_order"`
-}
-
-// UpdateExamSubjectRequest แก้ไขกลุ่มวิชา — ไม่มี field Code เพราะห้ามแก้
-type UpdateExamSubjectRequest struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	SortOrder   *int    `json:"sort_order"`
-	IsActive    *bool   `json:"is_active"`
-}
-
-type ExamSubjectResponse struct {
-	ID          string    `json:"id"`
-	Code        string    `json:"code"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	SortOrder   int       `json:"sort_order"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
-func NewExamSubjectResponse(s *models.ExamSubject) ExamSubjectResponse {
-	return ExamSubjectResponse{
-		ID:          s.ID.String(),
-		Code:        s.Code,
-		Name:        s.Name,
-		Description: s.Description,
-		SortOrder:   s.SortOrder,
-		IsActive:    s.IsActive,
-		CreatedAt:   s.CreatedAt,
-		UpdatedAt:   s.UpdatedAt,
-	}
-}
-
 // ExamChoice โครง choice ใน jsonb ของ exam_questions
 type ExamChoice struct {
 	Key       string `json:"key"`
@@ -69,10 +29,10 @@ type CreateExamQuestionRequest struct {
 }
 
 type UpdateExamQuestionRequest struct {
-	Prompt   *string      `json:"prompt"`
-	ImageURL *string      `json:"image_url"`
-	Choices  []ExamChoice `json:"choices"`
-	IsActive *bool        `json:"is_active"`
+	Prompt   *string       `json:"prompt"`
+	ImageURL *string       `json:"image_url"`
+	Choices  []ExamChoice  `json:"choices"`
+	IsActive *bool         `json:"is_active"`
 }
 
 type ExamQuestionFilter struct {
@@ -110,15 +70,15 @@ type SubmitExamAttemptRequest struct {
 }
 
 type ExamQuestionAdminResponse struct {
-	ID        string       `json:"id"`
-	Subject   string       `json:"subject"`
-	Mode      string       `json:"mode"`
-	Prompt    string       `json:"prompt"`
-	ImageURL  string       `json:"image_url"`
-	Choices   []ExamChoice `json:"choices"`
-	IsActive  bool         `json:"is_active"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
+	ID           string       `json:"id"`
+	Subject      string       `json:"subject"`
+	Mode         string       `json:"mode"`
+	Prompt       string       `json:"prompt"`
+	ImageURL     string       `json:"image_url"`
+	Choices      []ExamChoice `json:"choices"`
+	IsActive     bool         `json:"is_active"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 }
 
 type ExamQuestionPlayItem struct {

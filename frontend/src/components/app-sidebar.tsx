@@ -12,13 +12,11 @@ import {
   Globe2,
   LayoutDashboard,
   LogOut,
-  Settings2,
   UsersRound,
 } from "lucide-react";
 import { adminNavGroups, canAccessNavItem, type AdminNavItem } from "@/config/admin-nav";
-import { isStaffRole } from "@/config/staff-role";
-import { useAuth } from "@/features/auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CURRENT_STAFF_ROLE } from "@/config/staff-role";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,12 +45,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-function initialsFromName(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+const mockUser = {
+  name: CURRENT_STAFF_ROLE === "teacher" ? "อ.สมชาย ใจดี" : "Admin CE",
+  email:
+    CURRENT_STAFF_ROLE === "teacher"
+      ? "somchai@kmitl.ac.th"
+      : "admin@kmitl.ac.th",
+  initials: CURRENT_STAFF_ROLE === "teacher" ? "สจ" : "AD",
+};
 
 function NavMainGroup({
   label,
@@ -177,11 +177,6 @@ function NavMainGroup({
 
 function NavUser() {
   const { isMobile } = useSidebar();
-  const { user, logout } = useAuth();
-  const name = user?.displayName || user?.email || "Staff";
-  const email = user?.email || "";
-  const initials = initialsFromName(name);
-  const roleLabel = user?.role ?? "";
 
   return (
     <SidebarMenu>
@@ -193,12 +188,11 @@ function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user?.avatarUrl || undefined} alt={name} />
-                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{mockUser.initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{name}</span>
-                <span className="truncate text-xs">{email}</span>
+                <span className="truncate font-medium">{mockUser.name}</span>
+                <span className="truncate text-xs">{mockUser.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -212,36 +206,27 @@ function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user?.avatarUrl || undefined} alt={name} />
-                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{mockUser.initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{name}</span>
-                  <span className="truncate text-xs">
-                    {email}
-                    {roleLabel ? ` · ${roleLabel}` : ""}
-                  </span>
+                  <span className="truncate font-medium">{mockUser.name}</span>
+                  <span className="truncate text-xs">{mockUser.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem>
                 <Bell />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                logout();
-                window.location.href = "/login";
-              }}
-            >
+            <DropdownMenuItem>
               <LogOut />
               Log out
             </DropdownMenuItem>
@@ -254,18 +239,14 @@ function NavUser() {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const staffRole = isStaffRole(user?.role) ? user.role : null;
   const isDashboard = pathname === "/admin" || pathname === "/admin/dashboard";
 
-  const visibleGroups = staffRole
-    ? adminNavGroups
-        .map((group) => ({
-          ...group,
-          items: group.items.filter((item) => canAccessNavItem(item, staffRole)),
-        }))
-        .filter((group) => group.items.length > 0)
-    : [];
+  const visibleGroups = adminNavGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccessNavItem(item, CURRENT_STAFF_ROLE)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" {...props}>
@@ -310,12 +291,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 const groupActive = group.items.some(
                   (item) => !item.disabled && pathname === item.href
                 );
-                const GroupIcon =
-                  group.id === "public"
-                    ? Globe2
-                    : group.id === "system"
-                      ? Settings2
-                      : UsersRound;
+                const GroupIcon = group.id === "public" ? Globe2 : UsersRound;
 
                 return (
                   <NavMainGroup

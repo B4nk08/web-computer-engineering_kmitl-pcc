@@ -32,77 +32,6 @@ func optionalUserID(c *gin.Context) *uuid.UUID {
 	return &id
 }
 
-func (h *ExamHandler) CreateSubject(c *gin.Context) {
-	var req dto.CreateExamSubjectRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.Fail(c, http.StatusBadRequest, err.Error())
-		return
-	}
-	item, err := h.exams.CreateSubject(req, optionalUserID(c))
-	if err != nil {
-		mapExamSubjectError(c, err, "failed to create subject")
-		return
-	}
-	httpx.Created(c, item)
-}
-
-func (h *ExamHandler) ListSubjects(c *gin.Context) {
-	includeInactive := c.Query("include_inactive") == "true"
-	items, err := h.exams.ListSubjects(includeInactive)
-	if err != nil {
-		httpx.Fail(c, http.StatusInternalServerError, "failed to list subjects")
-		return
-	}
-	httpx.OK(c, items)
-}
-
-func (h *ExamHandler) UpdateSubject(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		httpx.Fail(c, http.StatusBadRequest, "invalid id")
-		return
-	}
-	var req dto.UpdateExamSubjectRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.Fail(c, http.StatusBadRequest, err.Error())
-		return
-	}
-	item, err := h.exams.UpdateSubject(id, req)
-	if err != nil {
-		mapExamSubjectError(c, err, "failed to update subject")
-		return
-	}
-	httpx.OK(c, item)
-}
-
-// DeleteSubject soft-delete (ตั้ง is_active=false) — ไม่ลบแถวจริงเพราะข้อมูลอื่นอาจอ้างอิงอยู่
-func (h *ExamHandler) DeleteSubject(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		httpx.Fail(c, http.StatusBadRequest, "invalid id")
-		return
-	}
-	if err := h.exams.DeactivateSubject(id); err != nil {
-		mapExamSubjectError(c, err, "failed to deactivate subject")
-		return
-	}
-	httpx.OK(c, gin.H{"deactivated": true})
-}
-
-func mapExamSubjectError(c *gin.Context, err error, fallback string) {
-	switch {
-	case errors.Is(err, service.ErrExamSubjectNotFound):
-		httpx.Fail(c, http.StatusNotFound, err.Error())
-	case errors.Is(err, service.ErrExamSubjectExists):
-		httpx.Fail(c, http.StatusConflict, err.Error())
-	case errors.Is(err, service.ErrInvalidExamSubjectCode),
-		errors.Is(err, service.ErrExamSubjectNameRequired):
-		httpx.Fail(c, http.StatusBadRequest, err.Error())
-	default:
-		httpx.Fail(c, http.StatusInternalServerError, fallback)
-	}
-}
-
 func (h *ExamHandler) CreateQuestion(c *gin.Context) {
 	var req dto.CreateExamQuestionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -283,7 +212,7 @@ func (h *ExamHandler) ListAttempts(c *gin.Context) {
 func mapExamWriteError(c *gin.Context, err error, fallback string) {
 	switch {
 	case errors.Is(err, service.ErrInvalidTrackGroup):
-		httpx.Fail(c, http.StatusBadRequest, "unknown subject code — ดูรายการที่ใช้ได้จาก GET /api/exams/subjects")
+		httpx.Fail(c, http.StatusBadRequest, "subject must be iot|software|network|programming")
 	case errors.Is(err, service.ErrInvalidExamMode):
 		httpx.Fail(c, http.StatusBadRequest, "mode must be mock|real")
 	default:
@@ -294,9 +223,7 @@ func mapExamWriteError(c *gin.Context, err error, fallback string) {
 func mapExamStartError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, service.ErrInvalidTrackGroup):
-		httpx.Fail(c, http.StatusBadRequest, "unknown subject code — ดูรายการที่ใช้ได้จาก GET /api/exams/subjects")
-	case errors.Is(err, service.ErrExamSubjectDisabled):
-		httpx.Fail(c, http.StatusBadRequest, err.Error())
+		httpx.Fail(c, http.StatusBadRequest, "subject must be iot|software|network|programming")
 	case errors.Is(err, service.ErrInvalidExamMode):
 		httpx.Fail(c, http.StatusBadRequest, "mode must be mock|real")
 	case errors.Is(err, service.ErrExamSettingNotFound):

@@ -11,7 +11,6 @@ func All() []any {
 		&QuizQuestion{},
 		&QuizOption{},
 		&QuizAttempt{},
-		&ExamSubject{},
 		&ExamQuestion{},
 		&ExamSetting{},
 		&ExamCredential{},

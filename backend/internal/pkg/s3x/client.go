@@ -3,7 +3,6 @@ package s3x
 import (
 	"context"
 	"fmt"
-	"io"
 	"path"
 	"strings"
 	"time"
@@ -97,29 +96,6 @@ func (c *Client) PresignPut(ctx context.Context, kind, filename, contentType str
 	}, nil
 }
 
-type PutResult struct {
-	Key     string
-	FileURL string
-}
-
-// PutObject อัปโหลดไฟล์จาก backend ตรงไป S3
-func (c *Client) PutObject(ctx context.Context, kind, filename, contentType string, body io.Reader) (*PutResult, error) {
-	key := buildObjectKey(kind, filename)
-	_, err := c.raw.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(c.bucket),
-		Key:         aws.String(key),
-		Body:        body,
-		ContentType: aws.String(contentType),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &PutResult{
-		Key:     key,
-		FileURL: c.publicURL(key),
-	}, nil
-}
-
 func (c *Client) publicURL(key string) string {
 	if c.publicBaseURL != "" {
 		return c.publicBaseURL + "/" + strings.TrimLeft(key, "/")
@@ -128,10 +104,13 @@ func (c *Client) publicURL(key string) string {
 }
 
 func buildObjectKey(kind, filename string) string {
+	now := time.Now().UTC()
 	safe := sanitizeFilename(filename)
 	return path.Join(
 		"uploads",
 		kind,
+		fmt.Sprintf("%04d", now.Year()),
+		fmt.Sprintf("%02d", now.Month()),
 		fmt.Sprintf("%s-%s", uuid.NewString(), safe),
 	)
 }
