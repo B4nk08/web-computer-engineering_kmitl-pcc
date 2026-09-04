@@ -124,9 +124,13 @@ export function Navbar() {
         <Link
           href="/"
           onClick={closeMobile}
-          className="flex h-11 w-32 shrink-0 items-center justify-center rounded-md bg-[#e5e5e5] text-xs font-semibold tracking-wide text-[var(--ink)] md:w-40"
+          className="flex h-11 shrink-0 items-center w-32 md:w-40"
         >
-          LOGO
+          <img 
+            src="/logoce.png" 
+            alt="KMITL Computer Logo" 
+            className="absolute left-8 h-full w-full object-contain object-left" 
+          />
         </Link>
 
         {/* เมนูหลัก: desktop */}
@@ -153,7 +157,7 @@ export function Navbar() {
             type="button"
             onClick={toggleRole}
             title="สลับมุมมอง: บุคคลทั่วไป / นักศึกษา-อาจารย์-แอดมิน (สาธิต ยังไม่มี backend จริง)"
-            className="hidden items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-white/90 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:flex"
+            className="absolute right-8 hidden items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-white/90 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:flex"
           >
             {isMember ? "Logout" : "Login"}
             {isMember ? <LogOut className="h-3.5 w-3.5" /> : <LogIn className="h-3.5 w-3.5" />}
