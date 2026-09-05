@@ -263,14 +263,39 @@ export function ContentFormView({
             />
           </div>
 
-          <FileUploadField
-            label="รูปภาพ"
-            value={form.imageUrl}
-            onChange={(url) => updateField("imageUrl", url)}
-            kind="image"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            hint="อัปโหลดไป S3 หรือวาง Image URL เอง"
-          />
+          {type === "video" ? (
+            <>
+              <FileUploadField
+                label="รูปหรือวิดีโอ"
+                value={form.imageUrl}
+                onChange={(url) => updateField("imageUrl", url)}
+                kind="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+                hint="อัปโหลดไฟล์ขึ้น S3 (สูงสุด 500MB) — วิดีโอ/รูปนี้จะแสดงบนหน้าแรกแทน YouTube"
+              />
+              <div className="space-y-2">
+                <Label htmlFor="content-youtube">YouTube URL (ถ้าไม่มีไฟล์อัปโหลด)</Label>
+                <Input
+                  id="content-youtube"
+                  value={form.youtubeUrl}
+                  onChange={(e) => updateField("youtubeUrl", e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  ใช้เมื่อไม่ได้แนบไฟล์ — ถ้ามีไฟล์อัปโหลด ระบบจะแสดงไฟล์ก่อน
+                </p>
+              </div>
+            </>
+          ) : (
+            <FileUploadField
+              label="รูปภาพ"
+              value={form.imageUrl}
+              onChange={(url) => updateField("imageUrl", url)}
+              kind="image"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              hint="อัปโหลดไป S3 หรือวาง Image URL เอง"
+            />
+          )}
 
           {type === "staff" || type === "career_path" ? (
             <div className="space-y-2">
@@ -284,18 +309,6 @@ export function ContentFormView({
                 placeholder={
                   type === "staff" ? "เช่น อาจารย์ประจำ" : "เช่น Software Engineer"
                 }
-              />
-            </div>
-          ) : null}
-
-          {type === "video" ? (
-            <div className="space-y-2">
-              <Label htmlFor="content-youtube">YouTube URL</Label>
-              <Input
-                id="content-youtube"
-                value={form.youtubeUrl}
-                onChange={(e) => updateField("youtubeUrl", e.target.value)}
-                placeholder="https://youtube.com/..."
               />
             </div>
           ) : null}

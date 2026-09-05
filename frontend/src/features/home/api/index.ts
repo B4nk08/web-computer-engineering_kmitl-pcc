@@ -1,1 +1,6 @@
-export { fetchHomeStaff, fetchHomeShowcase, fetchHomeCurriculum } from "./queries";
+export {
+  fetchHomeStaff,
+  fetchHomeShowcase,
+  fetchHomeCurriculum,
+  fetchHomeHeroMedia,
+} from "./queries";

@@ -3,6 +3,7 @@ package s3x
 import (
 	"context"
 	"fmt"
+	"io"
 	"path"
 	"strings"
 	"time"
@@ -94,6 +95,69 @@ func (c *Client) PresignPut(ctx context.Context, kind, filename, contentType str
 		FileURL:   c.publicURL(key),
 		ExpiresIn: expires,
 	}, nil
+}
+
+// Put อัปโหลดไฟล์ผ่าน backend → S3 (ไม่ต้องตั้ง CORS บน bucket สำหรับเบราว์เซอร์)
+func (c *Client) Put(ctx context.Context, kind, filename, contentType string, body io.Reader, size int64) (*PresignPutResult, error) {
+	key := buildObjectKey(kind, filename)
+	input := &s3.PutObjectInput{
+		Bucket:      aws.String(c.bucket),
+		Key:         aws.String(key),
+		Body:        body,
+		ContentType: aws.String(contentType),
+	}
+	if size > 0 {
+		input.ContentLength = aws.Int64(size)
+	}
+	if _, err := c.raw.PutObject(ctx, input); err != nil {
+		return nil, err
+	}
+	return &PresignPutResult{
+		Key:     key,
+		FileURL: c.publicURL(key),
+	}, nil
+}
+
+// Delete ลบ object ตาม key (เช่น uploads/image/2026/09/....jpg)
+func (c *Client) Delete(ctx context.Context, key string) error {
+	key = strings.TrimLeft(strings.TrimSpace(key), "/")
+	if key == "" {
+		return fmt.Errorf("empty object key")
+	}
+	_, err := c.raw.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	return err
+}
+
+// KeyFromURL ดึง object key จาก public URL ของ bucket นี้ (หรือ CloudFront base)
+func (c *Client) KeyFromURL(fileURL string) (string, error) {
+	fileURL = strings.TrimSpace(fileURL)
+	if fileURL == "" {
+		return "", fmt.Errorf("empty file url")
+	}
+
+	prefixes := []string{
+		fmt.Sprintf("https://%s.s3.%s.amazonaws.com/", c.bucket, c.region),
+		fmt.Sprintf("https://%s.s3.amazonaws.com/", c.bucket),
+		fmt.Sprintf("https://s3.%s.amazonaws.com/%s/", c.region, c.bucket),
+		fmt.Sprintf("https://s3.amazonaws.com/%s/", c.bucket),
+	}
+	if c.publicBaseURL != "" {
+		prefixes = append(prefixes, c.publicBaseURL+"/")
+	}
+
+	for _, p := range prefixes {
+		if strings.HasPrefix(fileURL, p) {
+			key := strings.TrimLeft(strings.SplitN(fileURL[len(p):], "?", 2)[0], "/")
+			if key == "" {
+				return "", fmt.Errorf("could not parse object key from url")
+			}
+			return key, nil
+		}
+	}
+	return "", fmt.Errorf("url is not from this S3 bucket")
 }
 
 func (c *Client) publicURL(key string) string {

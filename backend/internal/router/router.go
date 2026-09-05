@@ -40,6 +40,9 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		AllowCredentials: true,
 	}))
 
+	// รองรับอัปโหลดวิดีโอสูงสุด ~500MB (ส่วนเกิน MaxMultipartMemory จะเขียนลง temp)
+	r.MaxMultipartMemory = 32 << 20
+
 	r.GET("/health", deps.Health.Health)
 
 	api := r.Group("/api")
@@ -90,6 +93,8 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 
 		uploads := api.Group("/uploads")
 		{
+			uploads.POST("", deps.Upload.Upload) // multipart → S3 (แนะนำ — ไม่ต้อง CORS บน bucket)
+			uploads.DELETE("", deps.Upload.Delete)
 			uploads.POST("/presign", deps.Upload.Presign)
 		}
 

@@ -15,3 +15,9 @@ export type HomeShowcaseItem = {
   detail: string;
   imageUrl: string;
 };
+
+/** สื่อใน Hero — จาก content type `video` */
+export type HomeHeroMedia =
+  | { kind: "video"; src: string; title: string }
+  | { kind: "image"; src: string; title: string }
+  | { kind: "youtube"; videoId: string; title: string };

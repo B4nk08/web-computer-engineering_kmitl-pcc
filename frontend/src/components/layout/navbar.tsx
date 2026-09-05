@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, X, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import {
@@ -19,21 +19,26 @@ import { cn } from "@/lib/utils";
  * ----------
  * แถบเมนูบนสุดของเว็บไซต์ ใช้ร่วมกันทุกหน้า (วางไว้ใน layout.tsx)
  *
- * พฤติกรรม:
- * - เมนูที่มีลูกศร (About Us, Academics, Faculty, Student) ดรอปดาวน์ลงมา
- *   เมื่อเอาเมาส์ชี้ (desktop) หรือกดแตะ (มือถือ)
- * - รายการย่อยในดรอปดาวน์: hover แล้วได้พื้นหลังสีน้ำเงินเข้ม ตัวอักษรขาว
- *   ส่วนที่ไม่ได้ชี้เป็นตัวหนังสือเฉยๆ ไม่มีพื้นหลัง
- * - เมนูเปลี่ยนตามบทบาทผู้ใช้ (ดู hooks/use-role.tsx):
- *     guest  -> Home, About Us, Academics
- *     member -> Home, About Us, Academics, Faculty, Student
- * - Responsive: จอเล็กยุบเป็นปุ่มแฮมเบอร์เกอร์ กดเปิดเป็นเมนูแบบเลื่อนลง (accordion)
+ * หน้า Home: โปร่งทับวิดีโอตอนอยู่บนสุด → ทึบเมื่อเลื่อนลง
+ * หน้าอื่น: ทึบตลอด + spacer กันเนื้อหาถูกทับ
  */
 
-function DropdownItem({ label, href }: NavItem) {
+function scrollToHash(href: string) {
+  const hash = href.includes("#") ? href.split("#")[1] : "";
+  if (!hash) return;
+  window.setTimeout(() => {
+    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 50);
+}
+
+function DropdownItem({ label, href, onNavigate }: NavItem & { onNavigate?: () => void }) {
   return (
     <Link
       href={href}
+      onClick={() => {
+        onNavigate?.();
+        scrollToHash(href);
+      }}
       className="block rounded-md px-4 py-2.5 text-sm text-white/90 transition-colors
                  hover:bg-[var(--navy-800)] hover:text-white
                  focus-visible:bg-[var(--navy-800)] focus-visible:text-white focus-visible:outline-none"
@@ -45,37 +50,61 @@ function DropdownItem({ label, href }: NavItem) {
 
 function NavDropdown({
   label,
+  href,
   items,
   mobileOpen,
   onToggleMobile,
+  onNavigate,
 }: {
   label: string;
+  href?: string;
   items: NavItem[];
   mobileOpen?: boolean;
   onToggleMobile?: () => void;
+  onNavigate?: () => void;
 }) {
   const [hoverOpen, setHoverOpen] = useState(false);
   const isMobileControlled = mobileOpen !== undefined;
   const open = isMobileControlled ? mobileOpen : hoverOpen;
 
+  const labelClass =
+    "py-2 text-sm font-medium text-white/90 transition-colors hover:text-[var(--accent)] md:text-[15px]";
+
   return (
     <div
       className="relative"
-      onMouseEnter={() => setHoverOpen(true)}
-      onMouseLeave={() => setHoverOpen(false)}
+      onMouseEnter={() => !isMobileControlled && setHoverOpen(true)}
+      onMouseLeave={() => !isMobileControlled && setHoverOpen(false)}
     >
-      <button
-        type="button"
-        onClick={onToggleMobile}
-        className="flex items-center gap-1 py-2 text-sm font-medium text-white/90 transition-colors hover:text-[var(--accent)] md:text-[15px]"
-      >
-        {label}
-        <ChevronDown
-          className={cn("h-3.5 w-3.5 transition-transform duration-200", open && "rotate-180")}
-        />
-      </button>
+      <div className="flex items-center gap-1">
+        {href ? (
+          <Link
+            href={href}
+            onClick={() => {
+              onNavigate?.();
+              scrollToHash(href);
+            }}
+            className={labelClass}
+          >
+            {label}
+          </Link>
+        ) : (
+          <button type="button" onClick={onToggleMobile} className={labelClass}>
+            {label}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onToggleMobile}
+          aria-label={`เปิดเมนูย่อย ${label}`}
+          className="flex items-center py-2 text-white/90 transition-colors hover:text-[var(--accent)]"
+        >
+          <ChevronDown
+            className={cn("h-3.5 w-3.5 transition-transform duration-200", open && "rotate-180")}
+          />
+        </button>
+      </div>
 
-      {/* Desktop: dropdown panel ลอยด้านล่างเมนู */}
       <div
         className={cn(
           "absolute left-0 top-full z-40 hidden w-44 origin-top rounded-xl bg-[var(--navy-950)]/95 p-2 shadow-xl ring-1 ring-white/10 backdrop-blur transition-all duration-150 md:block",
@@ -83,11 +112,10 @@ function NavDropdown({
         )}
       >
         {items.map((item) => (
-          <DropdownItem key={item.label} {...item} />
+          <DropdownItem key={item.label} {...item} onNavigate={onNavigate} />
         ))}
       </div>
 
-      {/* Mobile: dropdown แบบ accordion แทรกในเมนู */}
       {isMobileControlled && (
         <div
           className={cn(
@@ -97,7 +125,7 @@ function NavDropdown({
         >
           <div className="mt-1 space-y-1 rounded-lg bg-white/5 p-2">
             {items.map((item) => (
-              <DropdownItem key={item.label} {...item} />
+              <DropdownItem key={item.label} {...item} onNavigate={onNavigate} />
             ))}
           </div>
         </div>
@@ -108,12 +136,26 @@ function NavDropdown({
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
-  /** ล็อกอินแล้ว — แสดงเมนู Faculty/Student และซ่อนปุ่ม Login */
+  const isHome = pathname === "/";
   const isMember = isAuthenticated;
+  const solidNav = !isHome || scrolled || mobileMenuOpen;
+
+  useEffect(() => {
+    if (!isHome) {
+      setScrolled(false);
+      return;
+    }
+    const onScroll = () => setScrolled(window.scrollY > 48);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
 
   const closeMobile = () => {
     setMobileMenuOpen(false);
@@ -128,9 +170,15 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 w-full bg-[var(--navy-950)] shadow-md">
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 w-full transition-[background-color,box-shadow,backdrop-filter] duration-300",
+          solidNav
+            ? "bg-[var(--navy-950)] shadow-md"
+            : "bg-gradient-to-b from-black/55 via-black/25 to-transparent shadow-none backdrop-blur-[2px]"
+        )}
+      >
         <nav className="flex h-16 w-full items-center justify-between gap-4 px-3 sm:px-4 md:px-5">
-          {/* โลโก้ — ชิดซ้าย */}
           <Link
             href="/"
             onClick={closeMobile}
@@ -144,7 +192,6 @@ export function Navbar() {
             />
           </Link>
 
-          {/* เมนูหลัก: desktop */}
           <div className="hidden items-center gap-6 lg:gap-8 md:flex">
             <Link
               href="/"
@@ -152,7 +199,7 @@ export function Navbar() {
             >
               Home
             </Link>
-            <NavDropdown label="About Us" items={ABOUT_US_ITEMS} />
+            <NavDropdown label="About Us" href="/#about" items={ABOUT_US_ITEMS} />
             <NavDropdown label="Academics" items={ACADEMICS_ITEMS} />
             {isMember && (
               <>
@@ -162,7 +209,6 @@ export function Navbar() {
             )}
           </div>
 
-          {/* ปุ่ม Login (เฉพาะยังไม่ล็อกอิน) / Logout + แฮมเบอร์เกอร์ */}
           <div className="flex shrink-0 items-center gap-3">
             {!authLoading &&
               (isAuthenticated ? (
@@ -196,7 +242,6 @@ export function Navbar() {
           </div>
         </nav>
 
-        {/* เมนูหลัก: mobile (แบบเลื่อนลง) */}
         <div
           className={cn(
             "overflow-hidden bg-[var(--navy-950)] transition-all duration-200 md:hidden",
@@ -209,15 +254,18 @@ export function Navbar() {
             </Link>
             <NavDropdown
               label="About Us"
+              href="/#about"
               items={ABOUT_US_ITEMS}
               mobileOpen={mobileDropdown === "about"}
               onToggleMobile={() => setMobileDropdown((d) => (d === "about" ? null : "about"))}
+              onNavigate={closeMobile}
             />
             <NavDropdown
               label="Academics"
               items={ACADEMICS_ITEMS}
               mobileOpen={mobileDropdown === "academics"}
               onToggleMobile={() => setMobileDropdown((d) => (d === "academics" ? null : "academics"))}
+              onNavigate={closeMobile}
             />
             {isMember && (
               <>
@@ -226,12 +274,14 @@ export function Navbar() {
                   items={FACUITY_ITEMS}
                   mobileOpen={mobileDropdown === "faculty"}
                   onToggleMobile={() => setMobileDropdown((d) => (d === "faculty" ? null : "faculty"))}
+                  onNavigate={closeMobile}
                 />
                 <NavDropdown
                   label="Student"
                   items={STUDENT_ITEMS}
                   mobileOpen={mobileDropdown === "student"}
                   onToggleMobile={() => setMobileDropdown((d) => (d === "student" ? null : "student"))}
+                  onNavigate={closeMobile}
                 />
               </>
             )}
@@ -258,8 +308,9 @@ export function Navbar() {
           </div>
         </div>
       </header>
-      {/* spacer ให้เนื้อหาไม่ถูก navbar ทับ (ความสูงเท่าแถบเมนู) */}
-      <div className="h-16 shrink-0" aria-hidden />
+
+      {/* หน้า Home ไม่ใส่ spacer — ให้ hero เต็มจอใต้ navbar โปร่ง */}
+      {!isHome ? <div className="h-16 shrink-0" aria-hidden /> : null}
     </>
   );
 }

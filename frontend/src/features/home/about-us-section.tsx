@@ -37,7 +37,7 @@ export function AboutUsSection() {
   }, []);
 
   return (
-    <section id="about" className="scroll-mt-20 bg-white py-16 sm:py-20">
+    <section id="about" className="scroll-mt-24 bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">
           About Us

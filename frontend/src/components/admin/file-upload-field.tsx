@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import { uploadFileToS3, type UploadKind } from "@/lib/api/upload";
 
+const MAX_UPLOAD_BYTES = 500 * 1024 * 1024; // ต้องตรงกับ backend
+
 type FileUploadFieldProps = {
   label?: string;
   value: string;
@@ -17,6 +19,10 @@ type FileUploadFieldProps = {
   placeholder?: string;
   hint?: string;
 };
+
+function formatMb(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
 
 export function FileUploadField({
   label = "รูปภาพ / ไฟล์",
@@ -34,9 +40,26 @@ export function FileUploadField({
   async function handleFile(file: File | undefined) {
     if (!file) return;
     setError(null);
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(
+        `ไฟล์ใหญ่เกินไป (${formatMb(file.size)}) — จำกัด ${formatMb(MAX_UPLOAD_BYTES)}`
+      );
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     try {
-      const { fileUrl } = await uploadFileToS3(file, kind);
+      const uploadKind: UploadKind =
+        kind === "file"
+          ? file.type.startsWith("video/")
+            ? "video"
+            : file.type.startsWith("image/")
+              ? "image"
+              : "file"
+          : kind;
+      const { fileUrl } = await uploadFileToS3(file, uploadKind);
       onChange(fileUrl);
     } catch (err) {
       const message =
@@ -52,10 +75,16 @@ export function FileUploadField({
     }
   }
 
+  const isVideo =
+    kind === "video" ||
+    /\.(mp4|webm|mov|ogg|m4v)(\?|$)/i.test(value) ||
+    value.includes("/uploads/video/");
+
   const isImage =
-    kind === "image" ||
-    /\.(jpe?g|png|gif|webp)(\?|$)/i.test(value) ||
-    value.includes("image");
+    !isVideo &&
+    (kind === "image" ||
+      /\.(jpe?g|png|gif|webp)(\?|$)/i.test(value) ||
+      value.includes("/uploads/image/"));
 
   return (
     <div className="space-y-2">
@@ -72,6 +101,27 @@ export function FileUploadField({
             className="absolute right-2 top-2 h-8 w-8"
             onClick={() => onChange("")}
             aria-label="ลบรูป"
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      ) : null}
+
+      {value && isVideo ? (
+        <div className="relative overflow-hidden rounded-md border bg-muted/30">
+          <video
+            src={value}
+            className="mx-auto max-h-48 w-full object-contain"
+            controls
+            preload="metadata"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute right-2 top-2 h-8 w-8"
+            onClick={() => onChange("")}
+            aria-label="ลบวิดีโอ"
           >
             <X className="size-4" />
           </Button>
@@ -114,7 +164,7 @@ export function FileUploadField({
         </div>
       </div>
 
-      {value && !isImage ? (
+      {value && !isImage && !isVideo ? (
         <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
           <ImageIcon className="size-3.5 shrink-0" />
           {value}

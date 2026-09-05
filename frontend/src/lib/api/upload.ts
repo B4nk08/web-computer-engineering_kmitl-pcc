@@ -1,53 +1,45 @@
-import { apiClient, endpoints } from "@/lib/api";
+import { apiClient, apiFormClient, endpoints } from "@/lib/api";
 
 export type UploadKind = "image" | "video" | "pdf" | "file";
 
-export type PresignUploadResponse = {
+export type DirectUploadResponse = {
   key: string;
-  upload_url: string;
   file_url: string;
   content_type: string;
-  expires_in_seconds: number;
 };
 
-export async function presignUpload(input: {
-  filename: string;
-  contentType: string;
-  kind: UploadKind;
-}): Promise<PresignUploadResponse> {
-  return apiClient<PresignUploadResponse>(endpoints.uploads.presign, {
-    method: "POST",
-    body: {
-      filename: input.filename,
-      content_type: input.contentType,
-      kind: input.kind,
-    },
-  });
-}
+export type DeleteUploadResponse = {
+  key: string;
+  deleted: boolean;
+};
 
-/** ขอ presign จาก backend แล้ว PUT ไฟล์ตรงไป S3 — คืน public URL */
+/** อัปโหลดผ่าน backend → S3 (ไม่โดน CORS ของ bucket) */
 export async function uploadFileToS3(
   file: File,
   kind: UploadKind
 ): Promise<{ fileUrl: string; key: string }> {
-  const contentType = file.type || "application/octet-stream";
-  const signed = await presignUpload({
-    filename: file.name,
-    contentType,
-    kind,
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("kind", kind);
+
+  const data = await apiFormClient<DirectUploadResponse>(endpoints.uploads.direct, {
+    method: "POST",
+    formData,
   });
 
-  const put = await fetch(signed.upload_url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": contentType,
+  return { fileUrl: data.file_url, key: data.key };
+}
+
+/** ลบไฟล์บน S3 ด้วย key หรือ file_url */
+export async function deleteFileFromS3(input: {
+  key?: string;
+  fileUrl?: string;
+}): Promise<DeleteUploadResponse> {
+  return apiClient<DeleteUploadResponse>(endpoints.uploads.direct, {
+    method: "DELETE",
+    body: {
+      key: input.key,
+      file_url: input.fileUrl,
     },
-    body: file,
   });
-
-  if (!put.ok) {
-    throw new Error(`อัปโหลดไป S3 ไม่สำเร็จ (${put.status})`);
-  }
-
-  return { fileUrl: signed.file_url, key: signed.key };
 }

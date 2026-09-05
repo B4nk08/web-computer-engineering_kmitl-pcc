@@ -1,7 +1,7 @@
 import { listPublishedContents } from "@/features/content";
 import { fetchCurriculum } from "@/features/curriculum";
-import { mapStaffToHome, mapStudentWorkToHome } from "../mappers";
-import type { HomeShowcaseItem, HomeStaffMember } from "../types";
+import { mapStaffToHome, mapStudentWorkToHome, mapVideoToHomeHero } from "../mappers";
+import type { HomeHeroMedia, HomeShowcaseItem, HomeStaffMember } from "../types";
 import type { CurriculumProgram } from "@/features/curriculum";
 
 /**
@@ -21,4 +21,10 @@ export async function fetchHomeShowcase(): Promise<HomeShowcaseItem[]> {
 
 export async function fetchHomeCurriculum(): Promise<CurriculumProgram | null> {
   return fetchCurriculum();
+}
+
+/** สื่อ Hero จาก content type `video` — ใช้รายการแรกตาม sort_order */
+export async function fetchHomeHeroMedia(): Promise<HomeHeroMedia | null> {
+  const rows = await listPublishedContents("video");
+  return mapVideoToHomeHero(rows[0] ?? null);
 }

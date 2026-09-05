@@ -45,6 +45,7 @@ export const endpoints = {
     importCommit: "/api/whitelist/import/commit",
   },
   uploads: {
+    direct: "/api/uploads",
     presign: "/api/uploads/presign",
   },
 } as const;
