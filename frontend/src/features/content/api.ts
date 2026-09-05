@@ -1,6 +1,7 @@
 import { apiClient, endpoints } from "@/lib/api";
-import { mapContentDto } from "./mappers";
+import { mapContentDetail, mapContentDto } from "./mappers";
 import type {
+  ContentDetail,
   ContentDto,
   ContentItem,
   ContentListParams,
@@ -25,6 +26,27 @@ export async function listContents(params: ContentListParams): Promise<ContentIt
   });
 
   return (data ?? []).map(mapContentDto);
+}
+
+/** รายการที่เผยแพร่แล้ว พร้อม body/image — ใช้กับหน้าสาธารณะ */
+export async function listPublishedContents(
+  type: ContentListParams["type"]
+): Promise<ContentDetail[]> {
+  if (!isApiContentType(type)) {
+    return [];
+  }
+
+  const data = await apiClient<ContentDto[]>(endpoints.contents.list, {
+    method: "GET",
+    query: {
+      type,
+      published_only: true,
+    },
+  });
+
+  return (data ?? [])
+    .map(mapContentDetail)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title, "th"));
 }
 
 export async function getContentDetail(id: string): Promise<ContentDto> {

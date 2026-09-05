@@ -1,11 +1,10 @@
-import { ContentManager } from "@/features/content";
+import { NewsManager } from "@/features/news";
 
 export default function NewsAdminPage() {
   return (
-    <ContentManager
-      type="news"
-      title="ข่าวสารทั่วไป"
-      description="เพิ่ม แก้ไข หรือลบข่าวสารทั่วไป"
+    <NewsManager
+      title="ข่าวสาร"
+      description="แยก External (หน้าเว็บสาธารณะ) กับ Internal (ข่าวภายใน) ตอนสร้าง"
     />
   );
 }

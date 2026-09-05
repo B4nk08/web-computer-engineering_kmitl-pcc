@@ -1,0 +1,1 @@
+export { fetchCurriculum } from "./queries";

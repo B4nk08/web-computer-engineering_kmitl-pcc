@@ -67,7 +67,7 @@ export function FileUploadField({
           <img src={value} alt="" className="mx-auto max-h-48 object-contain" />
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             size="icon"
             className="absolute right-2 top-2 h-8 w-8"
             onClick={() => onChange("")}

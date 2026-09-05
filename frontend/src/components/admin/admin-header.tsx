@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { adminNavGroups, findAdminNavItem } from "@/config/admin-nav";
-import { useAdminView } from "@/components/layout/admin-view-context";
+import { useAdminView } from "@/components/admin/admin-view-context";
 import {
   Breadcrumb,
   BreadcrumbItem,

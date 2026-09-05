@@ -11,13 +11,16 @@ import (
 
 // Dependencies รวม handler/สิ่งที่ route ต้องใช้ (inject จาก main)
 type Dependencies struct {
-	Health  *handlers.HealthHandler
-	Auth    *handlers.AuthHandler
-	Content *handlers.ContentHandler
-	Quiz    *handlers.QuizHandler
-	Exam    *handlers.ExamHandler
-	Upload  *handlers.UploadHandler
-	Tokens  *tokenx.Manager
+	Health    *handlers.HealthHandler
+	Auth      *handlers.AuthHandler
+	Content   *handlers.ContentHandler
+	News      *handlers.NewsHandler
+	Quiz      *handlers.QuizHandler
+	Exam      *handlers.ExamHandler
+	Upload    *handlers.UploadHandler
+	Students  *handlers.StudentHandler
+	Whitelist *handlers.WhitelistHandler
+	Tokens    *tokenx.Manager
 }
 
 func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
@@ -25,7 +28,13 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{cfg.FrontendURL, "http://localhost:3000"},
+		AllowOrigins: []string{
+			cfg.FrontendURL,
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:3001",
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -41,8 +50,24 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		{
 			auth.POST("/register", deps.Auth.Register)
 			auth.POST("/login", deps.Auth.Login)
+			auth.POST("/token", deps.Auth.GetToken)
+			auth.POST("/get-token", deps.Auth.GetToken)
 			auth.POST("/google", deps.Auth.GoogleLogin)
 			auth.GET("/me", middleware.RequireAuth(deps.Tokens), deps.Auth.Me)
+		}
+
+		students := api.Group("/students")
+		students.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
+		{
+			students.GET("", deps.Students.List)
+		}
+
+		whitelist := api.Group("/whitelist")
+		whitelist.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
+		{
+			whitelist.POST("", deps.Whitelist.Create)
+			whitelist.POST("/import/preview", deps.Whitelist.ImportPreview)
+			whitelist.POST("/import/commit", deps.Whitelist.ImportCommit)
 		}
 
 		contents := api.Group("/contents")
@@ -54,23 +79,26 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 			contents.DELETE("/:id", deps.Content.Delete)
 		}
 
-		// S3 presigned uploads (admin)
+		news := api.Group("/news")
+		{
+			news.GET("", deps.News.List)
+			news.GET("/:id", deps.News.Get)
+			news.POST("", deps.News.Create)
+			news.PUT("/:id", deps.News.Update)
+			news.DELETE("/:id", deps.News.Delete)
+		}
+
 		uploads := api.Group("/uploads")
 		{
 			uploads.POST("/presign", deps.Upload.Presign)
 		}
 
-		// ---------- Quiz ----------
 		quizzes := api.Group("/quizzes")
 		{
-			// public / play
 			quizzes.GET("", deps.Quiz.List)
 			quizzes.GET("/:id/play", deps.Quiz.Play)
 			quizzes.POST("/:id/attempts", deps.Quiz.SubmitAttempt)
 
-			// admin (เปิดไว้ก่อน — ใส่ auth ได้ทีหลัง)
-			// staff := quizzes.Group("")
-			// staff.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
 			quizzes.POST("", deps.Quiz.Create)
 			quizzes.GET("/:id", deps.Quiz.GetAdmin)
 			quizzes.PUT("/:id", deps.Quiz.Update)
@@ -84,14 +112,11 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 			quizQuestions.DELETE("/:id", deps.Quiz.DeleteQuestion)
 		}
 
-		// ---------- Exit Exam ----------
 		exams := api.Group("/exams")
 		{
-			// student flow
 			exams.POST("/start", deps.Exam.Start)
 			exams.POST("/attempts/:id/submit", deps.Exam.Submit)
 
-			// admin bank / settings / credentials / scores
 			exams.GET("/questions", deps.Exam.ListQuestions)
 			exams.POST("/questions", deps.Exam.CreateQuestion)
 			exams.PUT("/questions/:id", deps.Exam.UpdateQuestion)

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAdminView } from "@/components/layout/admin-view-context";
+import { useAdminView } from "@/components/admin";
 import { ApiError } from "@/lib/api";
 import { listContents } from "../api";
 import type { ContentItem, ContentManagerProps } from "../types";

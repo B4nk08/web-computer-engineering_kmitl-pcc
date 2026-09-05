@@ -22,6 +22,7 @@ export const buttonVariants = cva(
           "border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white",
         ghost: "text-[var(--foreground)] hover:bg-[var(--muted)]",
         accent: "bg-[var(--accent)] text-white hover:opacity-90",
+        destructive: "bg-red-600 text-white hover:bg-red-700",
         link: "text-[var(--accent)] underline-offset-4 hover:underline",
       },
       size: {

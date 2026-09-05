@@ -1,5 +1,9 @@
 import { AuthExperience } from "@/features/auth/components/auth-experience";
 
+/**
+ * (auth) — login / register
+ * ไม่มี Navbar / Footer — เต็มจอผ่าน AuthExperience
+ */
 export const metadata = {
   title: "Account | CE KMITL-PCC",
 };

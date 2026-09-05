@@ -12,3 +12,5 @@ bin
 coverage
 postgres_data
 docs/
+# docker
+# Readme.md

@@ -5,10 +5,15 @@ export const endpoints = {
     login: "/api/auth/login",
     google: "/api/auth/google",
     me: "/api/auth/me",
+    token: "/api/auth/token",
   },
   contents: {
     list: "/api/contents",
     byId: (id: string) => `/api/contents/${id}`,
+  },
+  news: {
+    list: "/api/news",
+    byId: (id: string) => `/api/news/${id}`,
   },
   quizzes: {
     list: "/api/quizzes",
@@ -21,6 +26,8 @@ export const endpoints = {
   exams: {
     start: "/api/exams/start",
     submit: (id: string) => `/api/exams/attempts/${id}/submit`,
+    subjects: "/api/exams/subjects",
+    subjectById: (id: string) => `/api/exams/subjects/${id}`,
     questions: "/api/exams/questions",
     questionById: (id: string) => `/api/exams/questions/${id}`,
     settings: "/api/exams/settings",
@@ -28,6 +35,14 @@ export const endpoints = {
       `/api/exams/settings/${subject}/${mode}`,
     credentials: "/api/exams/credentials",
     attempts: "/api/exams/attempts",
+  },
+  students: {
+    list: "/api/students",
+  },
+  whitelist: {
+    create: "/api/whitelist",
+    importPreview: "/api/whitelist/import/preview",
+    importCommit: "/api/whitelist/import/commit",
   },
   uploads: {
     presign: "/api/uploads/presign",

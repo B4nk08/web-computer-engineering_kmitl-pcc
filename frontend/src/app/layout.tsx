@@ -1,21 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { RoleProvider } from "@/hooks/use-role";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
+import { AuthProvider } from "@/features/auth";
 
 /**
- * layout.tsx (root)
- * ------------------
- * Layout หลักของทั้งเว็บไซต์ ครอบทุกหน้าด้วย:
- *  - RoleProvider: จำลองบทบาทผู้ใช้ guest/member (ดู hooks/use-role.tsx)
- *  - Navbar / Footer: แสดงซ้ำทุกหน้า ไม่ต้องเขียนซ้ำในแต่ละ page.tsx
+ * Root layout — providers + html/body เท่านั้น
+ * ไม่ใส่ Navbar/Footer ที่นี่ เพราะ auth / admin / exam ต้องเป็น full-bleed
  *
- * หมายเหตุเรื่องฟอนต์: โหลด Prompt/Inter ผ่านแท็ก <link> ธรรมดา (runtime)
- * แทนการใช้ next/font/google เพราะ next/font ต้อง fetch ฟอนต์ตอน build
- * ซึ่งจะพังถ้าเครื่อง build ไม่มีอินเทอร์เน็ต/อยู่หลัง proxy ที่ปิดกั้น
- * fonts.googleapis.com — ถ้าเครื่อง build ของคุณมีอินเทอร์เน็ตปกติ
- * เปลี่ยนกลับไปใช้ next/font/google ได้ตามสะดวก
+ * โครงสร้าง route:
+ *   (site)/*   → เว็บสาธารณะ (มี Navbar + Footer)
+ *   (auth)/*   → login / register
+ *   admin/*    → admin panel (sidebar ของตัวเอง)
+ *   exam/*     → Exit Exam (fullscreen)
  */
 
 export const metadata: Metadata = {
@@ -29,18 +24,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout ของ App Router คือที่ที่ถูกต้องสำหรับฟอนต์ทั้งเว็บ กฎนี้ตั้งใจไว้สำหรับ Pages Router (pages/_document.js) */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout ของ App Router คือที่ที่ถูกต้องสำหรับฟอนต์ทั้งเว็บ */}
         <link
           href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="flex min-h-full flex-col">
-        <RoleProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </RoleProvider>
+      <body className="min-h-full">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

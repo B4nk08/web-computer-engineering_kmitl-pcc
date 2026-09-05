@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Newspaper,
   ScrollText,
+  UserCog,
   Users,
   Video,
 } from "lucide-react";
@@ -19,17 +20,19 @@ export type ContentType =
   | "video"
   | "admissions"
   | "career_path"
+  | "curriculum"
   | "quiz"
   | "exit_exam";
 
 export type StaffRole = "admin" | "teacher";
 
-export type AdminNavGroupId = "public" | "external";
+export type AdminNavGroupId = "public" | "external" | "system";
 
 export type AdminNavItem = {
   title: string;
   href: string;
-  type: ContentType;
+  /** ใช้กับ ContentManager — รายการที่ไม่ใช่ content (เช่น whitelist) ไม่ต้องมี */
+  type?: ContentType;
   description: string;
   icon: LucideIcon;
   /** ถ้าไม่ระบุ = ทั้ง admin และ teacher เห็น */
@@ -52,7 +55,7 @@ export const adminNavGroups: AdminNavGroup[] = [
       {
         title: "ข้อมูลหลักสูตร",
         href: "/admin/curriculum",
-        type: "page",
+        type: "curriculum",
         description: "เพิ่ม แก้ไข หรือลบข้อมูลหลักสูตร",
         icon: BookOpen,
       },
@@ -116,9 +119,22 @@ export const adminNavGroups: AdminNavGroup[] = [
         title: "Exit Exam",
         href: "/admin/exit-exam",
         type: "exit_exam",
-        description: "จัดการ Exit Exam",
+        description: "จัดการกลุ่มข้อสอบและคลังคำถาม Exit Exam",
         icon: ScrollText,
         roles: ["teacher"],
+      },
+    ],
+  },
+  {
+    id: "system",
+    label: "System",
+    items: [
+      {
+        title: "รายชื่อผู้มีสิทธิ์เข้าใช้งาน",
+        href: "/admin/whitelist",
+        description: "เพิ่มรายชื่อทีละคน หรือนำเข้าไฟล์ CSV เข้า ce_whitelist",
+        icon: UserCog,
+        roles: ["admin", "teacher"],
       },
     ],
   },

@@ -4,9 +4,7 @@ import { StudentShowcaseFacultySection } from "@/features/home/student-showcase-
 
 /**
  * page.tsx (Home, route "/")
- * ---------------------------
- * หน้ายาวหน้าเดียวรวม 3 ส่วนตามสเปค: Hero -> About Us (+ กิจกรรม) -> Student Showcase & Faculty
- * เหมือนกันทั้งบทบาท guest และ member ต่างกันแค่เมนู Navbar (ดูใน components/layout/navbar.tsx)
+ * Hero -> About Us (รวมช่องข่าวสาร) -> Student Showcase & Faculty
  */
 export default function HomePage() {
   return (

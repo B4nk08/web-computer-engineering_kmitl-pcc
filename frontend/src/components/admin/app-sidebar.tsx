@@ -12,10 +12,12 @@ import {
   Globe2,
   LayoutDashboard,
   LogOut,
+  Settings2,
   UsersRound,
 } from "lucide-react";
-import { adminNavGroups, canAccessNavItem, type AdminNavItem } from "@/config/admin-nav";
-import { CURRENT_STAFF_ROLE } from "@/config/staff-role";
+import { adminNavGroups, canAccessNavItem, type AdminNavItem, type StaffRole } from "@/config/admin-nav";
+import { isStaffRole } from "@/config/staff-role";
+import { useAuth } from "@/features/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -45,14 +47,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const mockUser = {
-  name: CURRENT_STAFF_ROLE === "teacher" ? "อ.สมชาย ใจดี" : "Admin CE",
-  email:
-    CURRENT_STAFF_ROLE === "teacher"
-      ? "somchai@kmitl.ac.th"
-      : "admin@kmitl.ac.th",
-  initials: CURRENT_STAFF_ROLE === "teacher" ? "สจ" : "AD",
-};
+function initialsFrom(name: string, email: string): string {
+  const source = name.trim() || email.trim();
+  if (!source) return "??";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
+}
 
 function NavMainGroup({
   label,
@@ -177,6 +180,10 @@ function NavMainGroup({
 
 function NavUser() {
   const { isMobile } = useSidebar();
+  const { user, logout } = useAuth();
+  const name = user?.displayName || user?.email || "Staff";
+  const email = user?.email || "";
+  const initials = initialsFrom(name, email);
 
   return (
     <SidebarMenu>
@@ -188,11 +195,11 @@ function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg">{mockUser.initials}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{mockUser.name}</span>
-                <span className="truncate text-xs">{mockUser.email}</span>
+                <span className="truncate font-medium">{name}</span>
+                <span className="truncate text-xs">{email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -206,11 +213,11 @@ function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg">{mockUser.initials}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{mockUser.name}</span>
-                  <span className="truncate text-xs">{mockUser.email}</span>
+                  <span className="truncate font-medium">{name}</span>
+                  <span className="truncate text-xs">{email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -226,7 +233,12 @@ function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                logout();
+                window.location.href = "/login";
+              }}
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
@@ -239,12 +251,14 @@ function NavUser() {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const role: StaffRole = isStaffRole(user?.role) ? user.role : "admin";
   const isDashboard = pathname === "/admin" || pathname === "/admin/dashboard";
 
   const visibleGroups = adminNavGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => canAccessNavItem(item, CURRENT_STAFF_ROLE)),
+      items: group.items.filter((item) => canAccessNavItem(item, role)),
     }))
     .filter((group) => group.items.length > 0);
 
@@ -291,7 +305,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 const groupActive = group.items.some(
                   (item) => !item.disabled && pathname === item.href
                 );
-                const GroupIcon = group.id === "public" ? Globe2 : UsersRound;
+                const GroupIcon =
+                  group.id === "public"
+                    ? Globe2
+                    : group.id === "system"
+                      ? Settings2
+                      : UsersRound;
 
                 return (
                   <NavMainGroup
