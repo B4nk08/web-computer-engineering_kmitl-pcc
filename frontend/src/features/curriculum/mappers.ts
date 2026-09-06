@@ -57,6 +57,8 @@ export function mapCurriculum(item: ContentDetail): CurriculumProgram {
     titleEn: str(extra, "program_name_en"),
     body: item.body.trim(),
     pdfUrl: item.imageUrl,
+    aboutImageUrl: str(extra, "about_image_url"),
+    aboutCaption: str(extra, "about_image_caption"),
     location: str(extra, "location"),
     language: str(extra, "language"),
     systemDescription: systemDescription || studySystem,

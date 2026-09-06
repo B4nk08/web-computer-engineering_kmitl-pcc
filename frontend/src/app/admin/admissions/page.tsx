@@ -4,8 +4,8 @@ export default function AdmissionsAdminPage() {
   return (
     <ContentManager
       type="admissions"
-      title="จำนวนการรับสมัคร / ค่าเทอม"
-      description="เพิ่ม แก้ไข หรือลบข้อมูลรับสมัครและค่าเทอม"
+      title="ข้อมูลรับสมัคร"
+      description="หน้าคุณสมบัติผู้สมัคร — จำนวนรับ ค่าเทอม และข้อมูลรับเข้า"
     />
   );
 }

@@ -5,7 +5,7 @@ export default function StudentWorksAdminPage() {
     <ContentManager
       type="student_work"
       title="ผลงานนักศึกษา"
-      description="เพิ่ม แก้ไข หรือลบผลงานนักศึกษา"
+      description="หน้าแรก → ส่วนผลงานนักศึกษา — ชื่อผลงาน รายละเอียด และรูป"
     />
   );
 }

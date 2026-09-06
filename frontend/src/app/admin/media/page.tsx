@@ -4,8 +4,8 @@ export default function MediaAdminPage() {
   return (
     <ContentManager
       type="video"
-      title="รูปหรือวิดีโอแนะนำ"
-      description="เพิ่ม แก้ไข หรือลบรูปหรือวิดีโอแนะนำ"
+      title="วิดีโอหน้าแรก"
+      description="หน้าแรก → ด้านบนสุด — อัปโหลดวิดีโอหรือรูปแนะนำภาควิชา"
     />
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { listPublishedExternalNews, type NewsItem } from "@/features/news";
 import { useHomeCurriculum } from "./hooks/use-home-contents";
@@ -13,7 +13,6 @@ import { useHomeCurriculum } from "./hooks/use-home-contents";
  * ส่วน "About Us" + ช่องการ์ดด้านล่างแสดงข่าวสารจาก API (external)
  */
 export function AboutUsSection() {
-  const [pinOpen, setPinOpen] = useState(false);
   const [activeNews, setActiveNews] = useState<NewsItem | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
@@ -49,21 +48,17 @@ export function AboutUsSection() {
         <div className="grid gap-10 lg:grid-cols-[420px_1fr] lg:gap-14">
           <div className="relative">
             <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-[#d9d9d9] text-sm text-[var(--ink-soft)]">
-              รูปกิจกรรม/นักศึกษาภาควิชา
+              {curriculum?.aboutImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={curriculum.aboutImageUrl}
+                  alt={curriculum.title || "รูปกิจกรรมภาควิชา"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                "รูปกิจกรรม/นักศึกษาภาควิชา"
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setPinOpen((v) => !v)}
-              aria-label="ดูข้อมูลเพิ่มเติมเกี่ยวกับภาพ"
-              className="absolute left-5 top-5 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition-transform hover:scale-110"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-            {pinOpen && (
-              <div className="absolute left-5 top-16 w-56 rounded-lg bg-white p-3 text-xs leading-relaxed text-[var(--ink-soft)] shadow-xl ring-1 ring-black/5">
-                นักศึกษาและอาจารย์ภาควิชาวิศวกรรมคอมพิวเตอร์ร่วมกิจกรรมเชื่อมความสัมพันธ์ระหว่างรุ่น
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col justify-center">

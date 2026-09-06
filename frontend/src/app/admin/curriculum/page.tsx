@@ -4,8 +4,8 @@ export default function CurriculumAdminPage() {
   return (
     <ContentManager
       type="curriculum"
-      title="ข้อมูลหลักสูตร"
-      description="เพิ่ม แก้ไข หรือลบข้อมูลหลักสูตร"
+      title="About Us / หลักสูตร"
+      description="หน้าแรก → About Us — ข้อความหลักสูตร ตัวเลขสรุป รูปด้านซ้าย และหน้าหลักสูตร (/beng)"
     />
   );
 }

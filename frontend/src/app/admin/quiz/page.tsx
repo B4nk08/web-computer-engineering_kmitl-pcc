@@ -4,8 +4,8 @@ export default function QuizAdminPage() {
   return (
     <ContentManager
       type="quiz"
-      title="Quiz"
-      description="เพิ่ม แก้ไข หรือลบแบบทดสอบ Quiz"
+      title="Quiz แนะนำ"
+      description="แบบทดสอบสำหรับผู้สนใจ — จัดการคำถามและผลประเมิน"
     />
   );
 }
