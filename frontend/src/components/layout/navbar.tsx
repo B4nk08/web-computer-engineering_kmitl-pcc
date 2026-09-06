@@ -143,7 +143,6 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   const isHome = pathname === "/";
-  const isMember = isAuthenticated;
   const solidNav = !isHome || scrolled || mobileMenuOpen;
 
   useEffect(() => {
@@ -201,12 +200,8 @@ export function Navbar() {
             </Link>
             <NavDropdown label="About Us" href="/#about" items={ABOUT_US_ITEMS} />
             <NavDropdown label="Academics" items={ACADEMICS_ITEMS} />
-            {isMember && (
-              <>
-                <NavDropdown label="Faculty" items={FACUITY_ITEMS} />
-                <NavDropdown label="Student" items={STUDENT_ITEMS} />
-              </>
-            )}
+            <NavDropdown label="Faculty" items={FACUITY_ITEMS} />
+            <NavDropdown label="Student" items={STUDENT_ITEMS} />
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
@@ -267,24 +262,20 @@ export function Navbar() {
               onToggleMobile={() => setMobileDropdown((d) => (d === "academics" ? null : "academics"))}
               onNavigate={closeMobile}
             />
-            {isMember && (
-              <>
-                <NavDropdown
-                  label="Faculty"
-                  items={FACUITY_ITEMS}
-                  mobileOpen={mobileDropdown === "faculty"}
-                  onToggleMobile={() => setMobileDropdown((d) => (d === "faculty" ? null : "faculty"))}
-                  onNavigate={closeMobile}
-                />
-                <NavDropdown
-                  label="Student"
-                  items={STUDENT_ITEMS}
-                  mobileOpen={mobileDropdown === "student"}
-                  onToggleMobile={() => setMobileDropdown((d) => (d === "student" ? null : "student"))}
-                  onNavigate={closeMobile}
-                />
-              </>
-            )}
+            <NavDropdown
+              label="Faculty"
+              items={FACUITY_ITEMS}
+              mobileOpen={mobileDropdown === "faculty"}
+              onToggleMobile={() => setMobileDropdown((d) => (d === "faculty" ? null : "faculty"))}
+              onNavigate={closeMobile}
+            />
+            <NavDropdown
+              label="Student"
+              items={STUDENT_ITEMS}
+              mobileOpen={mobileDropdown === "student"}
+              onToggleMobile={() => setMobileDropdown((d) => (d === "student" ? null : "student"))}
+              onNavigate={closeMobile}
+            />
             {!authLoading &&
               (isAuthenticated ? (
                 <button

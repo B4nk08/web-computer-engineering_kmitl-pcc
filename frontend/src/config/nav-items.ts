@@ -23,7 +23,7 @@ export const ACADEMICS_ITEMS: NavItem[] = [
 
 // เฉพาะบทบาท "member" (นักศึกษา/อาจารย์/แอดมิน)
 export const FACUITY_ITEMS: NavItem[] = [
-  { label: "Faculty", href: "/faculty" },
+  { label: "Faculty", href: "/faculty/facultyce" },
   { label: "รายชื่อชั้นปี", href: "/faculty/students-by-year" },
 ];
 

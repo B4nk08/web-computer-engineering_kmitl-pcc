@@ -122,7 +122,7 @@ export function StudentShowcaseFacultySection() {
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--ink)] sm:text-2xl">Faculty</h2>
             <a
-              href="/faculty"
+              href="/faculty/facultyce"
               className="text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline"
             >
               ดูทั้งหมด →
