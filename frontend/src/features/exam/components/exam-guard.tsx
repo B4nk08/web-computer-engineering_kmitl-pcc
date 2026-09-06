@@ -4,19 +4,25 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth";
+import { isAuthBypassEnabled } from "@/features/auth/config/env";
 
 /** กันหน้า exam ทั้งหมดไว้เฉพาะผู้ที่ login แล้ว (นักศึกษา/อาจารย์/แอดมิน) */
 export function ExamGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const bypass = isAuthBypassEnabled();
 
   useEffect(() => {
-    if (loading) return;
+    if (bypass || loading) return;
     if (!isAuthenticated || !user) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
-  }, [loading, isAuthenticated, user, pathname, router]);
+  }, [bypass, loading, isAuthenticated, user, pathname, router]);
+
+  if (bypass) {
+    return <>{children}</>;
+  }
 
   if (loading || !user) {
     return (

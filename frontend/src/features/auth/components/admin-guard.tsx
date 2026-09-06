@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth";
+import { isAuthBypassEnabled } from "@/features/auth/config/env";
 import {
   canAccessNavItem,
   findAdminNavItem,
@@ -18,9 +19,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const bypass = isAuthBypassEnabled();
 
   useEffect(() => {
-    if (loading) return;
+    if (bypass || loading) return;
 
     if (!isAuthenticated || !user) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
@@ -36,7 +38,11 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     if (item && !canAccessNavItem(item, user.role as StaffRole)) {
       router.replace("/admin");
     }
-  }, [loading, isAuthenticated, user, pathname, router]);
+  }, [bypass, loading, isAuthenticated, user, pathname, router]);
+
+  if (bypass) {
+    return <>{children}</>;
+  }
 
   if (loading || !user || !isStaffRole(user.role)) {
     return (

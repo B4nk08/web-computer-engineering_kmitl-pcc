@@ -65,10 +65,12 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_AUTH_BYPASS: ${NEXT_PUBLIC_AUTH_BYPASS:-false}
     ports:
       - "${FRONTEND_HOST_PORT}:3000"
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_AUTH_BYPASS: ${NEXT_PUBLIC_AUTH_BYPASS:-false}
 
 volumes:
   postgres_data:
