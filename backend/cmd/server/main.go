@@ -36,6 +36,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	whitelistRepo := repository.NewWhitelistRepository(db)
 	contentRepo := repository.NewContentRepository(db)
+	newsRepo := repository.NewNewsRepository(db)
 	quizRepo := repository.NewQuizRepository(db)
 	examRepo := repository.NewExamRepository(db)
 
@@ -63,19 +64,25 @@ func main() {
 	// services
 	authService := service.NewAuthService(userRepo, whitelistRepo, tokens, googleVerifier)
 	contentService := service.NewContentService(contentRepo)
+	newsService := service.NewNewsService(newsRepo)
 	quizService := service.NewQuizService(quizRepo)
 	examService := service.NewExamService(examRepo)
 	uploadService := service.NewUploadService(s3Client)
+	studentService := service.NewStudentService(whitelistRepo)
+	whitelistService := service.NewWhitelistService(whitelistRepo)
 
 	// handlers
 	deps := router.Dependencies{
-		Health:  handlers.NewHealthHandler(db),
-		Auth:    handlers.NewAuthHandler(authService, userRepo),
-		Content: handlers.NewContentHandler(contentService),
-		Quiz:    handlers.NewQuizHandler(quizService),
-		Exam:    handlers.NewExamHandler(examService),
-		Upload:  handlers.NewUploadHandler(uploadService),
-		Tokens:  tokens,
+		Health:    handlers.NewHealthHandler(db),
+		Auth:      handlers.NewAuthHandler(authService, userRepo),
+		Content:   handlers.NewContentHandler(contentService),
+		News:      handlers.NewNewsHandler(newsService),
+		Quiz:      handlers.NewQuizHandler(quizService),
+		Exam:      handlers.NewExamHandler(examService),
+		Upload:    handlers.NewUploadHandler(uploadService),
+		Students:  handlers.NewStudentHandler(studentService),
+		Whitelist: handlers.NewWhitelistHandler(whitelistService),
+		Tokens:    tokens,
 	}
 
 	r := router.Setup(cfg, deps)

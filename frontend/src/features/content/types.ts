@@ -10,6 +10,7 @@ export const API_CONTENT_TYPES = [
   "video",
   "career_path",
   "admissions",
+  "curriculum",
 ] as const;
 
 export type ApiContentType = (typeof API_CONTENT_TYPES)[number];
@@ -41,6 +42,22 @@ export type ContentItem = {
   type: ContentType;
   slug?: string | null;
   isPublished: boolean;
+  updatedAt: string;
+};
+
+/** รายละเอียดเต็มสำหรับหน้าสาธารณะ (Home / Faculty / Showcase) */
+export type ContentDetail = {
+  id: string;
+  type: ContentType;
+  slug?: string | null;
+  title: string;
+  body: string;
+  imageUrl: string;
+  extra: Record<string, unknown> | null;
+  sortOrder: number;
+  isPublished: boolean;
+  publishedAt?: string | null;
+  createdAt: string;
   updatedAt: string;
 };
 

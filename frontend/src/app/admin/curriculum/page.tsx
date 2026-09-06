@@ -3,9 +3,9 @@ import { ContentManager } from "@/features/content";
 export default function CurriculumAdminPage() {
   return (
     <ContentManager
-      type="page"
-      title="ข้อมูลหลักสูตร"
-      description="เพิ่ม แก้ไข หรือลบข้อมูลหลักสูตร"
+      type="curriculum"
+      title="About Us / หลักสูตร"
+      description="หน้าแรก → About Us — ข้อความหลักสูตร ตัวเลขสรุป รูปด้านซ้าย และหน้าหลักสูตร (/beng)"
     />
   );
 }

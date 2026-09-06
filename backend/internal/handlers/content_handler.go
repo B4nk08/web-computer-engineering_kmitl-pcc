@@ -31,7 +31,7 @@ func (h *ContentHandler) List(c *gin.Context) {
 	items, err := h.contents.List(filter)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidContentType) {
-			httpx.Fail(c, http.StatusBadRequest, "type must be one of: page, staff, student_work, video, career_path, admissions")
+			httpx.Fail(c, http.StatusBadRequest, "type must be one of: page, staff, student_work, video, career_path, admissions, curriculum")
 			return
 		}
 		httpx.Fail(c, http.StatusInternalServerError, "failed to list contents")
@@ -71,7 +71,7 @@ func (h *ContentHandler) Create(c *gin.Context) {
 	item, err := h.contents.Create(req)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidContentType) {
-			httpx.Fail(c, http.StatusBadRequest, "type must be one of: page, staff, student_work, video, career_path, admissions")
+			httpx.Fail(c, http.StatusBadRequest, "type must be one of: page, staff, student_work, video, career_path, admissions, curriculum")
 			return
 		}
 		httpx.Fail(c, http.StatusInternalServerError, "failed to create content")

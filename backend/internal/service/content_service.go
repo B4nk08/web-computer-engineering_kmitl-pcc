@@ -24,6 +24,7 @@ var allowedContentTypes = map[models.ContentType]struct{}{
 	models.ContentVideo:       {},
 	models.ContentCareerPath:  {},
 	models.ContentAdmissions:  {},
+	models.ContentCurriculum:  {},
 }
 
 type ContentService interface {

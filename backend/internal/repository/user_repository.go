@@ -3,6 +3,7 @@ package repository
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kmitl-pcc/ce-web/backend/internal/models"
@@ -11,6 +12,9 @@ import (
 
 // ErrNotFound ใช้แทน record ที่หาไม่เจอ (ซ่อนรายละเอียดของ gorm)
 var ErrNotFound = errors.New("record not found")
+
+// ErrDuplicate ใช้แทนกรณี unique constraint ชน (เช่น email ซ้ำ)
+var ErrDuplicate = errors.New("duplicate record")
 
 type UserRepository interface {
 	FindByEmail(email string) (*models.User, error)
@@ -64,6 +68,13 @@ func (r *userRepository) Update(user *models.User) error {
 func translate(err error) error {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrNotFound
+	}
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return ErrDuplicate
+	}
+	msg := err.Error()
+	if strings.Contains(msg, "SQLSTATE 23505") || strings.Contains(msg, "duplicate key") {
+		return ErrDuplicate
 	}
 	return err
 }

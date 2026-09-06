@@ -1,11 +1,10 @@
-import { ContentManager } from "@/features/content";
+import { NewsManager } from "@/features/news";
 
 export default function NewsAdminPage() {
   return (
-    <ContentManager
-      type="news"
-      title="ข่าวสารทั่วไป"
-      description="เพิ่ม แก้ไข หรือลบข่าวสารทั่วไป"
+    <NewsManager
+      title="ข่าวสารหน้าแรก"
+      description="หน้าแรก → ใต้ About Us — ข่าว External โชว์สาธารณะ / Internal สำหรับภายใน"
     />
   );
 }

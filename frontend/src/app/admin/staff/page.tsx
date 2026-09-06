@@ -4,8 +4,8 @@ export default function StaffAdminPage() {
   return (
     <ContentManager
       type="staff"
-      title="บุคลากร"
-      description="เพิ่ม แก้ไข หรือลบบุคลากร"
+      title="คณาจารย์ / บุคลากร"
+      description="หน้าแรก → ส่วนบุคลากร — ชื่อ ตำแหน่ง รูป และประวัติสั้น ๆ"
     />
   );
 }

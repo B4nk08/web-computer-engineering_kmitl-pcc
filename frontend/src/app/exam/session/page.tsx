@@ -1,9 +1,5 @@
-import { ExamGuard, ExamSessionView } from "@/features/exam";
+import { ExamSessionView } from "@/features/exam";
 
 export default function ExamSessionPage() {
-  return (
-    <ExamGuard>
-      <ExamSessionView />
-    </ExamGuard>
-  );
+  return <ExamSessionView />;
 }

@@ -21,6 +21,7 @@ const (
 	ContentVideo        ContentType = "video"
 	ContentCareerPath   ContentType = "career_path"
 	ContentAdmissions   ContentType = "admissions"
+	ContentCurriculum   ContentType = "curriculum"
 )
 
 type Content struct {
@@ -29,7 +30,7 @@ type Content struct {
 	Slug        *string        `gorm:"size:120;index" json:"slug,omitempty"`
 	Title       string         `gorm:"size:500" json:"title"`
 	Body        string         `gorm:"type:text" json:"body"`
-	ImageURL    string         `gorm:"type:text" json:"image_url"`
+	ImageURL    string         `gorm:"column:file_url;type:text" json:"image_url"`
 	Extra       datatypes.JSON `gorm:"type:jsonb" json:"extra,omitempty"`
 	SortOrder   int            `gorm:"default:0" json:"sort_order"`
 	IsPublished bool           `gorm:"default:true" json:"is_published"`
