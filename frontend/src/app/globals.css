@@ -33,6 +33,21 @@
   --input: #e5e7eb;
   --ring: var(--accent);
   --radius: 0.75rem;
+  /* Quiz */
+  --navy-900: #101d3f;
+  --accent: #2f5fd6;
+  --surface: #f4f5f7;
+  --muted: #e9eaee;
+  --ink: #1b1f2a;
+  --ink-soft: #545a68;
+}
+/* Quiz เอฟเฟกต์ fade-in ใช้ตอนเปลี่ยนสไลด์ในหน้าแบบทดสอบ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.quiz-fade-in {
+  animation: fadeIn 0.35s ease both;
 }
 
 @theme inline {
