@@ -4,13 +4,20 @@ export { StudentShowcaseFacultySection } from "./student-showcase-faculty-sectio
 export {
   fetchHomeStaff,
   fetchHomeShowcase,
+  fetchHomeActivities,
   fetchHomeCurriculum,
   fetchHomeHeroMedia,
 } from "./api";
 export {
   useHomeStaff,
   useHomeShowcase,
+  useHomeActivities,
   useHomeCurriculum,
   useHomeHeroMedia,
 } from "./hooks/use-home-contents";
-export type { HomeStaffMember, HomeShowcaseItem, HomeHeroMedia } from "./types";
+export type {
+  HomeStaffMember,
+  HomeShowcaseItem,
+  HomeHeroMedia,
+  HomeActivity,
+} from "./types";

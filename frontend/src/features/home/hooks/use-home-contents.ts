@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import type { CurriculumProgram } from "@/features/curriculum";
 import {
+  fetchHomeActivities,
   fetchHomeCurriculum,
   fetchHomeHeroMedia,
   fetchHomeShowcase,
   fetchHomeStaff,
 } from "../api";
-import type { HomeHeroMedia, HomeShowcaseItem, HomeStaffMember } from "../types";
+import type {
+  HomeActivity,
+  HomeHeroMedia,
+  HomeShowcaseItem,
+  HomeStaffMember,
+} from "../types";
 
 type AsyncState<T> = {
   data: T[];
@@ -66,6 +72,38 @@ export function useHomeShowcase(): AsyncState<HomeShowcaseItem> {
       .catch(() => {
         if (!alive) return;
         setError("โหลดข้อมูลไม่สำเร็จ");
+        setData([]);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return { data, loading, error };
+}
+
+export function useHomeActivities(): AsyncState<HomeActivity> {
+  const [data, setData] = useState<HomeActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(null);
+
+    fetchHomeActivities()
+      .then((rows) => {
+        if (!alive) return;
+        setData(rows);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setError("โหลดกิจกรรมไม่สำเร็จ");
         setData([]);
       })
       .finally(() => {

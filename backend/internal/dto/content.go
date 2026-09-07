@@ -32,7 +32,7 @@ type UpdateContentRequest struct {
 
 // ContentFilter ค่าจาก query string สำหรับ list
 type ContentFilter struct {
-	Type          string `form:"type"`           // page | staff | student_work | video | career_path | admissions
+	Type          string `form:"type"`           // page | staff | student_work | video | career_path | admissions | curriculum | activity
 	Slug          string `form:"slug"`
 	IsPublished   *bool  `form:"is_published"`   // ไม่ส่ง = ทั้งหมด
 	PublishedOnly bool   `form:"published_only"` // true = เฉพาะที่เผยแพร่แล้ว

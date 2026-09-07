@@ -22,6 +22,7 @@ const (
 	ContentCareerPath   ContentType = "career_path"
 	ContentAdmissions   ContentType = "admissions"
 	ContentCurriculum   ContentType = "curriculum"
+	ContentActivity     ContentType = "activity"
 )
 
 type Content struct {

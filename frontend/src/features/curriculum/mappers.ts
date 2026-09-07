@@ -48,7 +48,7 @@ export function mapCurriculum(item: ContentDetail): CurriculumProgram {
 
   const summary: CurriculumProgram["summary"] = [];
   if (years) summary.push({ value: `${years} ปี`, label: "รูปแบบหลักสูตร" });
-  if (credits) summary.push({ value: `${credits} หน่วยกิต`, label: "จำนวนหน่วยกิตรวม" });
+  if (credits) summary.push({ value: credits, label: "หน่วยกิตรวม" });
   if (studySystem) summary.push({ value: studySystem, label: "ระบบการศึกษา" });
 
   return {

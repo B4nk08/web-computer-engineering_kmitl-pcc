@@ -1,221 +1,196 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { listPublishedExternalNews, type NewsItem } from "@/features/news";
-import { useHomeCurriculum } from "./hooks/use-home-contents";
+import { BookOpen, ExternalLink, FileSearch } from "lucide-react";
+import { useHomeActivities, useHomeCurriculum } from "./hooks/use-home-contents";
+import { ActivityModal } from "./activity-modal";
+import { useState } from "react";
+import type { HomeActivity } from "./types";
 
 /**
- * about-us-section.tsx
- * ---------------------
- * ส่วน "About Us" + ช่องการ์ดด้านล่างแสดงข่าวสารจาก API (external)
+ * About Us ตามเลย์เอาต์ใหม่:
+ * หัวข้อ → รูป + เนื้อหาเบื้องต้น (พื้นขาว) → ปุ่มหลักสูตร/คุณสมบัติ + กล่องกิจกรรม
+ * ไม่โชว์ข่าวสาร (ข่าวแยก Admin เป็น external/internal)
  */
 export function AboutUsSection() {
-  const [activeNews, setActiveNews] = useState<NewsItem | null>(null);
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
   const { data: curriculum, loading } = useHomeCurriculum();
-
-  useEffect(() => {
-    let alive = true;
-    listPublishedExternalNews()
-      .then((rows) => {
-        if (alive) setNews(rows);
-      })
-      .catch(() => {
-        if (alive) setNews([]);
-      })
-      .finally(() => {
-        if (alive) setNewsLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const { data: activities, loading: activitiesLoading } = useHomeActivities();
+  const [active, setActive] = useState<HomeActivity | null>(null);
 
   return (
-    <section id="about" className="scroll-mt-24 bg-white py-16 sm:py-20">
+    <section id="about" className="scroll-mt-24 bg-white pb-10 pt-12 sm:pb-12 sm:pt-16">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-[var(--accent)]">
+        <h2 className="mb-6 text-3xl font-bold tracking-tight text-[var(--ink)] sm:mb-8 sm:text-4xl">
           About Us
-        </p>
-        <h2 className="mb-8 text-2xl font-semibold text-[var(--ink)] sm:text-3xl">
-          รู้จักภาควิชาวิศวกรรมคอมพิวเตอร์
         </h2>
 
-        <div className="grid gap-10 lg:grid-cols-[420px_1fr] lg:gap-14">
-          <div className="relative">
-            <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-[#d9d9d9] text-sm text-[var(--ink-soft)]">
-              {curriculum?.aboutImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={curriculum.aboutImageUrl}
-                  alt={curriculum.title || "รูปกิจกรรมภาควิชา"}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                "รูปกิจกรรม/นักศึกษาภาควิชา"
-              )}
-            </div>
+        {/* รูปซ้าย / เนื้อหาเบื้องต้นขวา — พื้นขาว ไม่มีกรอบ navy */}
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 lg:items-center">
+          <div className="relative min-h-[240px] overflow-hidden rounded-2xl bg-[var(--surface)] sm:min-h-[320px]">
+            {curriculum?.aboutImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={curriculum.aboutImageUrl}
+                alt={curriculum.title || "About Us"}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full min-h-[240px] items-center justify-center px-6 text-sm text-[var(--ink-soft)] sm:min-h-[320px]">
+                {loading ? "กำลังโหลด..." : "อัปโหลดรูป About Us จาก Admin → หลักสูตร"}
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-col justify-center">
+          <div className="space-y-3 text-center sm:text-left">
             {loading ? (
-              <p className="mb-6 text-sm text-[var(--ink-soft)]">กำลังโหลดข้อมูลหลักสูตร...</p>
+              <p className="text-sm text-[var(--ink-soft)]">กำลังโหลดข้อมูลหลักสูตร...</p>
             ) : curriculum ? (
               <>
-                <p className="mb-3 text-sm font-medium leading-loose text-[var(--ink)] sm:text-[15px]">
-                  {curriculum.title}
-                </p>
-                {curriculum.titleEn ? (
-                  <p className="mb-3 text-sm leading-loose text-[var(--ink-soft)] sm:text-[15px]">
-                    {curriculum.titleEn}
+                {curriculum.title ? (
+                  <p className="text-base font-semibold leading-relaxed text-[var(--ink)] sm:text-lg">
+                    {curriculum.title}
                   </p>
+                ) : null}
+                {curriculum.titleEn ? (
+                  <p className="text-sm leading-relaxed text-[var(--ink-soft)]">{curriculum.titleEn}</p>
                 ) : null}
                 {curriculum.body ? (
-                  <p className="mb-3 whitespace-pre-line text-sm leading-loose text-[var(--ink-soft)] sm:text-[15px]">
+                  <p className="whitespace-pre-line text-sm leading-8 text-[var(--ink-soft)] sm:text-[15px] sm:leading-9">
                     {curriculum.body}
                   </p>
-                ) : null}
+                ) : (
+                  <p className="text-sm leading-8 text-[var(--ink-soft)] sm:text-[15px] sm:leading-9">
+                    หลักสูตรวิศวกรรมคอมพิวเตอร์มุ่งเน้นพื้นฐานวิทยาศาสตร์ คณิตศาสตร์ และการเขียนโปรแกรม
+                    พร้อมทักษะฮาร์ดแวร์ ซอฟต์แวร์ และเครือข่ายผ่านการเรียนแบบ Active Learning
+                  </p>
+                )}
                 {curriculum.systemDescription ? (
-                  <p className="mb-3 text-sm leading-loose text-[var(--ink-soft)] sm:text-[15px]">
+                  <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
                     {curriculum.systemDescription}
                   </p>
                 ) : null}
                 {curriculum.location ? (
-                  <p className="mb-3 text-sm leading-loose text-[var(--ink-soft)] sm:text-[15px]">
+                  <p className="text-sm text-[var(--ink-soft)]">
                     สถานที่จัดการเรียนการสอน: {curriculum.location}
                   </p>
                 ) : null}
                 {curriculum.language ? (
-                  <p className="mb-3 text-sm leading-loose text-[var(--ink-soft)] sm:text-[15px]">
-                    ภาษาที่ใช้: {curriculum.language}
-                  </p>
+                  <p className="text-sm text-[var(--ink-soft)]">ภาษาที่ใช้: {curriculum.language}</p>
                 ) : null}
                 {curriculum.summary.length > 0 ? (
-                  <div className="mb-6 flex flex-wrap gap-3">
+                  <div className="flex flex-wrap justify-center gap-2 pt-2 sm:justify-start">
                     {curriculum.summary.map((item) => (
                       <div
                         key={item.label}
-                        className="rounded-xl bg-[var(--surface)] px-4 py-2 text-center"
+                        className="rounded-xl bg-[var(--surface)] px-3 py-2 text-center"
                       >
                         <p className="text-sm font-semibold text-[var(--ink)]">{item.value}</p>
                         <p className="text-[11px] text-[var(--ink-soft)]">{item.label}</p>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="mb-6" />
-                )}
+                ) : null}
               </>
             ) : (
-              <p className="mb-6 text-sm leading-loose text-[var(--ink-soft)] sm:text-[15px]">
-                ยังไม่มีข้อมูลหลักสูตรที่เผยแพร่
-              </p>
+              <p className="text-sm text-[var(--ink-soft)]">ยังไม่มีข้อมูลหลักสูตรที่เผยแพร่</p>
             )}
-
-            <div className="flex flex-wrap gap-4">
-              <Button variant="outline" asChild>
-                <Link href="/beng" className="flex items-center gap-2">
-                  หลักสูตร
-                  <span className="text-xs">เพิ่มเติม</span>
-                </Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href="/admission-requirements" className="flex items-center gap-2">
-                  คุณสมบัติผู้สมัคร
-                  <span className="text-xs">เพิ่มเติม</span>
-                </Link>
-              </Button>
-            </div>
           </div>
         </div>
+      </div>
 
-        {/* ช่องเดิมชื่อกิจกรรม → แสดงข่าวสาร external จาก API */}
-        <div id="activities" className="mt-16 scroll-mt-20">
-          <h3 className="mb-6 text-xl font-semibold text-[var(--ink)]">ข่าวสาร</h3>
-          {newsLoading ? (
-            <p className="text-sm text-[var(--ink-soft)]">กำลังโหลดข่าวสาร...</p>
-          ) : news.length === 0 ? (
-            <p className="text-sm text-[var(--ink-soft)]">ยังไม่มีข่าวสารที่เผยแพร่</p>
+      {/* ปุ่มซ้ายแบบวงไอคอน + แถบยาว / กิจกรรมขวา */}
+      <div className="mx-auto mt-8 grid max-w-[1200px] gap-5 px-4 md:px-8 lg:grid-cols-[300px_1fr] lg:items-stretch lg:gap-6">
+        <div className="flex flex-col justify-center gap-6">
+          <Link
+            href="/beng"
+            className="group relative flex min-h-[88px] items-center pl-10"
+          >
+            <span className="absolute left-0 z-10 flex size-[88px] items-center justify-center rounded-full bg-[var(--navy-950)] shadow-md ring-4 ring-white transition group-hover:bg-[var(--navy-900)]">
+              <BookOpen className="size-9 text-white" strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="flex min-h-[72px] w-full flex-col justify-center gap-2 rounded-full bg-[var(--navy-950)] py-3 pl-14 pr-5 text-white shadow-md transition group-hover:bg-[var(--navy-900)]">
+              <span className="text-sm font-semibold leading-tight sm:text-[15px]">หลักสูตร พ.ศ. 2564</span>
+              <span className="inline-flex w-fit rounded-md bg-white px-3 py-1 text-xs font-semibold text-[var(--navy-950)]">
+                เพิ่มเติม
+              </span>
+            </span>
+          </Link>
+
+          <Link
+            href="/admission-requirements"
+            className="group relative flex min-h-[88px] items-center pl-10"
+          >
+            <span className="absolute left-0 z-10 flex size-[88px] items-center justify-center rounded-full bg-[var(--navy-950)] shadow-md ring-4 ring-white transition group-hover:bg-[var(--navy-900)]">
+              <FileSearch className="size-9 text-white" strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="flex min-h-[72px] w-full flex-col justify-center gap-2 rounded-full bg-[var(--navy-950)] py-3 pl-14 pr-5 text-white shadow-md transition group-hover:bg-[var(--navy-900)]">
+              <span className="text-sm font-semibold leading-tight sm:text-[15px]">
+                คุณสมบัติของผู้เข้าศึกษา
+              </span>
+              <span className="inline-flex w-fit rounded-md bg-white px-3 py-1 text-xs font-semibold text-[var(--navy-950)]">
+                เพิ่มเติม
+              </span>
+            </span>
+          </Link>
+        </div>
+
+        <div
+          id="activities"
+          className="scroll-mt-24 flex min-h-[240px] flex-col rounded-2xl border border-black/5 bg-[var(--surface)] px-4 py-5 sm:min-h-[280px] sm:px-6 sm:py-6"
+        >
+          <h3 className="mb-4 text-center text-lg font-semibold tracking-wide text-[var(--ink)]">
+            กิจกรรม
+          </h3>
+
+          {activitiesLoading ? (
+            <p className="flex flex-1 items-center justify-center text-sm text-[var(--ink-soft)]">
+              กำลังโหลดกิจกรรม...
+            </p>
+          ) : activities.length === 0 ? (
+            <p className="flex flex-1 items-center justify-center text-sm text-[var(--ink-soft)]">
+              ยังไม่มีกิจกรรมที่เผยแพร่ — เพิ่มได้ที่ Admin → กิจกรรม
+            </p>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-              {news.map((item) => (
+            <div className="grid flex-1 grid-cols-2 content-center gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {activities.map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setActiveNews(item)}
-                  className="group flex aspect-square flex-col items-center justify-center gap-2 rounded-xl bg-[#eceef1] p-3 text-center transition-transform hover:-translate-y-1 hover:shadow-md"
+                  onClick={() => setActive(item)}
+                  className="group flex h-full flex-col items-center gap-2 text-center transition"
                 >
-                  <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg bg-[#d9d9d9] text-[11px] text-[var(--ink-soft)] transition-colors group-hover:bg-[#c9cbd0]">
+                  <div className="aspect-[3/4] w-full overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition group-hover:-translate-y-0.5 group-hover:ring-[var(--navy-900)]/30">
                     {item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={item.imageUrl}
                         alt={item.title}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="h-full w-full object-cover"
                       />
-                    ) : null}
-                    <span
-                      className={
-                        item.imageUrl
-                          ? "relative z-10 line-clamp-3 bg-black/45 px-2 py-1 text-white"
-                          : "line-clamp-3 px-1"
-                      }
-                    >
-                      {item.title}
-                    </span>
+                    ) : (
+                      <div className="flex h-full items-center justify-center px-2 text-[11px] text-[var(--ink-soft)]">
+                        {item.title}
+                      </div>
+                    )}
                   </div>
+                  <span className="line-clamp-2 text-xs font-medium text-[var(--ink)]">
+                    {item.title}
+                  </span>
                 </button>
               ))}
             </div>
           )}
+
+          {activities.some((a) => a.googlePhotosUrl) ? (
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[var(--ink-soft)]">
+              <ExternalLink className="size-3" aria-hidden />
+              กดการ์ดเพื่อดูรายละเอียดและลิงก์รูป
+            </p>
+          ) : null}
         </div>
       </div>
 
-      {activeNews ? (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setActiveNews(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label={activeNews.title}
-        >
-          <div
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <h3 className="text-lg font-semibold text-[var(--ink)]">{activeNews.title}</h3>
-              <button
-                type="button"
-                onClick={() => setActiveNews(null)}
-                aria-label="ปิด"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-[var(--muted)]"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mb-4 aspect-video w-full overflow-hidden rounded-xl bg-[#d9d9d9]">
-              {activeNews.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={activeNews.imageUrl}
-                  alt={activeNews.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : null}
-            </div>
-            {activeNews.body ? (
-              <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--ink-soft)]">
-                {activeNews.body}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <ActivityModal activity={active} onClose={() => setActive(null)} />
     </section>
   );
 }

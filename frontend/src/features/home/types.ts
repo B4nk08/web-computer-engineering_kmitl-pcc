@@ -21,3 +21,13 @@ export type HomeHeroMedia =
   | { kind: "video"; src: string; title: string }
   | { kind: "image"; src: string; title: string }
   | { kind: "youtube"; videoId: string; title: string };
+
+/** กิจกรรมใน About Us — รูปปก + ลิงก์ Google Photos */
+export type HomeActivity = {
+  id: string;
+  title: string;
+  date: string;
+  description: string;
+  imageUrl: string;
+  googlePhotosUrl: string;
+};

@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   Briefcase,
+  CalendarDays,
   ClipboardList,
   FileQuestion,
   GraduationCap,
@@ -21,6 +22,7 @@ export type ContentType =
   | "admissions"
   | "career_path"
   | "curriculum"
+  | "activity"
   | "quiz"
   | "exit_exam";
 
@@ -68,11 +70,19 @@ export const adminNavGroups: AdminNavGroup[] = [
         icon: Video,
       },
       {
-        title: "ข่าวสารหน้าแรก",
+        title: "กิจกรรม",
+        href: "/admin/activities",
+        type: "activity",
+        description:
+          "หน้าแรก → About Us → กิจกรรม — รูปปก + ลิงก์ Google Photos ให้นักศึกษาเอารูป",
+        icon: CalendarDays,
+      },
+      {
+        title: "ข่าวสาร",
         href: "/admin/news",
         type: "news",
         description:
-          "หน้าแรก → ใต้ About Us — ข่าว External โชว์สาธารณะ / Internal สำหรับภายใน",
+          "ประกาศ External (เช่น TCAS) / Internal (เช่น รับน้อง) — ไม่โชว์ในกล่องกิจกรรมหน้าแรก",
         icon: Newspaper,
       },
       {

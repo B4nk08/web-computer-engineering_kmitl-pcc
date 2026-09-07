@@ -1,7 +1,17 @@
 import { listPublishedContents } from "@/features/content";
 import { fetchCurriculum } from "@/features/curriculum";
-import { mapStaffToHome, mapStudentWorkToHome, mapVideoToHomeHero } from "../mappers";
-import type { HomeHeroMedia, HomeShowcaseItem, HomeStaffMember } from "../types";
+import {
+  mapActivityToHome,
+  mapStaffToHome,
+  mapStudentWorkToHome,
+  mapVideoToHomeHero,
+} from "../mappers";
+import type {
+  HomeActivity,
+  HomeHeroMedia,
+  HomeShowcaseItem,
+  HomeStaffMember,
+} from "../types";
 import type { CurriculumProgram } from "@/features/curriculum";
 
 /**
@@ -17,6 +27,11 @@ export async function fetchHomeStaff(): Promise<HomeStaffMember[]> {
 export async function fetchHomeShowcase(): Promise<HomeShowcaseItem[]> {
   const rows = await listPublishedContents("student_work");
   return rows.map(mapStudentWorkToHome);
+}
+
+export async function fetchHomeActivities(): Promise<HomeActivity[]> {
+  const rows = await listPublishedContents("activity");
+  return rows.map(mapActivityToHome);
 }
 
 export async function fetchHomeCurriculum(): Promise<CurriculumProgram | null> {

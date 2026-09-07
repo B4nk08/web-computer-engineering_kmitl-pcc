@@ -4,7 +4,7 @@ import { StudentShowcaseFacultySection } from "@/features/home/student-showcase-
 
 /**
  * page.tsx (Home, route "/")
- * Hero -> About Us (รวมช่องข่าวสาร) -> Student Showcase & Faculty
+ * Hero -> About Us (หลักสูตร/คุณสมบัติ + กิจกรรม) -> Student Showcase & Faculty
  */
 export default function HomePage() {
   return (

@@ -34,6 +34,8 @@ type FormState = {
   year: string;
   aboutImageUrl: string;
   aboutCaption: string;
+  googlePhotosUrl: string;
+  eventDate: string;
 };
 
 const emptyForm: FormState = {
@@ -49,6 +51,8 @@ const emptyForm: FormState = {
   year: "",
   aboutImageUrl: "",
   aboutCaption: "",
+  googlePhotosUrl: "",
+  eventDate: "",
 };
 
 /** บอกคนทั่วไปว่าฟอร์มนี้ไปโผล่ตรงไหนบนเว็บ */
@@ -60,6 +64,7 @@ const LOCATION_HINT: Partial<Record<ApiContentType, string>> = {
   student_work: "หน้าแรก → ส่วนผลงานนักศึกษา",
   admissions: "หน้าคุณสมบัติผู้สมัคร / ข้อมูลรับเข้า",
   career_path: "หน้าเส้นทางอาชีพ",
+  activity: "หน้าแรก → About Us → กล่องกิจกรรม (รูปปก + ลิงก์ Google Photos)",
   page: "หน้าเว็บสาธารณะตามที่กำหนด",
 };
 
@@ -98,6 +103,8 @@ function dtoToForm(dto: ContentDto): FormState {
     year: readExtraString(dto.extra, "year"),
     aboutImageUrl: readExtraString(dto.extra, "about_image_url"),
     aboutCaption: readExtraString(dto.extra, "about_image_caption"),
+    googlePhotosUrl: readExtraString(dto.extra, "google_photos_url"),
+    eventDate: readExtraString(dto.extra, "event_date"),
   };
 }
 
@@ -134,6 +141,12 @@ function buildExtra(
     else delete extra.about_image_url;
     if (form.aboutCaption.trim()) extra.about_image_caption = form.aboutCaption.trim();
     else delete extra.about_image_caption;
+  }
+  if (type === "activity") {
+    if (form.googlePhotosUrl.trim()) extra.google_photos_url = form.googlePhotosUrl.trim();
+    else delete extra.google_photos_url;
+    if (form.eventDate.trim()) extra.event_date = form.eventDate.trim();
+    else delete extra.event_date;
   }
 
   return Object.keys(extra).length > 0 ? extra : undefined;
@@ -376,6 +389,38 @@ export function ContentFormView({
                 accept="application/pdf"
                 hint="ไฟล์เอกสารหลักสูตรสำหรับหน้า /beng (ไม่ใช่รูป About Us)"
               />
+            </>
+          ) : type === "activity" ? (
+            <>
+              <FileUploadField
+                label="รูปปกกิจกรรม"
+                value={form.imageUrl}
+                onChange={(url) => updateField("imageUrl", url)}
+                kind="image"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                hint="รูปปกที่โชว์ในการ์ดกิจกรรมหน้าแรก"
+              />
+              <div className="space-y-2">
+                <Label htmlFor="activity-date">ช่วงเวลา / วันที่</Label>
+                <Input
+                  id="activity-date"
+                  value={form.eventDate}
+                  onChange={(e) => updateField("eventDate", e.target.value)}
+                  placeholder="เช่น สิงหาคม 2569"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="google-photos">ลิงก์ Google Photos</Label>
+                <Input
+                  id="google-photos"
+                  value={form.googlePhotosUrl}
+                  onChange={(e) => updateField("googlePhotosUrl", e.target.value)}
+                  placeholder="https://photos.google.com/share/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  วางลิงก์แชร์อัลบั้ม — นักศึกษาคลิกแล้วไปเอารูปได้เอง
+                </p>
+              </div>
             </>
           ) : (
             <FileUploadField

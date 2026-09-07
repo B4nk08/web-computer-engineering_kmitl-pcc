@@ -11,6 +11,7 @@ export const API_CONTENT_TYPES = [
   "career_path",
   "admissions",
   "curriculum",
+  "activity",
 ] as const;
 
 export type ApiContentType = (typeof API_CONTENT_TYPES)[number];

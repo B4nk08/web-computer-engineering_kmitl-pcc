@@ -93,8 +93,8 @@ export function SubjectPicker() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[url('/exam/exam-bg.png')] bg-cover bg-center bg-no-repeat">
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-16">
+    <main className="relative min-h-[calc(100svh-4rem)] overflow-hidden bg-[url('/exam/exam-bg.png')] bg-cover bg-center bg-no-repeat">
+      <div className="relative z-10 flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center px-6 py-16">
         {hasActiveSession ? (
           <ResumeBanner onDismiss={() => setHasActiveSession(false)} />
         ) : null}

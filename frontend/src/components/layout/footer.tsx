@@ -6,7 +6,7 @@
  */
 export function Footer() {
   return (
-    <footer className="mt-20 bg-[var(--navy-950)] text-white/70">
+    <footer className="bg-[var(--navy-950)] text-white/70">
       <div className="mx-auto grid max-w-[1400px] gap-8 px-4 py-10 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
         <div>
           <div className="mb-3 flex h-11 w-32 items-center justify-center rounded-md bg-[#e5e5e5] text-xs font-semibold text-[var(--ink)]">

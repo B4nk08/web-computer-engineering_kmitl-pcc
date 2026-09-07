@@ -1,19 +1,16 @@
 "use client";
 
-import { X } from "lucide-react";
-import type { Activity } from "./data/activities";
+import { ExternalLink, X } from "lucide-react";
+import type { HomeActivity } from "./types";
 
 /**
- * activity-modal.tsx
- * -------------------
- * ป็อปอัพแสดงรายละเอียดกิจกรรม เมื่อผู้ใช้กดที่รูปกิจกรรมในหน้า About Us
- * ปิดได้ทั้งกดปุ่ม X, กดพื้นหลังสีดำโปร่ง, หรือกด Esc (ผ่าน onClose ที่ส่งเข้ามา)
+ * ป็อปอัพรายละเอียดกิจกรรม + ลิงก์ Google Photos
  */
 export function ActivityModal({
   activity,
   onClose,
 }: {
-  activity: Activity | null;
+  activity: HomeActivity | null;
   onClose: () => void;
 }) {
   if (!activity) return null;
@@ -32,9 +29,11 @@ export function ActivityModal({
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--accent)]">
-              {activity.date}
-            </p>
+            {activity.date ? (
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--accent)]">
+                {activity.date}
+              </p>
+            ) : null}
             <h3 className="mt-1 text-lg font-semibold text-[var(--ink)]">{activity.title}</h3>
           </div>
           <button
@@ -46,8 +45,37 @@ export function ActivityModal({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="mb-4 aspect-video w-full rounded-xl bg-[#d9d9d9]" />
-        <p className="text-sm leading-relaxed text-[var(--ink-soft)]">{activity.description}</p>
+
+        <div className="mb-4 aspect-video w-full overflow-hidden rounded-xl bg-[#d9d9d9]">
+          {activity.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={activity.imageUrl}
+              alt={activity.title}
+              className="h-full w-full object-cover"
+            />
+          ) : null}
+        </div>
+
+        {activity.description ? (
+          <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-[var(--ink-soft)]">
+            {activity.description}
+          </p>
+        ) : null}
+
+        {activity.googlePhotosUrl ? (
+          <a
+            href={activity.googlePhotosUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--navy-950)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--navy-900)]"
+          >
+            เปิดอัลบั้มรูป (Google Photos)
+            <ExternalLink className="size-4" aria-hidden />
+          </a>
+        ) : (
+          <p className="text-center text-xs text-[var(--ink-soft)]">ยังไม่มีลิงก์ Google Photos</p>
+        )}
       </div>
     </div>
   );
