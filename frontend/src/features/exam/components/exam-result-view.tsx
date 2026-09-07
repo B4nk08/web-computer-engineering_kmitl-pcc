@@ -107,7 +107,7 @@ export function ExamResultView({ result }: ExamResultViewProps) {
 
         <Button
           className="mt-6 w-full bg-indigo-950 hover:bg-indigo-900"
-          onClick={() => router.push("/exam")}
+          onClick={() => router.push("/student/exam")}
         >
           <Home className="size-4" />
           กลับหน้าเลือกกลุ่มข้อสอบ

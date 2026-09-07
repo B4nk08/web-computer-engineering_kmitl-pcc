@@ -29,5 +29,5 @@ export const FACUITY_ITEMS: NavItem[] = [
 
 export const STUDENT_ITEMS: NavItem[] = [
   { label: "Quizz แนะนำ", href: "/student/quiz-recommend" },
-  { label: "CE exit exam", href: "/student/ce-exit-exam" },
+  { label: "CE exit exam", href: "/student/exam" },
 ];

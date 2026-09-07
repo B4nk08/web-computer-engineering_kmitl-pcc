@@ -3,8 +3,8 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 
 /**
- * (site) — หน้าเว็บสาธารณะเท่านั้น
- * มี Navbar + Footer — ไม่ครอบ auth / admin / exam
+ * (site) — หน้าเว็บสาธารณะ (รวม Exit Exam)
+ * มี Navbar + Footer — ไม่ครอบ auth / admin
  */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (

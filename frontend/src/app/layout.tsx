@@ -4,13 +4,12 @@ import { AuthProvider } from "@/features/auth";
 
 /**
  * Root layout — providers + html/body เท่านั้น
- * ไม่ใส่ Navbar/Footer ที่นี่ เพราะ auth / admin / exam ต้องเป็น full-bleed
+ * ไม่ใส่ Navbar/Footer ที่นี่ เพราะ auth / admin ต้องเป็น full-bleed
  *
  * โครงสร้าง route:
- *   (site)/*   → เว็บสาธารณะ (มี Navbar + Footer)
+ *   (site)/*   → เว็บสาธารณะ + Exit Exam (มี Navbar + Footer)
  *   (auth)/*   → login / register
  *   admin/*    → admin panel (sidebar ของตัวเอง)
- *   exam/*     → Exit Exam (fullscreen)
  */
 
 export const metadata: Metadata = {

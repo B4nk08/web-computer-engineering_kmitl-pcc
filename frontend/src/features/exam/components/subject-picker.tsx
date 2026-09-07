@@ -88,7 +88,7 @@ export function SubjectPicker() {
     clearError();
     const ok = await startCombo("mock");
     if (ok) {
-      router.push("/exam/session");
+      router.push("/student/exam/session");
     }
   }
 

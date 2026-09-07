@@ -1,7 +1,7 @@
 /**
  * placeholder-page.tsx
  * ---------------------
- * ใช้แสดงหน้า(เช่น Quizz, วิเคราะห์,รายชื่อชั้นปี, CE exit exam)
+ * ใช้แสดงหน้าชั่วคราว (เช่น Quizz, วิเคราะห์, รายชื่อชั้นปี)
  * รอสเปกเพิ่ม
  */
 export function PlaceholderPage({ title, description }: { title: string; description?: string }) {

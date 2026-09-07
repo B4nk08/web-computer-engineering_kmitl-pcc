@@ -34,7 +34,7 @@ type ExamReviewViewProps = {
   stepper?: React.ReactNode;
   /** ข้อความบนปุ่มหลังเห็นคะแนนแล้ว เช่น "ไปข้อสอบหมวดถัดไป: IoT" — ถ้าไม่ส่งมาใช้ข้อความ default (กลับหน้าเลือกกลุ่ม) */
   nextLabel?: string;
-  /** เรียกเมื่อกดปุ่มหลังเห็นคะแนน — ถ้าไม่ส่งมา จะ router.push("/exam") แทน */
+  /** เรียกเมื่อกดปุ่มหลังเห็นคะแนน — ถ้าไม่ส่งมา จะไป /student/exam */
   onResultContinue?: () => Promise<boolean> | boolean;
   onGoToQuestion: (questionId: string) => void;
   onBackToTaking: () => void;
@@ -87,7 +87,7 @@ export function ExamReviewView({
   async function handleResultDone() {
     if (!onResultContinue) {
       setDialogOpen(false);
-      router.push("/exam");
+      router.push("/student/exam");
       return;
     }
     setPhase("loading");

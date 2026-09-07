@@ -45,7 +45,7 @@ export function ExamSessionView() {
 
   useEffect(() => {
     if (!loading && !session && !comboFinalSummary && !timeoutDialogOpen) {
-      router.replace("/exam");
+      router.replace("/student/exam");
     }
   }, [loading, session, comboFinalSummary, timeoutDialogOpen, router]);
 
@@ -83,7 +83,7 @@ export function ExamSessionView() {
     return (
       <ComboResultView
         summary={comboFinalSummary}
-        onDone={() => router.push("/exam")}
+        onDone={() => router.push("/student/exam")}
       />
     );
   }

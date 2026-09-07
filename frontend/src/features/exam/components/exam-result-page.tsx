@@ -17,7 +17,7 @@ export function ExamResultPage() {
 
   useEffect(() => {
     if (result === null) {
-      router.replace("/exam");
+      router.replace("/student/exam");
     }
   }, [result, router]);
 

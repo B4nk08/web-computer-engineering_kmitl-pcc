@@ -33,7 +33,7 @@ export function ResumeBanner({ onDismiss }: ResumeBannerProps) {
         {comboLabel} ที่ยังทำไม่เสร็จ
       </p>
       <div className="flex shrink-0 gap-2">
-        <Button size="sm" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => router.push("/exam/session")}>
+        <Button size="sm" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => router.push("/student/exam/session")}>
           ทำต่อ
         </Button>
         <Button
