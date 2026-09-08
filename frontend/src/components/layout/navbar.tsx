@@ -27,11 +27,17 @@ function scrollToHash(href: string) {
   const hash = href.includes("#") ? href.split("#")[1] : "";
   if (!hash) return;
   window.setTimeout(() => {
-    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .getElementById(hash)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 50);
 }
 
-function DropdownItem({ label, href, onNavigate }: NavItem & { onNavigate?: () => void }) {
+function DropdownItem({
+  label,
+  href,
+  onNavigate,
+}: NavItem & { onNavigate?: () => void }) {
   return (
     <Link
       href={href}
@@ -100,15 +106,20 @@ function NavDropdown({
           className="flex items-center py-2 text-white/90 transition-colors hover:text-[var(--accent)]"
         >
           <ChevronDown
-            className={cn("h-3.5 w-3.5 transition-transform duration-200", open && "rotate-180")}
+            className={cn(
+              "h-3.5 w-3.5 transition-transform duration-200",
+              open && "rotate-180",
+            )}
           />
         </button>
       </div>
 
       <div
         className={cn(
-          "absolute left-0 top-full z-40 hidden w-44 origin-top rounded-xl bg-[var(--navy-950)]/95 p-2 shadow-xl ring-1 ring-white/10 backdrop-blur transition-all duration-150 md:block",
-          open ? "visible translate-y-1 opacity-100" : "invisible -translate-y-1 opacity-0"
+          "absolute left-0 top-full z-40 hidden w-52 origin-top rounded-xl bg-[var(--navy-950)]/95 p-2 shadow-xl ring-1 ring-white/10 backdrop-blur transition-all duration-150 md:block",
+          open
+            ? "visible translate-y-1 opacity-100"
+            : "invisible -translate-y-1 opacity-0",
         )}
       >
         {items.map((item) => (
@@ -120,12 +131,16 @@ function NavDropdown({
         <div
           className={cn(
             "overflow-hidden transition-all duration-200 md:hidden",
-            open ? "max-h-60" : "max-h-0"
+            open ? "max-h-60" : "max-h-0",
           )}
         >
           <div className="mt-1 space-y-1 rounded-lg bg-white/5 p-2">
             {items.map((item) => (
-              <DropdownItem key={item.label} {...item} onNavigate={onNavigate} />
+              <DropdownItem
+                key={item.label}
+                {...item}
+                onNavigate={onNavigate}
+              />
             ))}
           </div>
         </div>
@@ -174,7 +189,7 @@ export function Navbar() {
           "fixed inset-x-0 top-0 z-50 w-full transition-[background-color,box-shadow,backdrop-filter] duration-300",
           solidNav
             ? "bg-[var(--navy-950)] shadow-md"
-            : "bg-gradient-to-b from-black/55 via-black/25 to-transparent shadow-none backdrop-blur-[2px]"
+            : "bg-gradient-to-b from-black/55 via-black/25 to-transparent shadow-none backdrop-blur-[2px]",
         )}
       >
         <nav className="flex h-16 w-full items-center justify-between gap-4 px-3 sm:px-4 md:px-5">
@@ -198,7 +213,11 @@ export function Navbar() {
             >
               Home
             </Link>
-            <NavDropdown label="About Us" href="/#about" items={ABOUT_US_ITEMS} />
+            <NavDropdown
+              label="About Us"
+              href="/#about"
+              items={ABOUT_US_ITEMS}
+            />
             <NavDropdown label="Academics" items={ACADEMICS_ITEMS} />
             <NavDropdown label="Faculty" items={FACUITY_ITEMS} />
             <NavDropdown label="Student" items={STUDENT_ITEMS} />
@@ -210,7 +229,11 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  title={user?.displayName ? `ออกจากระบบ (${user.displayName})` : "ออกจากระบบ"}
+                  title={
+                    user?.displayName
+                      ? `ออกจากระบบ (${user.displayName})`
+                      : "ออกจากระบบ"
+                  }
                   className="hidden items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-white/90 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:flex"
                 >
                   Logout
@@ -232,7 +255,11 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen((v) => !v)}
               className="flex h-9 w-9 items-center justify-center rounded-md text-white md:hidden"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </nav>
@@ -240,11 +267,17 @@ export function Navbar() {
         <div
           className={cn(
             "overflow-hidden bg-[var(--navy-950)] transition-all duration-200 md:hidden",
-            mobileMenuOpen ? "max-h-[520px] border-t border-white/10" : "max-h-0"
+            mobileMenuOpen
+              ? "max-h-[520px] border-t border-white/10"
+              : "max-h-0",
           )}
         >
           <div className="flex flex-col gap-1 px-4 py-3">
-            <Link href="/" onClick={closeMobile} className="py-2 text-[15px] font-medium text-white/90">
+            <Link
+              href="/"
+              onClick={closeMobile}
+              className="py-2 text-[15px] font-medium text-white/90"
+            >
               Home
             </Link>
             <NavDropdown
@@ -252,28 +285,38 @@ export function Navbar() {
               href="/#about"
               items={ABOUT_US_ITEMS}
               mobileOpen={mobileDropdown === "about"}
-              onToggleMobile={() => setMobileDropdown((d) => (d === "about" ? null : "about"))}
+              onToggleMobile={() =>
+                setMobileDropdown((d) => (d === "about" ? null : "about"))
+              }
               onNavigate={closeMobile}
             />
             <NavDropdown
               label="Academics"
               items={ACADEMICS_ITEMS}
               mobileOpen={mobileDropdown === "academics"}
-              onToggleMobile={() => setMobileDropdown((d) => (d === "academics" ? null : "academics"))}
+              onToggleMobile={() =>
+                setMobileDropdown((d) =>
+                  d === "academics" ? null : "academics",
+                )
+              }
               onNavigate={closeMobile}
             />
             <NavDropdown
               label="Faculty"
               items={FACUITY_ITEMS}
               mobileOpen={mobileDropdown === "faculty"}
-              onToggleMobile={() => setMobileDropdown((d) => (d === "faculty" ? null : "faculty"))}
+              onToggleMobile={() =>
+                setMobileDropdown((d) => (d === "faculty" ? null : "faculty"))
+              }
               onNavigate={closeMobile}
             />
             <NavDropdown
               label="Student"
               items={STUDENT_ITEMS}
               mobileOpen={mobileDropdown === "student"}
-              onToggleMobile={() => setMobileDropdown((d) => (d === "student" ? null : "student"))}
+              onToggleMobile={() =>
+                setMobileDropdown((d) => (d === "student" ? null : "student"))
+              }
               onNavigate={closeMobile}
             />
             {!authLoading &&

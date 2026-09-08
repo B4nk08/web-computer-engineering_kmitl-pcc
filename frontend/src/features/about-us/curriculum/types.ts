@@ -1,4 +1,4 @@
-/** View-model สำหรับหน้าหลักสูตร (/beng) และ Home About Us */
+/** View-model สำหรับหน้าหลักสูตร (/about-us/beng) และ Home About Us */
 
 export type CurriculumProgram = {
   id: string;

@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, ExternalLink, FileSearch } from "lucide-react";
-import { useHomeActivities, useHomeCurriculum } from "./hooks/use-home-contents";
-import { ActivityModal } from "./activity-modal";
-import { useState } from "react";
-import type { HomeActivity } from "./types";
+import { BookOpen, FileSearch } from "lucide-react";
+import { useActivities } from "@/features/about-us";
+import { useHomeCurriculum } from "./hooks/use-home-contents";
 
 /**
  * About Us ตามเลย์เอาต์ใหม่:
@@ -14,8 +12,7 @@ import type { HomeActivity } from "./types";
  */
 export function AboutUsSection() {
   const { data: curriculum, loading } = useHomeCurriculum();
-  const { data: activities, loading: activitiesLoading } = useHomeActivities();
-  const [active, setActive] = useState<HomeActivity | null>(null);
+  const { data: activities, loading: activitiesLoading } = useActivities();
 
   return (
     <section id="about" className="scroll-mt-24 bg-white pb-10 pt-12 sm:pb-12 sm:pt-16">
@@ -102,7 +99,7 @@ export function AboutUsSection() {
       <div className="mx-auto mt-8 grid max-w-[1200px] gap-5 px-4 md:px-8 lg:grid-cols-[300px_1fr] lg:items-stretch lg:gap-6">
         <div className="flex flex-col justify-center gap-6">
           <Link
-            href="/beng"
+            href="/about-us/beng"
             className="group relative flex min-h-[88px] items-center pl-10"
           >
             <span className="absolute left-0 z-10 flex size-[88px] items-center justify-center rounded-full bg-[var(--navy-950)] shadow-md ring-4 ring-white transition group-hover:bg-[var(--navy-900)]">
@@ -117,7 +114,7 @@ export function AboutUsSection() {
           </Link>
 
           <Link
-            href="/admission-requirements"
+            href="/about-us/admission-requirements"
             className="group relative flex min-h-[88px] items-center pl-10"
           >
             <span className="absolute left-0 z-10 flex size-[88px] items-center justify-center rounded-full bg-[var(--navy-950)] shadow-md ring-4 ring-white transition group-hover:bg-[var(--navy-900)]">
@@ -138,9 +135,21 @@ export function AboutUsSection() {
           id="activities"
           className="scroll-mt-24 flex min-h-[240px] flex-col rounded-2xl border border-black/5 bg-[var(--surface)] px-4 py-5 sm:min-h-[280px] sm:px-6 sm:py-6"
         >
-          <h3 className="mb-4 text-center text-lg font-semibold tracking-wide text-[var(--ink)]">
-            กิจกรรม
-          </h3>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold tracking-wide text-[var(--ink)]">
+              กิจกรรม
+            </h3>
+            <Link
+              href="/about-us/activities"
+              className="group/all text-xs font-medium text-[var(--navy-900)] underline-offset-4 transition hover:underline sm:text-sm"
+            >
+              ดูทั้งหมด
+              <span className="inline-block transition-transform duration-200 group-hover/all:translate-x-0.5">
+                {" "}
+                →
+              </span>
+            </Link>
+          </div>
 
           {activitiesLoading ? (
             <p className="flex flex-1 items-center justify-center text-sm text-[var(--ink-soft)]">
@@ -153,19 +162,17 @@ export function AboutUsSection() {
           ) : (
             <div className="grid flex-1 grid-cols-2 content-center gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {activities.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  type="button"
-                  onClick={() => setActive(item)}
-                  className="group flex h-full flex-col items-center gap-2 text-center transition"
+                  className="group flex h-full flex-col items-center gap-2 text-center"
                 >
-                  <div className="aspect-[3/4] w-full overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition group-hover:-translate-y-0.5 group-hover:ring-[var(--navy-900)]/30">
+                  <div className="aspect-[3/4] w-full overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-hover:ring-[var(--navy-900)]/30">
                     {item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={item.imageUrl}
                         alt={item.title}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center px-2 text-[11px] text-[var(--ink-soft)]">
@@ -173,24 +180,15 @@ export function AboutUsSection() {
                       </div>
                     )}
                   </div>
-                  <span className="line-clamp-2 text-xs font-medium text-[var(--ink)]">
+                  <span className="line-clamp-2 text-xs font-medium text-[var(--ink)] transition-colors group-hover:text-[var(--navy-900)]">
                     {item.title}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           )}
-
-          {activities.some((a) => a.googlePhotosUrl) ? (
-            <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[var(--ink-soft)]">
-              <ExternalLink className="size-3" aria-hidden />
-              กดการ์ดเพื่อดูรายละเอียดและลิงก์รูป
-            </p>
-          ) : null}
         </div>
       </div>
-
-      <ActivityModal activity={active} onClose={() => setActive(null)} />
     </section>
   );
 }

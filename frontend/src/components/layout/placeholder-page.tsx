@@ -4,7 +4,13 @@
  * ใช้แสดงหน้าชั่วคราว (เช่น Quizz, วิเคราะห์, รายชื่อชั้นปี)
  * รอสเปกเพิ่ม
  */
-export function PlaceholderPage({ title, description }: { title: string; description?: string }) {
+export function PlaceholderPage({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
   return (
     <section className="flex min-h-[50vh] items-center justify-center bg-[var(--surface)] px-4 py-16">
       <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5">

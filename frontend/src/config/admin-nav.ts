@@ -74,7 +74,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         href: "/admin/activities",
         type: "activity",
         description:
-          "หน้าแรก → About Us → กิจกรรม — รูปปก + ลิงก์ Google Photos ให้นักศึกษาเอารูป",
+          "หน้าแรก → About Us และหน้า /about-us/activities — รูปปก + ลิงก์ Google Photos",
         icon: CalendarDays,
       },
       {
@@ -96,7 +96,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         title: "ผลงานนักศึกษา",
         href: "/admin/student-works",
         type: "student_work",
-        description: "หน้าแรก → ส่วนผลงานนักศึกษา — ชื่อผลงาน รายละเอียด และรูป",
+        description: "หน้าแรก → Student Showcase และหน้า /about-us/student-works — รูป รายละเอียด และลิงก์เข้าใช้งาน",
         icon: GraduationCap,
       },
     ],
@@ -109,7 +109,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         title: "ข้อมูลรับสมัคร",
         href: "/admin/admissions",
         type: "admissions",
-        description: "หน้าคุณสมบัติผู้สมัคร — จำนวนรับ ค่าเทอม และข้อมูลรับเข้า",
+        description: "หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม",
         icon: ClipboardList,
       },
       {

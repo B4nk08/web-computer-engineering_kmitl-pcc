@@ -1,0 +1,1 @@
+export { fetchAdmissions } from "./queries";

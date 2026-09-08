@@ -36,6 +36,14 @@ type FormState = {
   aboutCaption: string;
   googlePhotosUrl: string;
   eventDate: string;
+  projectUrl: string;
+  subtitle: string;
+  titleEn: string;
+  quota: string;
+  applyUrl: string;
+  qualificationsText: string;
+  supportText: string;
+  documentsText: string;
 };
 
 const emptyForm: FormState = {
@@ -53,18 +61,26 @@ const emptyForm: FormState = {
   aboutCaption: "",
   googlePhotosUrl: "",
   eventDate: "",
+  projectUrl: "",
+  subtitle: "",
+  titleEn: "",
+  quota: "",
+  applyUrl: "",
+  qualificationsText: "",
+  supportText: "",
+  documentsText: "",
 };
 
 /** บอกคนทั่วไปว่าฟอร์มนี้ไปโผล่ตรงไหนบนเว็บ */
 const LOCATION_HINT: Partial<Record<ApiContentType, string>> = {
   curriculum:
-    "หน้าแรก → About Us (ข้อความด้านขวา + รูปด้านซ้าย) และหน้าหลักสูตร (/beng)",
+    "หน้าแรก → About Us (ข้อความด้านขวา + รูปด้านซ้าย) และหน้าหลักสูตร (/about-us/beng)",
   video: "หน้าแรก → วิดีโอด้านบนสุด",
   staff: "หน้าแรก → ส่วนบุคลากร / คณาจารย์",
-  student_work: "หน้าแรก → ส่วนผลงานนักศึกษา",
-  admissions: "หน้าคุณสมบัติผู้สมัคร / ข้อมูลรับเข้า",
+  student_work: "หน้าแรก → Student Showcase และหน้า listing /about-us/student-works",
+  admissions: "หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม",
   career_path: "หน้าเส้นทางอาชีพ",
-  activity: "หน้าแรก → About Us → กล่องกิจกรรม (รูปปก + ลิงก์ Google Photos)",
+  activity: "หน้าแรก → About Us → กล่องกิจกรรม และหน้า listing /about-us/activities",
   page: "หน้าเว็บสาธารณะตามที่กำหนด",
 };
 
@@ -89,6 +105,51 @@ function asExtraRecord(extra: unknown): Record<string, unknown> {
   return { ...(extra as Record<string, unknown>) };
 }
 
+function linesFromExtra(extra: unknown, key: string): string {
+  if (!extra || typeof extra !== "object" || Array.isArray(extra)) return "";
+  const value = (extra as Record<string, unknown>)[key];
+  if (!Array.isArray(value)) return "";
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean)
+    .join("\n");
+}
+
+function supportTextFromExtra(extra: unknown): string {
+  if (!extra || typeof extra !== "object" || Array.isArray(extra)) return "";
+  const value = (extra as Record<string, unknown>).support_items;
+  if (!Array.isArray(value)) return "";
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return "";
+      const row = item as Record<string, unknown>;
+      const title = typeof row.title === "string" ? row.title.trim() : "";
+      const detail = typeof row.detail === "string" ? row.detail.trim() : "";
+      if (!title) return "";
+      return detail ? `${title} | ${detail}` : title;
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function parseLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function parseSupportLines(text: string): { title: string; detail: string }[] {
+  return parseLines(text).map((line) => {
+    const sep = line.indexOf("|");
+    if (sep === -1) return { title: line, detail: "" };
+    return {
+      title: line.slice(0, sep).trim(),
+      detail: line.slice(sep + 1).trim(),
+    };
+  }).filter((row) => row.title);
+}
+
 function dtoToForm(dto: ContentDto): FormState {
   return {
     title: dto.title ?? "",
@@ -105,6 +166,14 @@ function dtoToForm(dto: ContentDto): FormState {
     aboutCaption: readExtraString(dto.extra, "about_image_caption"),
     googlePhotosUrl: readExtraString(dto.extra, "google_photos_url"),
     eventDate: readExtraString(dto.extra, "event_date"),
+    projectUrl: readExtraString(dto.extra, "project_url"),
+    subtitle: readExtraString(dto.extra, "subtitle") || readExtraString(dto.extra, "category"),
+    titleEn: readExtraString(dto.extra, "title_en"),
+    quota: readExtraString(dto.extra, "quota"),
+    applyUrl: readExtraString(dto.extra, "apply_url"),
+    qualificationsText: linesFromExtra(dto.extra, "qualifications"),
+    supportText: supportTextFromExtra(dto.extra),
+    documentsText: linesFromExtra(dto.extra, "documents"),
   };
 }
 
@@ -125,12 +194,34 @@ function buildExtra(
     else delete extra.youtube_url;
   }
   if (type === "admissions") {
+    if (form.titleEn.trim()) extra.title_en = form.titleEn.trim();
+    else delete extra.title_en;
     if (form.tuition.trim()) extra.tuition = form.tuition.trim();
     else delete extra.tuition;
+    if (form.quota.trim()) extra.quota = form.quota.trim();
+    else delete extra.quota;
+    if (form.applyUrl.trim()) extra.apply_url = form.applyUrl.trim();
+    else delete extra.apply_url;
+
+    const qualifications = parseLines(form.qualificationsText);
+    if (qualifications.length > 0) extra.qualifications = qualifications;
+    else delete extra.qualifications;
+
+    const supportItems = parseSupportLines(form.supportText);
+    if (supportItems.length > 0) extra.support_items = supportItems;
+    else delete extra.support_items;
+
+    const documents = parseLines(form.documentsText);
+    if (documents.length > 0) extra.documents = documents;
+    else delete extra.documents;
   }
   if (type === "student_work") {
     if (form.year.trim()) extra.year = form.year.trim();
     else delete extra.year;
+    if (form.subtitle.trim()) extra.subtitle = form.subtitle.trim();
+    else delete extra.subtitle;
+    if (form.projectUrl.trim()) extra.project_url = form.projectUrl.trim();
+    else delete extra.project_url;
   }
   if (type === "career_path") {
     if (form.position.trim()) extra.role = form.position.trim();
@@ -387,7 +478,7 @@ export function ContentFormView({
                 onChange={(url) => updateField("imageUrl", url)}
                 kind="pdf"
                 accept="application/pdf"
-                hint="ไฟล์เอกสารหลักสูตรสำหรับหน้า /beng (ไม่ใช่รูป About Us)"
+                hint="ไฟล์เอกสารหลักสูตรสำหรับหน้า /about-us/beng (ไม่ใช่รูป About Us)"
               />
             </>
           ) : type === "activity" ? (
@@ -422,6 +513,80 @@ export function ContentFormView({
                 </p>
               </div>
             </>
+          ) : type === "admissions" ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="admissions-title-en">ชื่อภาษาอังกฤษ</Label>
+                <Input
+                  id="admissions-title-en"
+                  value={form.titleEn}
+                  onChange={(e) => updateField("titleEn", e.target.value)}
+                  placeholder="Bachelor of Engineering Program in Computer Engineering"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="content-tuition">ค่าเทอม</Label>
+                  <Input
+                    id="content-tuition"
+                    value={form.tuition}
+                    onChange={(e) => updateField("tuition", e.target.value)}
+                    placeholder="เช่น 25,000 บาท / เทอม"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="content-quota">จำนวนรับ</Label>
+                  <Input
+                    id="content-quota"
+                    value={form.quota}
+                    onChange={(e) => updateField("quota", e.target.value)}
+                    placeholder="เช่น 40 คน / ปี"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apply-url">ลิงก์สมัคร / เว็บรับสมัคร</Label>
+                <Input
+                  id="apply-url"
+                  value={form.applyUrl}
+                  onChange={(e) => updateField("applyUrl", e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="qualifications">คุณสมบัติผู้เข้าศึกษา (หนึ่งข้อต่อบรรทัด)</Label>
+                <Textarea
+                  id="qualifications"
+                  value={form.qualificationsText}
+                  onChange={(e) => updateField("qualificationsText", e.target.value)}
+                  placeholder={
+                    "สำเร็จการศึกษาไม่ต่ำกว่ามัธยมศึกษาตอนปลายสายวิทยาศาสตร์-คณิตศาสตร์\nมีผลการเรียนเฉลี่ยสะสมเป็นไปตามเกณฑ์ที่คณะกำหนด"
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="support-items">
+                  การดูแลนักศึกษาแรกเข้า (บรรทัดละ 1 รายการ: หัวข้อ | รายละเอียด)
+                </Label>
+                <Textarea
+                  id="support-items"
+                  value={form.supportText}
+                  onChange={(e) => updateField("supportText", e.target.value)}
+                  placeholder={
+                    "ปฐมนิเทศนักศึกษาใหม่ | แนะนำหลักสูตร กฎระเบียบ และการใช้ชีวิต\nอาจารย์ที่ปรึกษาประจำ | ดูแลให้คำปรึกษารายบุคคล"
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="documents">เอกสารที่ต้องใช้ (หนึ่งรายการต่อบรรทัด)</Label>
+                <Textarea
+                  id="documents"
+                  value={form.documentsText}
+                  onChange={(e) => updateField("documentsText", e.target.value)}
+                  placeholder={"สำเนาบัตรประชาชน\nใบแสดงผลการเรียน"}
+                />
+              </div>
+            </>
           ) : (
             <FileUploadField
               label="รูปภาพ"
@@ -449,28 +614,39 @@ export function ContentFormView({
             </div>
           ) : null}
 
-          {type === "admissions" ? (
-            <div className="space-y-2">
-              <Label htmlFor="content-tuition">ค่าเทอม</Label>
-              <Input
-                id="content-tuition"
-                value={form.tuition}
-                onChange={(e) => updateField("tuition", e.target.value)}
-                placeholder="เช่น 25,000 บาท / เทอม"
-              />
-            </div>
-          ) : null}
-
           {type === "student_work" ? (
-            <div className="space-y-2">
-              <Label htmlFor="content-year">ปีการศึกษา</Label>
-              <Input
-                id="content-year"
-                value={form.year}
-                onChange={(e) => updateField("year", e.target.value)}
-                placeholder="เช่น 2568"
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="content-subtitle">หมวด / ประเภทผลงาน</Label>
+                <Input
+                  id="content-subtitle"
+                  value={form.subtitle}
+                  onChange={(e) => updateField("subtitle", e.target.value)}
+                  placeholder="เช่น โครงงานปี 4, Hardware, NETBOX"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="content-year">ปีการศึกษา</Label>
+                <Input
+                  id="content-year"
+                  value={form.year}
+                  onChange={(e) => updateField("year", e.target.value)}
+                  placeholder="เช่น 2568"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="content-project-url">ลิงก์เข้าใช้งานผลงาน</Label>
+                <Input
+                  id="content-project-url"
+                  value={form.projectUrl}
+                  onChange={(e) => updateField("projectUrl", e.target.value)}
+                  placeholder="https://..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  ลิงก์เว็บ demo / โปรเจกต์ ให้ผู้เข้าชมกดเข้าไปใช้งานได้จากหน้า listing
+                </p>
+              </div>
+            </>
           ) : null}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

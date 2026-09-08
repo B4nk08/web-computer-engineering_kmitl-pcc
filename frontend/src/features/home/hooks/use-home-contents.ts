@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { CurriculumProgram } from "@/features/curriculum";
+import type { CurriculumProgram } from "@/features/about-us";
 import {
   fetchHomeActivities,
   fetchHomeCurriculum,

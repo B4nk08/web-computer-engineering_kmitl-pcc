@@ -7,6 +7,16 @@ loadEnvConfig(path.resolve(__dirname, ".."));
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  async redirects() {
+    return [
+      { source: "/beng", destination: "/about-us/beng", permanent: true },
+      {
+        source: "/admission-requirements",
+        destination: "/about-us/admission-requirements",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

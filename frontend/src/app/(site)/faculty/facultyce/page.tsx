@@ -23,7 +23,9 @@ export default function FacultyCEPage() {
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>
         ) : data.length === 0 ? (
-          <p className="text-sm text-[var(--ink-soft)]">ยังไม่มีข้อมูลบุคลากรที่เผยแพร่</p>
+          <p className="text-sm text-[var(--ink-soft)]">
+            ยังไม่มีข้อมูลบุคลากรที่เผยแพร่
+          </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {data.map((member) => (
@@ -43,12 +45,18 @@ export default function FacultyCEPage() {
                     ) : null}
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-[var(--ink)]">{member.name}</h2>
-                    <p className="mt-0.5 text-sm text-[var(--ink-soft)]">{member.position}</p>
+                    <h2 className="text-base font-semibold text-[var(--ink)]">
+                      {member.name}
+                    </h2>
+                    <p className="mt-0.5 text-sm text-[var(--ink-soft)]">
+                      {member.position}
+                    </p>
                   </div>
                 </div>
                 {member.bio ? (
-                  <p className="text-sm leading-relaxed text-[var(--ink-soft)]">{member.bio}</p>
+                  <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
+                    {member.bio}
+                  </p>
                 ) : null}
               </article>
             ))}

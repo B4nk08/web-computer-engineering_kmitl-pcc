@@ -1,18 +1,14 @@
 import { listPublishedContents } from "@/features/content";
-import { fetchCurriculum } from "@/features/curriculum";
-import {
-  mapActivityToHome,
-  mapStaffToHome,
-  mapStudentWorkToHome,
-  mapVideoToHomeHero,
-} from "../mappers";
+import { fetchCurriculum, type CurriculumProgram } from "@/features/about-us/curriculum";
+import { fetchActivities } from "@/features/about-us/activities/api";
+import { fetchStudentWorks } from "@/features/about-us/student-works/api";
+import { mapStaffToHome, mapVideoToHomeHero } from "../mappers";
 import type {
   HomeActivity,
   HomeHeroMedia,
   HomeShowcaseItem,
   HomeStaffMember,
 } from "../types";
-import type { CurriculumProgram } from "@/features/curriculum";
 
 /**
  * Home content queries — ชั้น API ของหน้า Home
@@ -25,13 +21,11 @@ export async function fetchHomeStaff(): Promise<HomeStaffMember[]> {
 }
 
 export async function fetchHomeShowcase(): Promise<HomeShowcaseItem[]> {
-  const rows = await listPublishedContents("student_work");
-  return rows.map(mapStudentWorkToHome);
+  return fetchStudentWorks();
 }
 
 export async function fetchHomeActivities(): Promise<HomeActivity[]> {
-  const rows = await listPublishedContents("activity");
-  return rows.map(mapActivityToHome);
+  return fetchActivities();
 }
 
 export async function fetchHomeCurriculum(): Promise<CurriculumProgram | null> {

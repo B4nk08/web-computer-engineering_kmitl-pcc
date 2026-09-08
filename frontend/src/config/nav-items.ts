@@ -11,9 +11,10 @@ export interface NavItem {
 }
 
 export const ABOUT_US_ITEMS: NavItem[] = [
-  { label: "หลักสูตร", href: "/beng" },
-  { label: "คุณสมบัติ", href: "/admission-requirements" },
-  { label: "กิจกรรม", href: "/#activities" },
+  { label: "หลักสูตร", href: "/about-us/beng" },
+  { label: "คุณสมบัติ", href: "/about-us/admission-requirements" },
+  { label: "กิจกรรม", href: "/about-us/activities" },
+  { label: "ผลงานนักศึกษา", href: "/about-us/student-works" },
 ];
 
 export const ACADEMICS_ITEMS: NavItem[] = [

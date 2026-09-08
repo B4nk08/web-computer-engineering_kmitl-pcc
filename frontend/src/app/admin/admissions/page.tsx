@@ -5,7 +5,7 @@ export default function AdmissionsAdminPage() {
     <ContentManager
       type="admissions"
       title="ข้อมูลรับสมัคร"
-      description="หน้าคุณสมบัติผู้สมัคร — จำนวนรับ ค่าเทอม และข้อมูลรับเข้า"
+      description="หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม จำนวนรับ"
     />
   );
 }

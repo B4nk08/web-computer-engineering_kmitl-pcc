@@ -5,7 +5,7 @@ export default function ActivitiesAdminPage() {
     <ContentManager
       type="activity"
       title="กิจกรรม"
-      description="หน้าแรก → About Us → กิจกรรม — รูปปก คำอธิบาย และลิงก์ Google Photos"
+      description="หน้าแรก → About Us และหน้า /about-us/activities — รูปปก คำอธิบาย และลิงก์ Google Photos"
     />
   );
 }

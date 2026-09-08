@@ -1,10 +1,5 @@
 import type { ContentDetail } from "@/features/content";
-import type {
-  HomeActivity,
-  HomeHeroMedia,
-  HomeShowcaseItem,
-  HomeStaffMember,
-} from "./types";
+import type { HomeHeroMedia, HomeStaffMember } from "./types";
 
 function extraString(extra: Record<string, unknown> | null, key: string): string {
   const value = extra?.[key];
@@ -23,27 +18,6 @@ export function mapStaffToHome(item: ContentDetail): HomeStaffMember {
     position: position === "-" ? "อาจารย์" : position,
     bio: item.body,
     imageUrl: item.imageUrl,
-  };
-}
-
-export function mapStudentWorkToHome(item: ContentDetail): HomeShowcaseItem {
-  return {
-    id: item.id,
-    title: item.title,
-    subtitle: extraString(item.extra, "subtitle") || extraString(item.extra, "category") || "ผลงานนักศึกษา",
-    detail: item.body,
-    imageUrl: item.imageUrl,
-  };
-}
-
-export function mapActivityToHome(item: ContentDetail): HomeActivity {
-  return {
-    id: item.id,
-    title: item.title,
-    date: extraString(item.extra, "event_date"),
-    description: item.body,
-    imageUrl: item.imageUrl,
-    googlePhotosUrl: extraString(item.extra, "google_photos_url"),
   };
 }
 

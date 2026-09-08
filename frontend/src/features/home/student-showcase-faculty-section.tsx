@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useHomeShowcase, useHomeStaff } from "./hooks/use-home-contents";
-import type { HomeShowcaseItem, HomeStaffMember } from "./types";
+import { useStudentWorks, type StudentWork } from "@/features/about-us";
+import { useHomeStaff } from "./hooks/use-home-contents";
+import type { HomeStaffMember } from "./types";
 
 /**
  * student-showcase-faculty-section.tsx
@@ -50,29 +52,23 @@ function ScrollRow({
   );
 }
 
-function ShowcaseCard({ item }: { item: HomeShowcaseItem }) {
-  const [expanded, setExpanded] = useState(false);
-
+function ShowcaseCard({ item }: { item: StudentWork }) {
   return (
-    <div className="w-64 shrink-0 rounded-2xl bg-[var(--navy-900)] p-4 text-white transition-transform duration-200 hover:-translate-y-1.5">
+    <div className="group w-64 shrink-0 rounded-2xl bg-[var(--navy-900)] p-4 text-white transition duration-300 hover:-translate-y-1.5 hover:bg-[var(--navy-800)] hover:shadow-lg">
       <div className="mb-3 flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-white/10 text-xs text-white/60">
         {item.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+          <img
+            src={item.imageUrl}
+            alt={item.title}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
         ) : (
           "รูปผลงาน"
         )}
       </div>
-      <p className="text-xs font-medium text-white/60">{item.subtitle}</p>
+      <p className="text-xs font-medium text-white/60">{item.year ? `ปี ${item.year}` : item.subtitle}</p>
       <h4 className="mt-1 text-sm font-semibold">{item.title}</h4>
-      {expanded && <p className="mt-2 text-xs leading-relaxed text-white/70">{item.detail}</p>}
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="mt-3 text-xs font-medium text-[var(--accent)] underline-offset-4 hover:underline"
-      >
-        {expanded ? "ย่อรายละเอียด" : "รายละเอียดเพิ่มเติม"}
-      </button>
     </div>
   );
 }
@@ -93,7 +89,7 @@ function FacultyCard({ member }: { member: HomeStaffMember }) {
 }
 
 export function StudentShowcaseFacultySection() {
-  const showcase = useHomeShowcase();
+  const showcase = useStudentWorks();
   const staff = useHomeStaff();
 
   return (
@@ -103,6 +99,16 @@ export function StudentShowcaseFacultySection() {
         <div className="mb-16">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--ink)] sm:text-2xl">Student Showcase</h2>
+            <Link
+              href="/about-us/student-works"
+              className="group/all text-sm font-medium text-[var(--accent)] underline-offset-4 transition hover:underline"
+            >
+              ดูทั้งหมด
+              <span className="inline-block transition-transform duration-200 group-hover/all:translate-x-0.5">
+                {" "}
+                →
+              </span>
+            </Link>
           </div>
           {showcase.loading ? (
             <p className="text-sm text-[var(--ink-soft)]">กำลังโหลด...</p>
