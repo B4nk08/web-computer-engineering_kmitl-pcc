@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BookOpen, FileSearch } from "lucide-react";
 import { useActivities } from "@/features/about-us";
 import { useHomeCurriculum } from "./hooks/use-home-contents";
+import { ScrollRow } from "./scroll-row";
 
 /**
  * About Us ตามเลย์เอาต์ใหม่:
@@ -133,7 +134,7 @@ export function AboutUsSection() {
 
         <div
           id="activities"
-          className="scroll-mt-24 flex min-h-[240px] flex-col rounded-2xl border border-black/5 bg-[var(--surface)] px-4 py-5 sm:min-h-[280px] sm:px-6 sm:py-6"
+          className="scroll-mt-24 flex min-h-[240px] min-w-0 flex-col rounded-2xl border border-black/5 bg-[var(--surface)] px-4 py-5 sm:min-h-[280px] sm:px-6 sm:py-6"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold tracking-wide text-[var(--ink)]">
@@ -160,11 +161,11 @@ export function AboutUsSection() {
               ยังไม่มีกิจกรรมที่เผยแพร่ — เพิ่มได้ที่ Admin → กิจกรรม
             </p>
           ) : (
-            <div className="grid flex-1 grid-cols-2 content-center gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <ScrollRow className="sm:px-10">
               {activities.map((item) => (
                 <div
                   key={item.id}
-                  className="group flex h-full flex-col items-center gap-2 text-center"
+                  className="group flex w-28 shrink-0 flex-col items-center gap-2 text-center sm:w-32"
                 >
                   <div className="aspect-[3/4] w-full overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-hover:ring-[var(--navy-900)]/30">
                     {item.imageUrl ? (
@@ -185,7 +186,7 @@ export function AboutUsSection() {
                   </span>
                 </div>
               ))}
-            </div>
+            </ScrollRow>
           )}
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
+import { AboutUsPageHeader } from "../../components/about-us-page-header";
 import { useActivities } from "../hooks/use-activities";
 import { ActivityModal } from "./activity-modal";
 import type { ActivityItem } from "../types";
@@ -16,20 +17,11 @@ export function ActivitiesListingView() {
 
   return (
     <div className="min-h-[calc(100svh-4rem)] bg-[var(--surface)]">
-      <header className="border-b border-black/5 bg-white pt-20 sm:pt-24">
-        <div className="mx-auto max-w-[1200px] px-4 pb-8 sm:px-6 sm:pb-10">
-          <p className="text-xs font-semibold tracking-[0.14em] text-[var(--navy-900)]/70">
-            ACTIVITIES
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--ink)] sm:text-4xl">
-            กิจกรรม
-          </h1>
-          <div className="mt-3 h-1 w-12 rounded-full bg-[var(--navy-900)]" />
-          <p className="mt-4 max-w-2xl text-sm leading-8 text-[var(--ink-soft)] sm:text-[15px] sm:leading-9">
-            รวมกิจกรรมของภาควิชา — กดการ์ดเพื่อดูรายละเอียดและอัลบั้มรูป
-          </p>
-        </div>
-      </header>
+      <AboutUsPageHeader
+        eyebrow="ACTIVITIES"
+        title="กิจกรรม"
+        description="รวมกิจกรรมของภาควิชา — กดการ์ดเพื่อดูรายละเอียดและอัลบั้มรูป"
+      />
 
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (

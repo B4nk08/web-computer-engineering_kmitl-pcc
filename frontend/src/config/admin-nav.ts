@@ -82,7 +82,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         href: "/admin/news",
         type: "news",
         description:
-          "ประกาศ External (เช่น TCAS) / Internal (เช่น รับน้อง) — ไม่โชว์ในกล่องกิจกรรมหน้าแรก",
+          "หน้า /news — ประกาศภายนอก (เช่น TCAS) และข่าวภายใน แยกจากกล่องกิจกรรม",
         icon: Newspaper,
       },
       {
@@ -116,7 +116,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         title: "เส้นทางอาชีพ",
         href: "/admin/careers",
         type: "career_path",
-        description: "หน้าเส้นทางอาชีพ — อาชีพหลังจบการศึกษา",
+        description: "หน้า /about-us/careers — อาชีพหลังจบการศึกษา",
         icon: Briefcase,
       },
       {

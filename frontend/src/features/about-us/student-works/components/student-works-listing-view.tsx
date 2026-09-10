@@ -1,12 +1,13 @@
 "use client";
 
 import { ExternalLink, Loader2 } from "lucide-react";
+import { AboutUsPageHeader } from "../../components/about-us-page-header";
 import { useStudentWorks } from "../hooks/use-student-works";
 import type { StudentWork } from "../types";
 
 function StudentWorkCard({ item }: { item: StudentWork }) {
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-md hover:ring-[var(--navy-900)]/20">
+    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-white transition duration-300 hover:-translate-y-1 hover:border-[var(--navy-900)]/25 hover:shadow-sm">
       <div className="aspect-[16/10] overflow-hidden bg-[var(--surface)]">
         {item.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -64,20 +65,11 @@ export function StudentWorksListingView() {
 
   return (
     <div className="min-h-[calc(100svh-4rem)] bg-[var(--surface)]">
-      <header className="border-b border-black/5 bg-white pt-20 sm:pt-24">
-        <div className="mx-auto max-w-[1200px] px-4 pb-8 sm:px-6 sm:pb-10">
-          <p className="text-xs font-semibold tracking-[0.14em] text-[var(--navy-900)]/70">
-            STUDENT WORKS
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--ink)] sm:text-4xl">
-            ผลงานนักศึกษา
-          </h1>
-          <div className="mt-3 h-1 w-12 rounded-full bg-[var(--navy-900)]" />
-          <p className="mt-4 max-w-2xl text-sm leading-8 text-[var(--ink-soft)] sm:text-[15px] sm:leading-9">
-            โครงงานปี 4 และผลงานที่เผยแพร่ — กดปุ่มเข้าไปใช้งานเพื่อเปิดลิงก์ผลงานจริง
-          </p>
-        </div>
-      </header>
+      <AboutUsPageHeader
+        eyebrow="STUDENT WORKS"
+        title="ผลงานนักศึกษา"
+        description="โครงงานปี 4 และผลงานที่เผยแพร่ — กดปุ่มเข้าไปใช้งานเพื่อเปิดลิงก์ผลงานจริง"
+      />
 
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (

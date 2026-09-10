@@ -13,8 +13,15 @@ export interface NavItem {
 export const ABOUT_US_ITEMS: NavItem[] = [
   { label: "หลักสูตร", href: "/about-us/beng" },
   { label: "คุณสมบัติ", href: "/about-us/admission-requirements" },
+  { label: "เส้นทางอาชีพ", href: "/about-us/careers" },
   { label: "กิจกรรม", href: "/about-us/activities" },
   { label: "ผลงานนักศึกษา", href: "/about-us/student-works" },
+];
+
+export const NEWS_ITEMS: NavItem[] = [
+  { label: "ทั้งหมด", href: "/news" },
+  { label: "ประกาศภายนอก", href: "/news/external" },
+  { label: "ข่าวภายใน", href: "/news/internal" },
 ];
 
 export const ACADEMICS_ITEMS: NavItem[] = [

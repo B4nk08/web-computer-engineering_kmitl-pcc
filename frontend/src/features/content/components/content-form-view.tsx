@@ -79,7 +79,7 @@ const LOCATION_HINT: Partial<Record<ApiContentType, string>> = {
   staff: "หน้าแรก → ส่วนบุคลากร / คณาจารย์",
   student_work: "หน้าแรก → Student Showcase และหน้า listing /about-us/student-works",
   admissions: "หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม",
-  career_path: "หน้าเส้นทางอาชีพ",
+  career_path: "หน้า /about-us/careers — อาชีพหลังจบการศึกษา",
   activity: "หน้าแรก → About Us → กล่องกิจกรรม และหน้า listing /about-us/activities",
   page: "หน้าเว็บสาธารณะตามที่กำหนด",
 };

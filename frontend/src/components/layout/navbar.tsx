@@ -9,6 +9,7 @@ import {
   ABOUT_US_ITEMS,
   ACADEMICS_ITEMS,
   FACUITY_ITEMS,
+  NEWS_ITEMS,
   STUDENT_ITEMS,
   type NavItem,
 } from "@/config/nav-items";
@@ -131,7 +132,7 @@ function NavDropdown({
         <div
           className={cn(
             "overflow-hidden transition-all duration-200 md:hidden",
-            open ? "max-h-60" : "max-h-0",
+            open ? "max-h-80" : "max-h-0",
           )}
         >
           <div className="mt-1 space-y-1 rounded-lg bg-white/5 p-2">
@@ -218,6 +219,7 @@ export function Navbar() {
               href="/#about"
               items={ABOUT_US_ITEMS}
             />
+            <NavDropdown label="ข่าวสาร" href="/news" items={NEWS_ITEMS} />
             <NavDropdown label="Academics" items={ACADEMICS_ITEMS} />
             <NavDropdown label="Faculty" items={FACUITY_ITEMS} />
             <NavDropdown label="Student" items={STUDENT_ITEMS} />
@@ -268,7 +270,7 @@ export function Navbar() {
           className={cn(
             "overflow-hidden bg-[var(--navy-950)] transition-all duration-200 md:hidden",
             mobileMenuOpen
-              ? "max-h-[520px] border-t border-white/10"
+              ? "max-h-[720px] border-t border-white/10"
               : "max-h-0",
           )}
         >
@@ -287,6 +289,16 @@ export function Navbar() {
               mobileOpen={mobileDropdown === "about"}
               onToggleMobile={() =>
                 setMobileDropdown((d) => (d === "about" ? null : "about"))
+              }
+              onNavigate={closeMobile}
+            />
+            <NavDropdown
+              label="ข่าวสาร"
+              href="/news"
+              items={NEWS_ITEMS}
+              mobileOpen={mobileDropdown === "news"}
+              onToggleMobile={() =>
+                setMobileDropdown((d) => (d === "news" ? null : "news"))
               }
               onNavigate={closeMobile}
             />

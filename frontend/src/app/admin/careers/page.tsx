@@ -5,7 +5,7 @@ export default function CareersAdminPage() {
     <ContentManager
       type="career_path"
       title="เส้นทางอาชีพ"
-      description="หน้าเส้นทางอาชีพ — อาชีพหลังจบการศึกษา"
+      description="หน้า /about-us/careers — อาชีพหลังจบการศึกษา"
     />
   );
 }
