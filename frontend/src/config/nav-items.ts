@@ -26,7 +26,6 @@ export const NEWS_ITEMS: NavItem[] = [
 
 export const ACADEMICS_ITEMS: NavItem[] = [
   { label: "Quizz", href: "/academics/quiz" },
-  { label: "วิเคราะห์", href: "/academics/analysis" },
 ];
 
 // เฉพาะบทบาท "member" (นักศึกษา/อาจารย์/แอดมิน)
