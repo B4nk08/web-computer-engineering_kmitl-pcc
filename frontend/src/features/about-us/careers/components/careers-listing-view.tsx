@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { AboutUsPageHeader } from "../../components/about-us-page-header";
-import { useCareers } from "../hooks/use-careers";
+import { useGroupedCareers } from "../hooks/use-careers";
 import type { CareerPath } from "../types";
 
 function CareerCard({ item }: { item: CareerPath }) {
@@ -43,14 +43,13 @@ function CareerCard({ item }: { item: CareerPath }) {
  * หน้า /about-us/careers — อาชีพหลังจบการศึกษา
  */
 export function CareersListingView() {
-  const { data, loading, error } = useCareers();
+  const { groups, loading, error } = useGroupedCareers();
 
   return (
     <div className="min-h-[calc(100svh-4rem)] bg-[var(--surface)]">
       <AboutUsPageHeader
         eyebrow="CAREER PATH"
         title="เส้นทางอาชีพ"
-        description="อาชีพที่บัณฑิตวิศวกรรมคอมพิวเตอร์สามารถเติบโตได้หลังจบการศึกษา"
       />
 
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
@@ -61,14 +60,26 @@ export function CareersListingView() {
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>
-        ) : data.length === 0 ? (
+        ) : groups.length === 0 ? (
           <p className="text-sm text-[var(--ink-soft)]">
             ยังไม่มีเส้นทางอาชีพที่เผยแพร่ — เพิ่มได้ที่ Admin → เส้นทางอาชีพ
           </p>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {data.map((item) => (
-              <CareerCard key={item.id} item={item} />
+          <div className="space-y-10">
+            {groups.map((group) => (
+              <section key={group.cluster?.code ?? "other"}>
+                <h2 className="text-lg font-semibold text-[var(--navy-900)]">
+                  {group.cluster?.name ?? "อื่นๆ"}
+                </h2>
+                {group.cluster?.description ? (
+                  <p className="mt-1 text-sm text-[var(--ink-soft)]">{group.cluster.description}</p>
+                ) : null}
+                <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.items.map((item) => (
+                    <CareerCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}

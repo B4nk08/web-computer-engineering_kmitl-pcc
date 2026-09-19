@@ -18,6 +18,15 @@ const (
 
 var prefixRe = regexp.MustCompile(`^(\d{2})`)
 
+// PrefixDigits ดึง 2 หลักแรกเป็นข้อความ เช่น "66"
+func PrefixDigits(studentCode string) (string, bool) {
+	n, ok := Prefix(studentCode)
+	if !ok {
+		return "", false
+	}
+	return fmt.Sprintf("%02d", n), true
+}
+
 // Prefix ดึง 2 หลักแรกของรหัสนักศึกษา
 func Prefix(studentCode string) (int, bool) {
 	studentCode = strings.TrimSpace(studentCode)

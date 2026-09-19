@@ -1,1 +1,1 @@
-export { fetchCurriculum } from "./queries";
+export { fetchCurriculum, fetchCurricula } from "./queries";

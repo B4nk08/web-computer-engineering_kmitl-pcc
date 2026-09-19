@@ -3,57 +3,63 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { QuizToast } from "./quiz-toast";
-import type { QuizAnswers, QuizQuestion, ChoiceId } from "./types";
+import type { PlayAnswers, PlayQuestion } from "./types";
 
-/**
- * quiz-flow.tsx
- * -------------
- * Component กลางที่ใช้ทำทั้ง 2 แบบทดสอบ (Quizz แนะนำสาย และ Quizz วัดความพร้อม)
- * รับผิดชอบ: หน้าแนะนำ (intro) -> ทำแบบทดสอบทีละข้อ พร้อม progress bar ->
- * ตรวจสอบว่าตอบครบหรือยัง -> เด้งแจ้งเตือน "กำลังประมวลผล/เรียบร้อย" ->
- * ส่งต่อคำตอบทั้งหมดให้ `renderResult` ของแต่ละหน้าคำนวณและแสดงผลเอง
- * (แต่ละควิซมีวิธีคำนวณผลต่างกัน จึงแยก renderResult ออกไปเป็น prop)
- */
+const CHOICE_LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
 
 interface QuizFlowProps {
-  questions: QuizQuestion[];
+  questions: PlayQuestion[];
   introQuote: string;
   introDescription: string[];
+  onSubmit?: (answers: PlayAnswers) => Promise<void>;
   renderResult: (args: {
-    answers: QuizAnswers;
-    questions: QuizQuestion[];
+    answers: PlayAnswers;
     onRetake: () => void;
   }) => React.ReactNode;
 }
 
 type Stage = "intro" | "quiz" | "result";
 
-const PROCESSING_DELAY_MS = 900;
 const DONE_DELAY_MS = 700;
 
-export function QuizFlow({ questions, introQuote, introDescription, renderResult }: QuizFlowProps) {
+export function QuizFlow({
+  questions,
+  introQuote,
+  introDescription,
+  onSubmit,
+  renderResult,
+}: QuizFlowProps) {
   const [stage, setStage] = useState<Stage>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<QuizAnswers>({});
-  const [missingIds, setMissingIds] = useState<number[] | null>(null);
-  const [toastStatus, setToastStatus] = useState<"processing" | "done" | null>(null);
+  const [answers, setAnswers] = useState<PlayAnswers>({});
+  const [missingIndexes, setMissingIndexes] = useState<number[] | null>(null);
+  const [toastStatus, setToastStatus] = useState<"processing" | "done" | null>(
+    null,
+  );
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const total = questions.length;
   const currentQuestion = questions[currentIndex];
   const isLast = currentIndex === total - 1;
-  const progressPercent = useMemo(() => Math.round(((currentIndex + 1) / total) * 100), [currentIndex, total]);
+  const progressPercent = useMemo(
+    () => (total > 0 ? Math.round(((currentIndex + 1) / total) * 100) : 0),
+    [currentIndex, total],
+  );
 
   function reset() {
     setStage("intro");
     setCurrentIndex(0);
     setAnswers({});
-    setMissingIds(null);
+    setMissingIndexes(null);
     setToastStatus(null);
+    setSubmitError(null);
   }
 
-  function selectChoice(choiceId: ChoiceId) {
+  function selectChoice(choiceId: string) {
+    if (!currentQuestion) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: choiceId }));
-    setMissingIds(null);
+    setMissingIndexes(null);
+    setSubmitError(null);
   }
 
   function goPrev() {
@@ -65,45 +71,58 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
       setCurrentIndex((i) => i + 1);
       return;
     }
-    handleSubmit();
+    void handleSubmit();
   }
 
-  function handleSubmit() {
-    const missing = questions.filter((q) => !answers[q.id]).map((q) => q.id);
+  async function handleSubmit() {
+    const missing = questions
+      .map((q, index) => (answers[q.id] ? -1 : index + 1))
+      .filter((n) => n > 0);
     if (missing.length > 0) {
-      setMissingIds(missing);
-      // พาไปที่ข้อแรกที่ยังไม่ได้ตอบ เพื่อให้ผู้ใช้แก้ไขได้สะดวก
-      const firstMissingIndex = questions.findIndex((q) => q.id === missing[0]);
+      setMissingIndexes(missing);
+      const firstMissingIndex = questions.findIndex((q) => !answers[q.id]);
       if (firstMissingIndex !== -1) setCurrentIndex(firstMissingIndex);
       return;
     }
 
+    setSubmitError(null);
     setToastStatus("processing");
-    setTimeout(() => {
+    try {
+      if (onSubmit) {
+        await onSubmit(answers);
+      }
       setToastStatus("done");
       setTimeout(() => {
         setToastStatus(null);
         setStage("result");
       }, DONE_DELAY_MS);
-    }, PROCESSING_DELAY_MS);
+    } catch (err) {
+      setToastStatus(null);
+      setSubmitError(err instanceof Error ? err.message : "ส่งคำตอบไม่สำเร็จ");
+    }
   }
 
   if (stage === "intro") {
     return (
-      <section className="quiz-fade-in flex min-h-[70vh] items-center justify-center bg-white px-4 py-16">
-        <div className="max-w-xl text-center">
-          <p className="text-lg font-semibold leading-relaxed text-[var(--navy-900)] sm:text-xl">
+      <section className="quiz-fade-in flex min-h-svh flex-1 items-center justify-center px-6 py-24">
+        <div className="w-full max-w-4xl text-center">
+          <p className="text-balance text-xl font-semibold leading-snug text-[var(--navy-900)] underline decoration-[var(--navy-900)] decoration-1 underline-offset-[10px] sm:text-2xl lg:text-[1.7rem]">
             &ldquo;{introQuote}&rdquo;
           </p>
-          <div className="mt-4 space-y-1.5 text-sm text-[var(--ink-soft)]">
+          <p className="mx-auto mt-8 max-w-2xl text-pretty text-sm font-medium leading-relaxed text-[var(--navy-900)] sm:text-[15px]">
+            &ldquo;{" "}
             {introDescription.map((line, i) => (
-              <p key={i}>{line}</p>
-            ))}
-          </div>
+              <span key={i}>
+                {i > 0 ? <br /> : null}
+                {line}
+              </span>
+            ))}{" "}
+            &rdquo;
+          </p>
           <button
             type="button"
             onClick={() => setStage("quiz")}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--navy-900)] px-6 py-3 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
+            className="mt-12 inline-flex items-center gap-2 rounded-full bg-[var(--navy-900)] px-6 py-2.5 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
           >
             เริ่มทำแบบทดสอบ
             <ChevronRight className="h-4 w-4" />
@@ -113,15 +132,14 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
     );
   }
 
-  if (stage === "quiz") {
+  if (stage === "quiz" && currentQuestion) {
     const selected = answers[currentQuestion.id];
 
     return (
-      <section className="quiz-fade-in flex min-h-[70vh] items-center justify-center bg-white px-4 py-12">
-        <div className="w-full max-w-xl">
-          {/* แถบหัวข้อ + progress bar */}
+      <section className="quiz-fade-in quiz-question-bg flex min-h-svh flex-1 items-center justify-center px-4 py-10 sm:px-8">
+        <div className="w-full max-w-3xl">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex flex-1 items-center gap-3 rounded-full border border-[var(--navy-900)]/20 px-4 py-1.5">
+            <div className="flex flex-1 items-center gap-3 rounded-full border border-[var(--navy-900)]/20 px-5 py-2">
               <span className="whitespace-nowrap text-xs font-semibold text-[var(--navy-900)]">
                 Question {currentIndex + 1} / {total}
               </span>
@@ -135,24 +153,24 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
             {toastStatus && <QuizToast status={toastStatus} />}
           </div>
 
-          {/* การ์ดคำถาม */}
-          <div className="rounded-2xl bg-white p-5 shadow-lg ring-1 ring-black/5 sm:p-6">
+          <div className="rounded-2xl bg-white p-8 shadow-lg ring-1 ring-black/5 sm:p-10">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
               Question {currentIndex + 1}
             </p>
-            <h2 className="mb-4 text-sm font-medium leading-relaxed text-[var(--ink)] sm:text-base">
+            <h2 className="mb-6 text-sm font-medium leading-relaxed text-[var(--ink)] sm:text-base">
               {currentIndex + 1}. {currentQuestion.text}
             </h2>
 
-            <div className="space-y-2.5">
-              {currentQuestion.choices.map((choice) => {
+            <div className="space-y-3">
+              {currentQuestion.choices.map((choice, index) => {
                 const isSelected = selected === choice.id;
+                const letter = CHOICE_LETTERS[index] ?? String(index + 1);
                 return (
                   <button
                     key={choice.id}
                     type="button"
                     onClick={() => selectChoice(choice.id)}
-                    className={`flex w-full items-center gap-3 rounded-full border px-3 py-2.5 text-left text-xs transition-colors sm:text-sm ${
+                    className={`flex w-full items-center gap-3 rounded-full border px-4 py-3.5 text-left text-xs transition-colors sm:text-sm ${
                       isSelected
                         ? "border-[var(--navy-900)] bg-[var(--navy-900)] text-white"
                         : "border-[var(--navy-900)]/25 bg-white text-[var(--ink)] hover:border-[var(--navy-900)]/60"
@@ -160,10 +178,12 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
                   >
                     <span
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                        isSelected ? "bg-white text-[var(--navy-900)]" : "bg-[var(--navy-900)] text-white"
+                        isSelected
+                          ? "bg-white text-[var(--navy-900)]"
+                          : "bg-[var(--navy-900)] text-white"
                       }`}
                     >
-                      {choice.id}
+                      {letter}
                     </span>
                     <span className="leading-snug">{choice.text}</span>
                   </button>
@@ -172,15 +192,19 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
             </div>
           </div>
 
-          {/* แจ้งเตือนข้อที่ยังไม่ได้ตอบ */}
-          {missingIds && missingIds.length > 0 && (
+          {missingIndexes && missingIndexes.length > 0 && (
             <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-700 ring-1 ring-amber-200">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>ยังไม่ได้ตอบข้อที่ {missingIds.join(", ")} กรุณาตอบให้ครบก่อนส่งคำตอบ</span>
+              <span>
+                ยังไม่ได้ตอบข้อที่ {missingIndexes.join(", ")}{" "}
+                กรุณาตอบให้ครบก่อนส่งคำตอบ
+              </span>
             </div>
           )}
+          {submitError ? (
+            <p className="mt-3 text-xs text-red-600">{submitError}</p>
+          ) : null}
 
-          {/* ปุ่มย้อนกลับ / ถัดไป / ส่งคำตอบ */}
           <div className="mt-5 flex items-center justify-between text-sm">
             <button
               type="button"
@@ -194,7 +218,8 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
             <button
               type="button"
               onClick={goNext}
-              className="flex items-center gap-1 font-semibold text-[var(--navy-900)] transition-colors hover:text-[var(--accent)]"
+              disabled={toastStatus === "processing"}
+              className="flex items-center gap-1 font-semibold text-[var(--navy-900)] transition-colors hover:text-[var(--accent)] disabled:opacity-50"
             >
               {isLast ? "ส่งคำตอบ" : "ถัดไป"}
               {!isLast && <ChevronRight className="h-4 w-4" />}
@@ -205,6 +230,9 @@ export function QuizFlow({ questions, introQuote, introDescription, renderResult
     );
   }
 
-  // stage === "result"
-  return <div className="quiz-fade-in">{renderResult({ answers, questions, onRetake: reset })}</div>;
+  return (
+    <div className="quiz-fade-in">
+      {renderResult({ answers, onRetake: reset })}
+    </div>
+  );
 }

@@ -11,6 +11,7 @@ func TestLabel(t *testing.T) {
 		{"64200002", "CE01", true},
 		{"65200006", "CE02", true},
 		{"66200004", "CE03", true},
+		{"6620001", "CE03", true},
 		{"67200014", "CE04", true},
 		{"68200001", "CE05", true},
 		{"", "", false},

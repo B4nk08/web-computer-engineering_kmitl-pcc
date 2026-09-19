@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth";
-import { isAuthBypassEnabled } from "@/features/auth/config/env";
 import {
   canAccessNavItem,
   findAdminNavItem,
@@ -12,17 +11,15 @@ import {
 import { isStaffRole } from "@/config/staff-role";
 
 /**
- * กันเข้า /admin ถ้ายังไม่ login หรือ role ไม่ใช่ admin/teacher
- * และกัน path ที่ role นั้นเข้าไม่ได้ (เช่น Exit Exam = teacher เท่านั้น)
+ * กันเข้า /admin — เฉพาะอาจารย์/แอดมินจาก ce_whitelist
  */
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const bypass = isAuthBypassEnabled();
 
   useEffect(() => {
-    if (bypass || loading) return;
+    if (loading) return;
 
     if (!isAuthenticated || !user) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
@@ -38,11 +35,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     if (item && !canAccessNavItem(item, user.role as StaffRole)) {
       router.replace("/admin");
     }
-  }, [bypass, loading, isAuthenticated, user, pathname, router]);
-
-  if (bypass) {
-    return <>{children}</>;
-  }
+  }, [loading, isAuthenticated, user, pathname, router]);
 
   if (loading || !user || !isStaffRole(user.role)) {
     return (

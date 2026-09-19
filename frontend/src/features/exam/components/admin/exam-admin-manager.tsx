@@ -1,14 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Pencil, Save, Trash2 } from "lucide-react";
 import {
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Pencil,
-  Save,
-  Trash2,
-} from "lucide-react";
+  AdminBadge,
+  AdminCheckbox,
+  AdminConfirmDialog,
+  AdminEmptyState,
+  AdminPageFrame,
+  AdminPill,
+  AdminSection,
+  AdminSelectionBar,
+  AdminStatus,
+  AdminToggle,
+  deleteConfirmCopy,
+  deleteMany,
+  useAdminSelection,
+  type PendingDelete,
+} from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +54,11 @@ export function ExamAdminManager() {
   const [timeLimit, setTimeLimit] = useState(90);
   const [isEnabled, setIsEnabled] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const questionIds = useMemo(() => questions.map((item) => item.id), [questions]);
+  const selection = useAdminSelection(questionIds);
 
   function flash(message: string) {
     setNotice(message);
@@ -166,33 +180,32 @@ export function ExamAdminManager() {
     }
   }
 
-  async function handleDelete(q: ExamQuestionAdminDto) {
-    if (!window.confirm(`ลบข้อสอบนี้?\n\n${q.prompt.slice(0, 80)}`)) return;
+  async function handleConfirmDelete() {
+    if (!pendingDelete?.ids.length) return;
+    setDeleting(true);
     try {
-      await deleteExamQuestion(q.id);
-      flash("ลบข้อสอบแล้ว");
-      if (selectedCode) void loadQuestions(selectedCode);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "ลบข้อสอบไม่สำเร็จ"
-      );
+      const result = await deleteMany(pendingDelete.ids, deleteExamQuestion);
+      selection.clear();
+      setPendingDelete(null);
+      if (selectedCode) await loadQuestions(selectedCode);
+      if (result.failed > 0) {
+        setError(result.message ?? "ลบบางข้อสอบไม่สำเร็จ");
+      } else {
+        flash(result.ok > 1 ? `ลบ ${result.ok} ข้อแล้ว` : "ลบข้อสอบแล้ว");
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Exit Exam
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            เลือกกลุ่มข้อสอบ แล้วเพิ่ม/แก้ไขคำถามผ่านระบบ (โหมด Mock)
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <>
+    <AdminPageFrame
+      title="Exit Exam"
+      description="เลือกกลุ่มข้อสอบ แล้วเพิ่ม/แก้ไขคำถามผ่านระบบ (โหมด Mock)"
+      bodyClassName="space-y-6"
+      actions={
+        <>
           <ExamSubjectCreateDialog
             onCreated={() => {
               flash("เพิ่มกลุ่มข้อสอบแล้ว");
@@ -206,105 +219,55 @@ export function ExamAdminManager() {
               setFormOpen(true);
             }}
           />
-        </div>
-      </header>
+        </>
+      }
+    >
+      {notice ? <AdminStatus tone="success">{notice}</AdminStatus> : null}
+      {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-      {notice ? (
-        <p
-          role="status"
-          className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
-        >
-          <CheckCircle2 className="size-4 shrink-0" />
-          {notice}
-        </p>
-      ) : null}
-
-      {error ? (
-        <p
-          role="alert"
-          className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
-          <AlertCircle className="size-4 shrink-0" />
-          {error}
-        </p>
-      ) : null}
-
-      {/* Subject selector */}
-      <section className="space-y-3">
-        <p className="text-sm font-medium text-foreground">กลุ่มข้อสอบ</p>
+      <AdminSection title="กลุ่มข้อสอบ">
         {loadingSubjects ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             กำลังโหลดกลุ่ม...
           </div>
         ) : subjects.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-            ยังไม่มีกลุ่มข้อสอบ — กด &quot;เพิ่มกลุ่ม&quot; เพื่อสร้าง เช่น software, iot
-          </div>
+          <AdminEmptyState
+            title="ยังไม่มีกลุ่มข้อสอบ"
+            description='กด "เพิ่มกลุ่ม" เพื่อสร้าง เช่น software, iot'
+          />
         ) : (
           <div className="flex flex-wrap gap-2">
             {subjects.map((subject) => {
               const Icon = getSubjectIcon(subject.code);
-              const active = subject.code === selectedCode;
               return (
-                <button
+                <AdminPill
                   key={subject.id}
-                  type="button"
+                  active={subject.code === selectedCode}
+                  muted={!subject.is_active}
                   onClick={() => setSelectedCode(subject.code)}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-colors",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card text-foreground hover:bg-muted",
-                    !subject.is_active && "opacity-50"
-                  )}
                 >
                   <Icon className="size-4" />
                   {subject.name}
-                  {!subject.is_active ? (
-                    <span className="text-xs opacity-80">(ปิด)</span>
-                  ) : null}
-                </button>
+                  {!subject.is_active ? <span className="text-xs opacity-80">(ปิด)</span> : null}
+                </AdminPill>
               );
             })}
           </div>
         )}
-      </section>
+      </AdminSection>
 
       {selectedSubject ? (
         <>
-          {/* Settings */}
-          <section className="rounded-xl border border-border bg-card p-4">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">
-                  การตั้งค่าสอบ — {selectedSubject.name}
-                </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  ต้องบันทึกการตั้งค่าก่อน นักศึกษาถึงจะเริ่มสอบกลุ่มนี้ได้
-                  {!hasSetting ? (
-                    <span className="ml-1 font-medium text-amber-700">
-                      (ยังไม่ได้ตั้งค่า)
-                    </span>
-                  ) : null}
-                </p>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => void handleSaveSettings()}
-                disabled={savingSettings}
-              >
-                {savingSettings ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-                บันทึกการตั้งค่า
-              </Button>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <AdminSection
+            title={`การตั้งค่าสอบ — ${selectedSubject.name}`}
+            description={
+              hasSetting
+                ? "ต้องบันทึกการตั้งค่าก่อน นักศึกษาถึงจะเริ่มสอบกลุ่มนี้ได้"
+                : "ต้องบันทึกการตั้งค่าก่อน นักศึกษาถึงจะเริ่มสอบกลุ่มนี้ได้ (ยังไม่ได้ตั้งค่า)"
+            }
+          >
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="exam-qcount">จำนวนข้อที่สุ่มออกมา</Label>
                 <Input
@@ -327,73 +290,86 @@ export function ExamAdminManager() {
               </div>
               <div className="space-y-2">
                 <Label>สถานะ</Label>
-                <label className="flex h-9 items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={isEnabled}
-                    onChange={(e) => setIsEnabled(e.target.checked)}
-                  />
-                  เปิดให้นักศึกษาสอบได้
-                </label>
+                <AdminToggle
+                  checked={isEnabled}
+                  onChange={setIsEnabled}
+                  label="เปิดให้นักศึกษาสอบได้"
+                />
               </div>
             </div>
-          </section>
-
-          {/* Question list */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-foreground">
-                คลังข้อสอบ ({questions.length} ข้อ)
-              </h3>
+            <div className="flex justify-end">
+              <Button type="button" onClick={() => void handleSaveSettings()} disabled={savingSettings}>
+                {savingSettings ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                บันทึกการตั้งค่า
+              </Button>
             </div>
+          </AdminSection>
 
+          <AdminSection title={`คลังข้อสอบ (${questions.length} ข้อ)`}>
             {loadingQuestions ? (
               <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
                 กำลังโหลดข้อสอบ...
               </div>
             ) : questions.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center">
-                <p className="text-sm font-medium text-foreground">ยังไม่มีข้อสอบในกลุ่มนี้</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  กด &quot;เพิ่มข้อสอบ&quot; เพื่อใส่โจทย์และตัวเลือก ก–ง
-                </p>
-              </div>
+              <AdminEmptyState
+                title="ยังไม่มีข้อสอบในกลุ่มนี้"
+                description='กด "เพิ่มข้อสอบ" เพื่อใส่โจทย์และตัวเลือก ก–ง'
+              />
             ) : (
+              <>
+              <AdminSelectionBar
+                total={questions.length}
+                selectedCount={selection.count}
+                allSelected={selection.allSelected}
+                someSelected={selection.someSelected}
+                onToggleAll={selection.setAll}
+                onDeleteSelected={() =>
+                  setPendingDelete({
+                    ids: selection.selectedIds,
+                    label: `${selection.count} ข้อที่เลือก`,
+                  })
+                }
+                deleting={deleting}
+              />
               <ul className="space-y-3">
                 {questions.map((q, idx) => {
                   const correct = q.choices.find((c) => c.is_correct);
                   return (
                     <li
                       key={q.id}
-                      className="rounded-xl border border-border bg-card p-4"
+                      className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
+                        <AdminCheckbox
+                          className="mt-1.5"
+                          checked={selection.selected.has(q.id)}
+                          onCheckedChange={() => selection.toggle(q.id)}
+                          disabled={deleting}
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
+                            <span className="inline-flex size-7 items-center justify-center rounded-xl bg-[#d4652b] text-xs font-semibold text-white">
                               {idx + 1}
                             </span>
-                            {!q.is_active ? (
-                              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
-                                ปิดใช้งาน
-                              </span>
-                            ) : null}
+                            {!q.is_active ? <AdminBadge tone="warning">ปิดใช้งาน</AdminBadge> : null}
                           </div>
-                          <p className="mt-2 text-sm font-medium text-foreground">
+                          <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">
                             {q.prompt}
                           </p>
-                          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                          <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
                             {q.choices.map((c) => (
                               <li
                                 key={c.key}
                                 className={cn(
+                                  "flex items-start gap-2",
                                   c.is_correct && "font-medium text-emerald-700"
                                 )}
                               >
-                                <span className="mr-1 uppercase">{c.key}.</span>
-                                {c.text}
-                                {c.is_correct ? " ✓" : ""}
+                                <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-secondary text-[11px] font-semibold uppercase text-foreground">
+                                  {c.key}
+                                </span>
+                                <span>{c.text}{c.is_correct ? " ✓" : ""}</span>
                               </li>
                             ))}
                           </ul>
@@ -421,7 +397,13 @@ export function ExamAdminManager() {
                             variant="ghost"
                             size="icon"
                             aria-label="ลบ"
-                            onClick={() => void handleDelete(q)}
+                            disabled={deleting}
+                            onClick={() =>
+                              setPendingDelete({
+                                ids: [q.id],
+                                label: q.prompt.slice(0, 80) || "ข้อนี้",
+                              })
+                            }
                           >
                             <Trash2 className="size-4 text-red-600" />
                           </Button>
@@ -431,11 +413,13 @@ export function ExamAdminManager() {
                   );
                 })}
               </ul>
+              </>
             )}
-          </section>
+          </AdminSection>
         </>
       ) : null}
 
+    </AdminPageFrame>
       {selectedCode ? (
         <ExamQuestionFormDialog
           subjectCode={selectedCode}
@@ -448,6 +432,17 @@ export function ExamAdminManager() {
           }}
         />
       ) : null}
-    </div>
+
+      <AdminConfirmDialog
+        open={pendingDelete != null}
+        title={deleteConfirmCopy(pendingDelete).title}
+        description={deleteConfirmCopy(pendingDelete).description}
+        confirming={deleting}
+        onConfirm={() => void handleConfirmDelete()}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      />
+    </>
   );
 }

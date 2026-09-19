@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Loader2, UserPlus, X } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { AdminDialogFrame, AdminFormActions, AdminSelect, AdminStatus } from "@/components/admin";
 import { ApiError } from "@/lib/api";
 import { createWhitelistEntry } from "../api";
 import type { WhitelistRole } from "../types";
@@ -26,6 +26,7 @@ export function WhitelistCreateDialog({ onCreated }: WhitelistCreateDialogProps)
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [studentCode, setStudentCode] = useState("");
   const [role, setRole] = useState<WhitelistRole | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function WhitelistCreateDialog({ onCreated }: WhitelistCreateDialogProps)
   function reset() {
     setEmail("");
     setFullName("");
+    setStudentCode("");
     setRole("");
     setError(null);
   }
@@ -42,7 +44,7 @@ export function WhitelistCreateDialog({ onCreated }: WhitelistCreateDialogProps)
     setError(null);
     setSubmitting(true);
     try {
-      await createWhitelistEntry({ email, full_name: fullName, role });
+      await createWhitelistEntry({ email, full_name: fullName, role, student_code: studentCode });
       reset();
       setOpen(false);
       onCreated();
@@ -75,32 +77,11 @@ export function WhitelistCreateDialog({ onCreated }: WhitelistCreateDialogProps)
           เพิ่มทีละคน
         </Button>
       </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-background p-6 shadow-xl outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="text-lg font-semibold tracking-tight">
-                เพิ่มรายชื่อทีละคน
-              </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                เพิ่มเข้า ce_whitelist โดยตรง — ถ้าไม่เลือก role จะเป็นนักศึกษาโดยอัตโนมัติ
-              </Dialog.Description>
-            </div>
-            <Dialog.Close asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                aria-label="ปิด"
-                disabled={submitting}
-              >
-                <X className="size-4" />
-              </Button>
-            </Dialog.Close>
-          </div>
-
+      <AdminDialogFrame
+        title="เพิ่มรายชื่อทีละคน"
+        description="เพิ่มเข้า ce_whitelist โดยตรง — ถ้าไม่เลือก role จะเป็นนักศึกษาโดยอัตโนมัติ"
+        submitting={submitting}
+      >
           <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="whitelist-email">อีเมล</Label>
@@ -128,31 +109,38 @@ export function WhitelistCreateDialog({ onCreated }: WhitelistCreateDialogProps)
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="whitelist-student-code">รหัสนักศึกษา</Label>
+              <Input
+                id="whitelist-student-code"
+                value={studentCode}
+                onChange={(e) => setStudentCode(e.target.value)}
+                placeholder="6620001"
+                disabled={submitting}
+              />
+              <p className="text-xs text-muted-foreground">
+                ใช้แยกรุ่นในหน้ารายชื่อชั้นปี จาก 2 หลักแรก เช่น 66 → เพื่อนรหัสเดียวกัน
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="whitelist-role">บทบาท (Role)</Label>
-              <select
+              <AdminSelect
                 id="whitelist-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as WhitelistRole | "")}
                 disabled={submitting}
-                className={cn(
-                  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                )}
               >
                 {ROLE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </div>
 
-            {error ? (
-              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </p>
-            ) : null}
+            {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-            <div className="flex justify-end gap-2 pt-2">
+            <AdminFormActions>
               <Dialog.Close asChild>
                 <Button type="button" variant="outline" disabled={submitting}>
                   ยกเลิก
@@ -162,10 +150,9 @@ export function WhitelistCreateDialog({ onCreated }: WhitelistCreateDialogProps)
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
                 เพิ่มรายชื่อ
               </Button>
-            </div>
+            </AdminFormActions>
           </form>
-        </Dialog.Content>
-      </Dialog.Portal>
+      </AdminDialogFrame>
     </Dialog.Root>
   );
 }

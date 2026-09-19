@@ -1,34 +1,28 @@
 "use client";
 
+import { useEffect, useState, type ComponentType } from "react";
 import {
-  Activity,
-  ExternalLink,
+  AlertCircle,
   FilePlus2,
-  FilePenLine,
+  FileQuestion,
   FileX2,
-  Globe2,
-  UsersRound,
+  GraduationCap,
+  Loader2,
+  ScrollText,
 } from "lucide-react";
+import { useAuth } from "@/features/auth";
+import { ApiError } from "@/lib/api";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  EXAM_COLOR,
+  EXTERNAL_QUIZ_COLOR,
+  INTERNAL_QUIZ_COLOR,
+  UsageTrendChart,
+} from "./usage-charts";
 import {
-  EXTERNAL_COLOR,
-  INTERNAL_COLOR,
-  VisitorShareChart,
-  VisitorTrendChart,
-} from "./visitor-charts";
-import {
-  getActivityLogs,
-  getDashboardStats,
-  getVisitorTrend,
-  type ActivityAction,
-  type ActivityLogItem,
-} from "./mock-data";
+  fetchDashboard,
+  type DashboardActivityLog,
+  type DashboardDto,
+} from "./api";
 
 function formatWhen(iso: string) {
   try {
@@ -41,188 +35,238 @@ function formatWhen(iso: string) {
   }
 }
 
-function actionMeta(action: ActivityAction) {
-  switch (action) {
-    case "create":
-      return {
-        label: "เพิ่มข้อมูล",
-        className: "bg-emerald-50 text-emerald-700",
-        Icon: FilePlus2,
-      };
-    case "delete":
-      return {
-        label: "ลบข้อมูล",
-        className: "bg-red-50 text-red-700",
-        Icon: FileX2,
-      };
-    case "update":
-      return {
-        label: "แก้ไขข้อมูล",
-        className: "bg-amber-50 text-amber-700",
-        Icon: FilePenLine,
-      };
-  }
+function todayLabel() {
+  return new Intl.DateTimeFormat("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
 }
 
-function ActivityRow({ item }: { item: ActivityLogItem }) {
+function actionMeta(action: string) {
+  if (action === "delete") {
+    return {
+      label: "ลบข้อมูล",
+      className: "bg-rose-50 text-rose-800",
+      Icon: FileX2,
+    };
+  }
+  return {
+    label: "เพิ่มข้อมูล",
+    className: "bg-emerald-50 text-emerald-800",
+    Icon: FilePlus2,
+  };
+}
+
+function ActivityRow({ item }: { item: DashboardActivityLog }) {
   const meta = actionMeta(item.action);
   const Icon = meta.Icon;
+  const actor = item.actor_name?.trim() || "ระบบ";
 
   return (
-    <li className="flex items-start gap-3 border-b border-border/60 py-3 last:border-b-0">
-      <div className={`mt-0.5 rounded-md p-2 ${meta.className}`}>
+    <li className="flex items-start gap-3 py-3.5 first:pt-0 last:pb-0">
+      <div className={`mt-0.5 rounded-xl p-2 ${meta.className}`}>
         <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">
-          {item.actorName}{" "}
+          {actor}{" "}
           <span className="font-normal text-muted-foreground">{meta.label}</span>
         </p>
         <p className="truncate text-sm text-muted-foreground">
-          {item.targetType}: {item.targetTitle}
+          {item.target_type}: {item.target_title}
         </p>
       </div>
-      <time className="shrink-0 text-xs text-muted-foreground">{formatWhen(item.createdAt)}</time>
+      <time className="shrink-0 text-xs text-muted-foreground">
+        {formatWhen(item.created_at)}
+      </time>
     </li>
   );
 }
 
+function StatCard({
+  title,
+  value,
+  hint,
+  icon: Icon,
+  tint,
+}: {
+  title: string;
+  value: string;
+  hint: string;
+  icon: ComponentType<{ className?: string }>;
+  tint: string;
+}) {
+  return (
+    <article className="admin-card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <div className={`rounded-xl p-2 ${tint}`}>
+          <Icon className="size-4" />
+        </div>
+      </div>
+      <p className="mt-4 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{hint}</p>
+    </article>
+  );
+}
+
 export function AdminDashboard() {
-  const stats = getDashboardStats();
-  const logs = getActivityLogs();
-  const trend = getVisitorTrend();
-  const share = [
-    { name: "External", value: stats.externalVisitors, color: EXTERNAL_COLOR },
-    { name: "Internal", value: stats.internalVisitors, color: INTERNAL_COLOR },
-  ];
-  const total = stats.externalVisitors + stats.internalVisitors;
+  const { user } = useAuth();
+  const [data, setData] = useState<DashboardDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const firstName = (user?.displayName || user?.email || "Staff").split(/\s+/)[0];
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    fetchDashboard()
+      .then((payload) => {
+        if (mounted) setData(payload);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "โหลดแดชบอร์ดไม่สำเร็จ"
+        );
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">Dashboard</h2>
-        <p className="text-sm text-muted-foreground">
-          สรุปจำนวนผู้เข้าชมและบันทึกการเพิ่ม/ลบข้อมูล (ข้อมูลตัวอย่าง)
-        </p>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">แดชบอร์ด</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {firstName} · สรุป Quiz, Exit Exam และการแก้ไขข้อมูลเว็บ
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">{todayLabel()}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">External visitors</CardTitle>
-            <Globe2 className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.externalVisitors.toLocaleString("th-TH")}
-            </div>
-            <p className="text-xs text-muted-foreground">{stats.externalChange}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Internal visitors</CardTitle>
-            <UsersRound className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.internalVisitors.toLocaleString("th-TH")}
-            </div>
-            <p className="text-xs text-muted-foreground">{stats.internalChange}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">รวมผู้เข้าชม</CardTitle>
-            <ExternalLink className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{total.toLocaleString("th-TH")}</div>
-            <p className="text-xs text-muted-foreground">External + Internal</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">การแก้ไขล่าสุด</CardTitle>
-            <Activity className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.recentActions}</div>
-            <p className="text-xs text-muted-foreground">
-              จากเนื้อหาทั้งหมด {stats.totalContents} รายการ
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Card className="min-w-0 lg:col-span-3">
-          <CardHeader>
-            <CardTitle>แนวโน้มผู้เข้าชม</CardTitle>
-            <CardDescription>External vs Internal — 7 วันล่าสุด</CardDescription>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <VisitorTrendChart data={trend} />
-            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-blue-600" />
-                External
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-slate-500" />
-                Internal
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="min-w-0 lg:col-span-2">
-          <CardHeader>
-            <CardTitle>สัดส่วนผู้เข้าชม</CardTitle>
-            <CardDescription>แยก External / Internal</CardDescription>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <VisitorShareChart
-              external={stats.externalVisitors}
-              internal={stats.internalVisitors}
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          กำลังโหลดแดชบอร์ด...
+        </div>
+      ) : error ? (
+        <div className="admin-card flex items-start gap-3 border-rose-200/80 bg-rose-50 p-5 text-sm text-rose-800">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          {error}
+        </div>
+      ) : data ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              title="Quiz ภายนอก"
+              value={data.external_quiz_plays.toLocaleString("th-TH")}
+              hint="ครั้งที่ผู้สนใจเล่นแบบทดสอบ"
+              icon={FileQuestion}
+              tint="bg-sky-50 text-sky-800"
             />
-            <ul className="mt-2 space-y-2 text-sm">
-              {share.map((item) => (
-                <li key={item.name} className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2">
-                    <span
-                      className="size-2.5 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    {item.name}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {item.value.toLocaleString("th-TH")} (
-                    {Math.round((item.value / total) * 100)}%)
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+            <StatCard
+              title="Quiz ภายในสาขา"
+              value={data.internal_quiz_plays.toLocaleString("th-TH")}
+              hint="ครั้งที่นักศึกษาเล่นแบบทดสอบ"
+              icon={GraduationCap}
+              tint="bg-violet-50 text-violet-800"
+            />
+            <StatCard
+              title="Exit Exam ที่เริ่มทำ"
+              value={data.exam_started.toLocaleString("th-TH")}
+              hint="รวมทุกกลุ่มวิชา"
+              icon={ScrollText}
+              tint="bg-emerald-50 text-emerald-800"
+            />
+            <StatCard
+              title="Exit Exam ที่ส่งแล้ว"
+              value={data.exam_submitted.toLocaleString("th-TH")}
+              hint="ส่งคำตอบครบ"
+              icon={ScrollText}
+              tint="bg-amber-50 text-amber-800"
+            />
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity log</CardTitle>
-          <CardDescription>บันทึกการเพิ่ม แก้ไข หรือลบข้อมูล</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul>
-            {logs.map((item) => (
-              <ActivityRow key={item.id} item={item} />
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+          <div className="grid gap-4">
+            <article className="admin-card min-w-0 p-5 lg:p-6">
+              <div className="mb-4">
+                <h3 className="text-base font-semibold tracking-tight">การใช้งาน 7 วันล่าสุด</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Quiz ภายนอก / ภายในสาขา และ Exit Exam
+                </p>
+              </div>
+              {data.trend.every(
+                (point) =>
+                  point.external_quiz === 0 &&
+                  point.internal_quiz === 0 &&
+                  point.exam === 0
+              ) ? (
+                <p className="rounded-2xl border border-dashed border-border px-4 py-12 text-center text-sm text-muted-foreground">
+                  ยังไม่มีการเล่น Quiz หรือ Exit Exam ใน 7 วันที่ผ่านมา
+                </p>
+              ) : (
+                <>
+                  <UsageTrendChart data={data.trend} />
+                  <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: EXTERNAL_QUIZ_COLOR }}
+                      />
+                      Quiz ภายนอก
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: INTERNAL_QUIZ_COLOR }}
+                      />
+                      Quiz ภายในสาขา
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: EXAM_COLOR }}
+                      />
+                      Exit Exam
+                    </span>
+                  </div>
+                </>
+              )}
+            </article>
+
+            <article className="admin-card p-5 sm:p-6">
+              <div className="mb-4">
+                <h3 className="text-base font-semibold tracking-tight">บันทึกการแก้ไขเว็บ</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  รายการที่เพิ่มหรือลบล่าสุด
+                </p>
+              </div>
+              {data.logs.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+                  ยังไม่มีบันทึกการเพิ่มหรือลบข้อมูล
+                </p>
+              ) : (
+                <ul className="divide-y divide-border/70">
+                  {data.logs.map((item) => (
+                    <ActivityRow key={`${item.action}-${item.id}`} item={item} />
+                  ))}
+                </ul>
+              )}
+            </article>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

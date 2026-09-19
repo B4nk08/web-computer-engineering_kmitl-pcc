@@ -13,5 +13,6 @@ export function mapCareerPath(item: ContentDetail): CareerPath {
     role: extraString(item.extra, "role") || extraString(item.extra, "position"),
     detail: item.body,
     imageUrl: item.imageUrl,
+    clusterCode: extraString(item.extra, "cluster_code"),
   };
 }

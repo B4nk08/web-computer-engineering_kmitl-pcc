@@ -17,6 +17,7 @@ type ContentRepository interface {
 	Create(content *models.Content) error
 	FindByID(id uuid.UUID) (*models.Content, error)
 	List(filter ContentListFilter) ([]models.Content, error)
+	ListPublishedCareersByCluster(clusterCode string) ([]models.Content, error)
 	Update(content *models.Content) error
 	Delete(id uuid.UUID) error
 }
@@ -56,6 +57,20 @@ func (r *contentRepository) List(filter ContentListFilter) ([]models.Content, er
 
 	var items []models.Content
 	if err := q.Order("sort_order ASC, created_at DESC").Find(&items).Error; err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *contentRepository) ListPublishedCareersByCluster(clusterCode string) ([]models.Content, error) {
+	var items []models.Content
+	err := r.db.Where(
+		"type = ? AND is_published = ? AND extra->>'cluster_code' = ?",
+		models.ContentCareerPath,
+		true,
+		clusterCode,
+	).Order("sort_order ASC, created_at DESC").Find(&items).Error
+	if err != nil {
 		return nil, err
 	}
 	return items, nil

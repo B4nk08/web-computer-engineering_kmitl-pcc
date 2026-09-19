@@ -11,7 +11,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AdminHeader() {
@@ -25,57 +24,63 @@ export function AdminHeader() {
   const title = isDashboard ? "Dashboard" : (current?.title ?? "Admin");
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-black/5 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-      <div className="flex items-center gap-2 px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mr-2 data-[orientation=vertical]:h-4"
-        />
-        <Breadcrumb>
-          <BreadcrumbList>
-            {isDashboard && !actionLabel ? (
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
-            ) : (
-              <>
-                {group && (
-                  <>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="/admin">{group.label}</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                  </>
-                )}
-                <BreadcrumbItem>
-                  {actionLabel && onBackToList ? (
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-white/40 bg-white/70 px-4 backdrop-blur-xl sm:h-16 sm:px-6 lg:px-8">
+      <SidebarTrigger className="-ml-1 rounded-xl border border-border/80 bg-white shadow-sm hover:bg-white" />
+      <Breadcrumb>
+        <BreadcrumbList className="text-sm">
+          {isDashboard && !actionLabel ? (
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-medium text-foreground">
+                Dashboard
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          ) : (
+            <>
+              {group && (
+                <>
+                  <BreadcrumbItem className="hidden md:block">
                     <BreadcrumbLink
-                      href={pathname}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onBackToList();
-                      }}
+                      href="/admin"
+                      className="text-muted-foreground hover:text-foreground"
                     >
-                      {title}
+                      {group.label}
                     </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbPage>{title}</BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-                {actionLabel ? (
-                  <>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{actionLabel}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </>
-                ) : null}
-              </>
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                </>
+              )}
+              <BreadcrumbItem>
+                {actionLabel && onBackToList ? (
+                  <BreadcrumbLink
+                    href={pathname}
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onBackToList();
+                    }}
+                  >
+                    {title}
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage className="font-medium text-foreground">
+                    {title}
+                  </BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {actionLabel ? (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="font-medium text-foreground">
+                      {actionLabel}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              ) : null}
+            </>
+          )}
+        </BreadcrumbList>
+      </Breadcrumb>
     </header>
   );
 }

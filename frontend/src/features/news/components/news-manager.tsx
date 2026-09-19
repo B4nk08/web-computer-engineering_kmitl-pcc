@@ -1,11 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAdminView } from "@/components/admin";
+import {
+  AdminConfirmDialog,
+  AdminPageFrame,
+  AdminPill,
+  AdminSelectionBar,
+  AdminStatus,
+  deleteConfirmCopy,
+  deleteMany,
+  useAdminSelection,
+  useAdminView,
+  type PendingDelete,
+} from "@/components/admin";
 import { ApiError } from "@/lib/api";
-import { listNews } from "../api";
+import { deleteNews, listNews } from "../api";
 import type { NewsItem } from "../types";
 import { NewsFormView, type NewsFormMode } from "./news-form-view";
 import { NewsList } from "./news-list";
@@ -23,11 +34,21 @@ export function NewsManager({ title, description }: NewsManagerProps) {
   const { setTrail, clearTrail } = useAdminView();
   const [items, setItems] = useState<NewsItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<ViewState>({ kind: "list" });
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [audienceFilter, setAudienceFilter] = useState<"all" | NewsItem["audience"]>("all");
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+  const selection = useAdminSelection(itemIds);
+
+  function flash(message: string) {
+    setNotice(message);
+    window.setTimeout(() => setNotice(null), 3500);
+  }
 
   const load = useCallback(async (mode: "initial" | "refresh" = "initial") => {
     if (mode === "initial") setLoading(true);
@@ -73,6 +94,24 @@ export function NewsManager({ title, description }: NewsManagerProps) {
     return () => clearTrail();
   }, [view, setTrail, clearTrail, backToList]);
 
+  async function handleConfirmDelete() {
+    if (!pendingDelete?.ids.length) return;
+    setDeleting(true);
+    try {
+      const result = await deleteMany(pendingDelete.ids, deleteNews);
+      selection.clear();
+      setPendingDelete(null);
+      await load("refresh");
+      if (result.failed > 0) {
+        setError(result.message ?? "ลบบางรายการไม่สำเร็จ");
+      } else {
+        flash(result.ok > 1 ? `ลบ ${result.ok} รายการแล้ว` : "ลบรายการแล้ว");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (view.kind === "form") {
     return (
       <NewsFormView
@@ -89,13 +128,11 @@ export function NewsManager({ title, description }: NewsManagerProps) {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <AdminPageFrame
+      title={title}
+      description={description}
+      actions={
+        <>
           <Button
             type="button"
             variant="outline"
@@ -113,47 +150,77 @@ export function NewsManager({ title, description }: NewsManagerProps) {
             <Plus className="size-4" />
             เพิ่มข้อมูล
           </Button>
-        </div>
-      </header>
-
-      <div className="mb-4 flex flex-wrap gap-2">
+        </>
+      }
+    >
+      <div className="mb-5 flex flex-wrap gap-2">
         {(
           [
             { id: "all", label: "ทั้งหมด" },
-            { id: "external", label: "External" },
-            { id: "internal", label: "Internal" },
+            { id: "external", label: "รับสมัคร" },
+            { id: "internal", label: "ภายในสาขา" },
           ] as const
         ).map((tab) => (
-          <Button
+          <AdminPill
             key={tab.id}
-            type="button"
-            size="sm"
-            variant={audienceFilter === tab.id ? "default" : "outline"}
+            active={audienceFilter === tab.id}
             onClick={() => setAudienceFilter(tab.id)}
           >
             {tab.label}
-          </Button>
+          </AdminPill>
         ))}
       </div>
 
+      {notice ? <div className="mb-4"><AdminStatus tone="success">{notice}</AdminStatus></div> : null}
       {error ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-10 text-center">
-          <AlertCircle className="size-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium text-foreground">โหลดข้อมูลไม่สำเร็จ</p>
-            <p className="mt-1 text-sm text-muted-foreground">{error}</p>
-          </div>
+        <div className="mb-4 space-y-3">
+          <AdminStatus tone="error">{error}</AdminStatus>
           <Button type="button" variant="outline" size="sm" onClick={() => void load("refresh")}>
             ลองอีกครั้ง
           </Button>
         </div>
-      ) : (
-        <NewsList
-          items={items}
-          loading={loading || refreshing}
-          onEdit={(id) => setView({ kind: "form", mode: "edit", editId: id })}
-        />
-      )}
-    </div>
+      ) : null}
+
+      {!error || items.length > 0 ? (
+        <>
+          <AdminSelectionBar
+            total={items.length}
+            selectedCount={selection.count}
+            allSelected={selection.allSelected}
+            someSelected={selection.someSelected}
+            onToggleAll={selection.setAll}
+            onDeleteSelected={() =>
+              setPendingDelete({
+                ids: selection.selectedIds,
+                label: `${selection.count} รายการที่เลือก`,
+              })
+            }
+            deleting={deleting}
+          />
+          <NewsList
+            items={items}
+            loading={loading || refreshing}
+            selectedIds={selection.selected}
+            onToggle={selection.toggle}
+            onEdit={(id) => setView({ kind: "form", mode: "edit", editId: id })}
+            onDelete={(item) =>
+              setPendingDelete({ ids: [item.id], label: item.title || "รายการนี้" })
+            }
+            deleting={deleting}
+          />
+        </>
+      ) : null}
+
+      <AdminConfirmDialog
+        open={pendingDelete != null}
+        title={deleteConfirmCopy(pendingDelete).title}
+        description={deleteConfirmCopy(pendingDelete).description}
+        confirming={deleting}
+        onConfirm={() => void handleConfirmDelete()}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      />
+    </AdminPageFrame>
   );
 }

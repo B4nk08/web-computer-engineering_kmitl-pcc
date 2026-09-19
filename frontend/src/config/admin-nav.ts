@@ -4,6 +4,7 @@ import {
   Briefcase,
   CalendarDays,
   ClipboardList,
+  Compass,
   FileQuestion,
   GraduationCap,
   Newspaper,
@@ -28,7 +29,7 @@ export type ContentType =
 
 export type StaffRole = "admin" | "teacher";
 
-export type AdminNavGroupId = "public" | "external" | "system";
+export type AdminNavGroupId = "public" | "external" | "student" | "system";
 
 export type AdminNavItem = {
   title: string;
@@ -59,7 +60,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         href: "/admin/curriculum",
         type: "curriculum",
         description:
-          "หน้าแรก → About Us — ข้อความหลักสูตร ตัวเลขสรุป รูปด้านซ้าย และหน้าหลักสูตร",
+          "หน้า /about-us/beng เป็น listing หลักสูตร · รูป About Us ใช้บนหน้าแรก",
         icon: BookOpen,
       },
       {
@@ -82,7 +83,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         href: "/admin/news",
         type: "news",
         description:
-          "หน้า /news — ประกาศภายนอก (เช่น TCAS) และข่าวภายใน แยกจากกล่องกิจกรรม",
+          "หน้า /news = ประกาศรับสมัคร (ทุกคนเห็น) · /news/internal = ประกาศภายในสาขา (ล็อกอิน)",
         icon: Newspaper,
       },
       {
@@ -109,7 +110,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         title: "ข้อมูลรับสมัคร",
         href: "/admin/admissions",
         type: "admissions",
-        description: "หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม",
+        description: "หนึ่งรายการต่อรอบรับสมัคร เช่น TCAS 1 Portfolio, โควตา",
         icon: ClipboardList,
       },
       {
@@ -120,11 +121,27 @@ export const adminNavGroups: AdminNavGroup[] = [
         icon: Briefcase,
       },
       {
-        title: "Quiz แนะนำ",
+        title: "Quiz วัดความพร้อม",
         href: "/admin/quiz",
         type: "quiz",
-        description: "แบบทดสอบสำหรับผู้สนใจ — จัดการคำถามและผลประเมิน",
+        description:
+          "หน้า /academics/quiz — แบบทดสอบสำหรับบุคคลทั่วไป แต่ละตัวเลือกมีน้ำหนัก 0–3",
         icon: FileQuestion,
+        roles: ["admin", "teacher"],
+      },
+    ],
+  },
+  {
+    id: "student",
+    label: "สำหรับนักศึกษา",
+    items: [
+      {
+        title: "Quiz แนะนำสาย",
+        href: "/admin/quiz-recommend",
+        type: "quiz",
+        description:
+          "หน้า /student/quiz-recommend — แบบทดสอบแนะนำสายงานสำหรับนักศึกษาที่ล็อกอินแล้ว",
+        icon: Compass,
         roles: ["admin", "teacher"],
       },
       {

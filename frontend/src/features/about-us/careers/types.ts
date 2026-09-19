@@ -5,4 +5,5 @@ export type CareerPath = {
   role: string;
   detail: string;
   imageUrl: string;
+  clusterCode: string;
 };

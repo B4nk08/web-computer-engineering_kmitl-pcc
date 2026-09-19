@@ -38,7 +38,9 @@ func main() {
 	contentRepo := repository.NewContentRepository(db)
 	newsRepo := repository.NewNewsRepository(db)
 	quizRepo := repository.NewQuizRepository(db)
+	clusterRepo := repository.NewCareerClusterRepository(db)
 	examRepo := repository.NewExamRepository(db)
+	dashboardRepo := repository.NewDashboardRepository(db)
 
 	// S3 (optional — upload API returns 503 if not configured)
 	var s3Client *s3x.Client
@@ -65,23 +67,25 @@ func main() {
 	authService := service.NewAuthService(userRepo, whitelistRepo, tokens, googleVerifier)
 	contentService := service.NewContentService(contentRepo)
 	newsService := service.NewNewsService(newsRepo)
-	quizService := service.NewQuizService(quizRepo)
+	quizService := service.NewQuizService(quizRepo, clusterRepo, contentRepo)
 	examService := service.NewExamService(examRepo)
 	uploadService := service.NewUploadService(s3Client)
 	studentService := service.NewStudentService(whitelistRepo)
 	whitelistService := service.NewWhitelistService(whitelistRepo)
+	dashboardService := service.NewDashboardService(dashboardRepo)
 
 	// handlers
 	deps := router.Dependencies{
 		Health:    handlers.NewHealthHandler(db),
 		Auth:      handlers.NewAuthHandler(authService, userRepo),
-		Content:   handlers.NewContentHandler(contentService),
-		News:      handlers.NewNewsHandler(newsService),
+		Content:   handlers.NewContentHandler(contentService, dashboardService),
+		News:      handlers.NewNewsHandler(newsService, dashboardService),
 		Quiz:      handlers.NewQuizHandler(quizService),
 		Exam:      handlers.NewExamHandler(examService),
 		Upload:    handlers.NewUploadHandler(uploadService),
 		Students:  handlers.NewStudentHandler(studentService),
 		Whitelist: handlers.NewWhitelistHandler(whitelistService),
+		Dashboard: handlers.NewDashboardHandler(dashboardService),
 		Tokens:    tokens,
 	}
 

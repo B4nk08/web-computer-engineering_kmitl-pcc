@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { FolderPlus, Loader2, X } from "lucide-react";
+import { FolderPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
+import { AdminDialogFrame, AdminFormActions, AdminStatus } from "@/components/admin";
 import { createExamSubject } from "../../api";
 
 type ExamSubjectCreateDialogProps = {
@@ -66,25 +67,11 @@ export function ExamSubjectCreateDialog({ onCreated }: ExamSubjectCreateDialogPr
           เพิ่มกลุ่ม
         </Button>
       </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-background p-6 shadow-xl outline-none">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="text-lg font-semibold tracking-tight">
-                เพิ่มกลุ่มข้อสอบ
-              </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                เช่น software, iot — code ใช้ตัวเล็ก a-z 0-9 _ - และแก้ทีหลังไม่ได้
-              </Dialog.Description>
-            </div>
-            <Dialog.Close asChild>
-              <Button type="button" variant="ghost" size="icon" disabled={submitting} aria-label="ปิด">
-                <X className="size-4" />
-              </Button>
-            </Dialog.Close>
-          </div>
-
+      <AdminDialogFrame
+        title="เพิ่มกลุ่มข้อสอบ"
+        description="เช่น software, iot — code ใช้ตัวเล็ก a-z 0-9 _ - และแก้ทีหลังไม่ได้"
+        submitting={submitting}
+      >
           <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="exam-subject-code">Code</Label>
@@ -120,13 +107,9 @@ export function ExamSubjectCreateDialog({ onCreated }: ExamSubjectCreateDialogPr
               />
             </div>
 
-            {error ? (
-              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </p>
-            ) : null}
+            {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-            <div className="flex justify-end gap-2 pt-2">
+            <AdminFormActions>
               <Dialog.Close asChild>
                 <Button type="button" variant="outline" disabled={submitting}>
                   ยกเลิก
@@ -136,10 +119,9 @@ export function ExamSubjectCreateDialog({ onCreated }: ExamSubjectCreateDialogPr
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
                 เพิ่มกลุ่ม
               </Button>
-            </div>
+            </AdminFormActions>
           </form>
-        </Dialog.Content>
-      </Dialog.Portal>
+      </AdminDialogFrame>
     </Dialog.Root>
   );
 }

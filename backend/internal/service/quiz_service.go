@@ -1,8 +1,12 @@
 package service
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"math"
+	"math/big"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,17 +17,20 @@ import (
 )
 
 var (
-	ErrInvalidQuizKind   = errors.New("invalid quiz kind")
-	ErrQuizNotFound      = errors.New("quiz not found")
+	ErrInvalidQuizKind      = errors.New("invalid quiz kind")
+	ErrQuizNotFound         = errors.New("quiz not found")
 	ErrQuizQuestionNotFound = errors.New("quiz question not found")
-	ErrQuizInactive      = errors.New("quiz is inactive")
+	ErrQuizInactive         = errors.New("quiz is inactive")
+	ErrQuizLoginRequired    = errors.New("login required for this quiz")
+	ErrQuizIncomplete       = errors.New("please answer every question")
 )
 
 type QuizService interface {
 	CreateQuiz(req dto.CreateQuizRequest) (*dto.QuizResponse, error)
 	ListQuizzes(filter dto.QuizFilter) ([]dto.QuizResponse, error)
+	ListCareerClusters() ([]dto.CareerClusterResponse, error)
 	GetQuizAdmin(id uuid.UUID) (*dto.QuizDetailAdminResponse, error)
-	GetQuizPlay(id uuid.UUID) (*dto.QuizPlayResponse, error)
+	GetQuizPlay(id uuid.UUID, userID *uuid.UUID) (*dto.QuizPlayResponse, error)
 	UpdateQuiz(id uuid.UUID, req dto.UpdateQuizRequest) (*dto.QuizResponse, error)
 	DeleteQuiz(id uuid.UUID) error
 
@@ -36,11 +43,17 @@ type QuizService interface {
 }
 
 type quizService struct {
-	quizzes repository.QuizRepository
+	quizzes  repository.QuizRepository
+	clusters repository.CareerClusterRepository
+	contents repository.ContentRepository
 }
 
-func NewQuizService(quizzes repository.QuizRepository) QuizService {
-	return &quizService{quizzes: quizzes}
+func NewQuizService(
+	quizzes repository.QuizRepository,
+	clusters repository.CareerClusterRepository,
+	contents repository.ContentRepository,
+) QuizService {
+	return &quizService{quizzes: quizzes, clusters: clusters, contents: contents}
 }
 
 func parseQuizKind(v string) (models.QuizKind, error) {
@@ -67,6 +80,9 @@ func (s *quizService) CreateQuiz(req dto.CreateQuizRequest) (*dto.QuizResponse, 
 		Description: req.Description,
 		IsActive:    active,
 	}
+	if req.QuestionCount != nil && *req.QuestionCount > 0 {
+		quiz.QuestionCount = *req.QuestionCount
+	}
 	if err := s.quizzes.CreateQuiz(quiz); err != nil {
 		return nil, err
 	}
@@ -92,6 +108,25 @@ func (s *quizService) ListQuizzes(filter dto.QuizFilter) ([]dto.QuizResponse, er
 	out := make([]dto.QuizResponse, 0, len(items))
 	for i := range items {
 		out = append(out, dto.NewQuizResponse(&items[i]))
+	}
+	return out, nil
+}
+
+func (s *quizService) ListCareerClusters() ([]dto.CareerClusterResponse, error) {
+	items, err := s.clusters.ListActive()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]dto.CareerClusterResponse, 0, len(items))
+	for _, item := range items {
+		out = append(out, dto.CareerClusterResponse{
+			Code:        item.Code,
+			Name:        item.Name,
+			NameEn:      item.NameEn,
+			Description: item.Description,
+			ImageURL:    item.ImageURL,
+			SortOrder:   item.SortOrder,
+		})
 	}
 	return out, nil
 }
@@ -149,7 +184,7 @@ func (s *quizService) GetQuizAdmin(id uuid.UUID) (*dto.QuizDetailAdminResponse, 
 	}, nil
 }
 
-func (s *quizService) GetQuizPlay(id uuid.UUID) (*dto.QuizPlayResponse, error) {
+func (s *quizService) GetQuizPlay(id uuid.UUID, userID *uuid.UUID) (*dto.QuizPlayResponse, error) {
 	quiz, err := s.quizzes.FindQuizByID(id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
@@ -159,6 +194,9 @@ func (s *quizService) GetQuizPlay(id uuid.UUID) (*dto.QuizPlayResponse, error) {
 	}
 	if !quiz.IsActive {
 		return nil, ErrQuizInactive
+	}
+	if quiz.Kind == models.QuizInternal && userID == nil {
+		return nil, ErrQuizLoginRequired
 	}
 	adminQs, err := s.loadQuestionsAdmin(id)
 	if err != nil {
@@ -182,6 +220,9 @@ func (s *quizService) GetQuizPlay(id uuid.UUID) (*dto.QuizPlayResponse, error) {
 			Options:   opts,
 		})
 	}
+	shuffleSlice(publicQs)
+	n := playSize(quiz.QuestionCount, len(publicQs))
+	publicQs = publicQs[:n]
 	return &dto.QuizPlayResponse{
 		Quiz:      dto.NewQuizResponse(quiz),
 		Questions: publicQs,
@@ -204,6 +245,13 @@ func (s *quizService) UpdateQuiz(id uuid.UUID, req dto.UpdateQuizRequest) (*dto.
 	}
 	if req.IsActive != nil {
 		quiz.IsActive = *req.IsActive
+	}
+	if req.QuestionCount != nil {
+		if *req.QuestionCount < 0 {
+			quiz.QuestionCount = 0
+		} else {
+			quiz.QuestionCount = *req.QuestionCount
+		}
 	}
 	if err := s.quizzes.UpdateQuiz(quiz); err != nil {
 		return nil, err
@@ -289,6 +337,20 @@ func (s *quizService) UpdateQuestion(id uuid.UUID, req dto.UpdateQuizQuestionReq
 	if err := s.quizzes.UpdateQuestion(q); err != nil {
 		return nil, err
 	}
+	if len(req.Options) >= 2 {
+		opts := make([]models.QuizOption, 0, len(req.Options))
+		for _, o := range req.Options {
+			opts = append(opts, models.QuizOption{
+				QuestionID: q.ID,
+				Label:      o.Label,
+				ScoreMap:   datatypes.JSON(o.ScoreMap),
+				SortOrder:  o.SortOrder,
+			})
+		}
+		if err := s.quizzes.ReplaceOptions(q.ID, opts); err != nil {
+			return nil, err
+		}
+	}
 	options, err := s.quizzes.ListOptionsByQuestionIDs([]uuid.UUID{q.ID})
 	if err != nil {
 		return nil, err
@@ -332,14 +394,19 @@ func (s *quizService) SubmitAttempt(quizID uuid.UUID, userID *uuid.UUID, req dto
 	if !quiz.IsActive {
 		return nil, ErrQuizInactive
 	}
+	if quiz.Kind == models.QuizInternal && userID == nil {
+		return nil, ErrQuizLoginRequired
+	}
 
 	questions, err := s.quizzes.ListQuestionsByQuizID(quizID)
 	if err != nil {
 		return nil, err
 	}
 	qIDs := make([]uuid.UUID, 0, len(questions))
+	questionSet := map[string]struct{}{}
 	for _, q := range questions {
 		qIDs = append(qIDs, q.ID)
+		questionSet[q.ID.String()] = struct{}{}
 	}
 	options, err := s.quizzes.ListOptionsByQuestionIDs(qIDs)
 	if err != nil {
@@ -350,19 +417,17 @@ func (s *quizService) SubmitAttempt(quizID uuid.UUID, userID *uuid.UUID, req dto
 		optByID[o.ID.String()] = o
 	}
 
-	scores := map[string]float64{
-		string(models.TrackIoT):         0,
-		string(models.TrackSoftware):    0,
-		string(models.TrackNetwork):     0,
-		string(models.TrackProgramming): 0,
-	}
-	answered := 0
-	for _, optID := range req.Answers {
-		opt, ok := optByID[optID]
-		if !ok {
+	answered := map[string]struct{}{}
+	scores := map[string]float64{}
+	for qID, optID := range req.Answers {
+		if _, ok := questionSet[qID]; !ok {
 			continue
 		}
-		answered++
+		opt, ok := optByID[optID]
+		if !ok || opt.QuestionID.String() != qID {
+			continue
+		}
+		answered[qID] = struct{}{}
 		var scoreMap map[string]float64
 		if len(opt.ScoreMap) > 0 {
 			_ = json.Unmarshal(opt.ScoreMap, &scoreMap)
@@ -371,30 +436,34 @@ func (s *quizService) SubmitAttempt(quizID uuid.UUID, userID *uuid.UUID, req dto
 			scores[k] += v
 		}
 	}
+	need := playSize(quiz.QuestionCount, len(questions))
+	if need == 0 || len(answered) != need {
+		return nil, ErrQuizIncomplete
+	}
 
-	var recommended *models.TrackGroup
-	bestTrack := ""
-	bestScore := -1.0
-	for track, score := range scores {
-		if score > bestScore {
-			bestScore = score
-			bestTrack = track
+	played := make([]models.QuizQuestion, 0, len(answered))
+	for _, q := range questions {
+		if _, ok := answered[q.ID.String()]; ok {
+			played = append(played, q)
 		}
 	}
-	if bestTrack != "" {
-		t := models.TrackGroup(bestTrack)
-		recommended = &t
+
+	var recommended *models.TrackGroup
+	var resultJSON []byte
+	if quiz.Kind == models.QuizInternal {
+		payload, rec, err := s.buildInternalResult(scores, len(played), len(answered))
+		if err != nil {
+			return nil, err
+		}
+		resultJSON, _ = json.Marshal(payload)
+		recommended = rec
+	} else {
+		payload := buildExternalResult(played, options, req.Answers, optByID, len(answered))
+		resultJSON, _ = json.Marshal(payload)
 	}
 
 	now := time.Now().UTC()
 	answersJSON, _ := json.Marshal(req.Answers)
-	resultPayload := map[string]any{
-		"scores":         scores,
-		"answered_count": answered,
-		"question_count": len(questions),
-	}
-	resultJSON, _ := json.Marshal(resultPayload)
-
 	attempt := &models.QuizAttempt{
 		QuizID:           quizID,
 		UserID:           userID,
@@ -407,6 +476,221 @@ func (s *quizService) SubmitAttempt(quizID uuid.UUID, userID *uuid.UUID, req dto
 		return nil, err
 	}
 	return mapQuizAttempt(attempt), nil
+}
+
+const internalCloseGap = 12
+
+func playSize(configured, bank int) int {
+	if bank <= 0 {
+		return 0
+	}
+	if configured <= 0 || configured >= bank {
+		return bank
+	}
+	return configured
+}
+
+func shuffleSlice[T any](items []T) {
+	for i := len(items) - 1; i > 0; i-- {
+		jBig, err := rand.Int(rand.Reader, big.NewInt(int64(i+1)))
+		if err != nil {
+			return
+		}
+		j := int(jBig.Int64())
+		items[i], items[j] = items[j], items[i]
+	}
+}
+
+func (s *quizService) buildInternalResult(scores map[string]float64, questionCount, answeredCount int) (*dto.InternalQuizResult, *models.TrackGroup, error) {
+	clusters, err := s.clusters.ListActive()
+	if err != nil {
+		return nil, nil, err
+	}
+	views := make([]dto.ClusterScoreView, 0, len(clusters))
+	for _, cluster := range clusters {
+		score := scores[cluster.Code]
+		percent := 0
+		if questionCount > 0 {
+			percent = int(math.Round((score / float64(questionCount)) * 100))
+		}
+		views = append(views, dto.ClusterScoreView{
+			Code:        cluster.Code,
+			Name:        cluster.Name,
+			NameEn:      cluster.NameEn,
+			Description: cluster.Description,
+			Score:       score,
+			Percent:     percent,
+		})
+	}
+	sort.SliceStable(views, func(i, j int) bool {
+		if views[i].Percent != views[j].Percent {
+			return views[i].Percent > views[j].Percent
+		}
+		if views[i].Score != views[j].Score {
+			return views[i].Score > views[j].Score
+		}
+		return views[i].Code < views[j].Code
+	})
+
+	isClose := false
+	recommendedCode := ""
+	if len(views) > 0 && views[0].Score > 0 {
+		recommendedCode = views[0].Code
+		if len(views) > 1 {
+			gap := views[0].Percent - views[1].Percent
+			isClose = gap < internalCloseGap
+		}
+		careers, err := s.careerBriefs(views[0].Code, 4)
+		if err != nil {
+			return nil, nil, err
+		}
+		views[0].Careers = careers
+		if isClose && len(views) > 1 {
+			runner, err := s.careerBriefs(views[1].Code, 2)
+			if err != nil {
+				return nil, nil, err
+			}
+			views[1].Careers = runner
+		}
+	}
+
+	var rec *models.TrackGroup
+	if recommendedCode != "" {
+		t := models.TrackGroup(recommendedCode)
+		rec = &t
+	}
+	return &dto.InternalQuizResult{
+		Kind:            string(models.QuizInternal),
+		QuestionCount:   questionCount,
+		AnsweredCount:   answeredCount,
+		IsClose:         isClose,
+		RecommendedCode: recommendedCode,
+		Clusters:        views,
+	}, rec, nil
+}
+
+func (s *quizService) careerBriefs(clusterCode string, limit int) ([]dto.CareerBrief, error) {
+	items, err := s.contents.ListPublishedCareersByCluster(clusterCode)
+	if err != nil {
+		return nil, err
+	}
+	if limit > 0 && len(items) > limit {
+		items = items[:limit]
+	}
+	out := make([]dto.CareerBrief, 0, len(items))
+	for _, item := range items {
+		role := extraString(item.Extra, "role")
+		if role == "" {
+			role = extraString(item.Extra, "position")
+		}
+		out = append(out, dto.CareerBrief{
+			ID:       item.ID.String(),
+			Title:    item.Title,
+			Role:     role,
+			Detail:   item.Body,
+			ImageURL: item.ImageURL,
+		})
+	}
+	return out, nil
+}
+
+func parseOptionScoreMap(raw datatypes.JSON) map[string]float64 {
+	if len(raw) == 0 {
+		return nil
+	}
+	var scoreMap map[string]float64
+	_ = json.Unmarshal(raw, &scoreMap)
+	return scoreMap
+}
+
+func optionWeight(scoreMap map[string]float64) float64 {
+	if len(scoreMap) == 0 {
+		return 0
+	}
+	if v, ok := scoreMap["readiness"]; ok {
+		return v
+	}
+	var sum float64
+	for _, v := range scoreMap {
+		sum += v
+	}
+	return sum
+}
+
+func externalBand(percent int) string {
+	switch {
+	case percent >= 80:
+		return "high"
+	case percent >= 60:
+		return "fair"
+	case percent >= 40:
+		return "prepare"
+	default:
+		return "low"
+	}
+}
+
+func buildExternalResult(
+	questions []models.QuizQuestion,
+	options []models.QuizOption,
+	answers map[string]string,
+	optByID map[string]models.QuizOption,
+	answeredCount int,
+) dto.ExternalQuizResult {
+	optsByQ := map[string][]models.QuizOption{}
+	for _, option := range options {
+		qid := option.QuestionID.String()
+		optsByQ[qid] = append(optsByQ[qid], option)
+	}
+
+	var score, maxScore float64
+	for _, question := range questions {
+		qid := question.ID.String()
+		qMax := 0.0
+		for _, option := range optsByQ[qid] {
+			w := optionWeight(parseOptionScoreMap(option.ScoreMap))
+			if w > qMax {
+				qMax = w
+			}
+		}
+		maxScore += qMax
+		if optID, ok := answers[qid]; ok {
+			if option, found := optByID[optID]; found {
+				score += optionWeight(parseOptionScoreMap(option.ScoreMap))
+			}
+		}
+	}
+
+	percent := 0
+	if maxScore > 0 {
+		percent = int(math.Round((score / maxScore) * 100))
+	}
+
+	return dto.ExternalQuizResult{
+		Kind:          string(models.QuizExternal),
+		QuestionCount: len(questions),
+		AnsweredCount: answeredCount,
+		Score:         score,
+		MaxScore:      maxScore,
+		Percent:       percent,
+		Band:          externalBand(percent),
+	}
+}
+
+func extraString(raw datatypes.JSON, key string) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var extra map[string]any
+	if err := json.Unmarshal(raw, &extra); err != nil {
+		return ""
+	}
+	value, ok := extra[key]
+	if !ok {
+		return ""
+	}
+	s, _ := value.(string)
+	return s
 }
 
 func (s *quizService) ListAttempts(quizID uuid.UUID) ([]dto.QuizAttemptResponse, error) {

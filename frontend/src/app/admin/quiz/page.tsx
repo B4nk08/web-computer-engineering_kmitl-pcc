@@ -1,11 +1,5 @@
-import { ContentManager } from "@/features/content";
+import { QuizAdminManager } from "@/features/quiz/components/admin/quiz-admin-manager";
 
-export default function QuizAdminPage() {
-  return (
-    <ContentManager
-      type="quiz"
-      title="Quiz แนะนำ"
-      description="แบบทดสอบสำหรับผู้สนใจ — จัดการคำถามและผลประเมิน"
-    />
-  );
+export default function ExternalQuizAdminPage() {
+  return <QuizAdminManager kind="external" />;
 }

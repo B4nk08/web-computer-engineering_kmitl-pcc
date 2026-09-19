@@ -15,6 +15,7 @@ var ErrInvalidToken = errors.New("invalid or expired token")
 type Claims struct {
 	UserID uuid.UUID `json:"user_id"`
 	Email  string    `json:"email"`
+	Name   string    `json:"name"`
 	Role   string    `json:"role"`
 	jwt.RegisteredClaims
 }
@@ -30,11 +31,12 @@ func NewManager(secret string, expireHours int) *Manager {
 }
 
 // Generate สร้าง JWT จากข้อมูลผู้ใช้
-func (m *Manager) Generate(userID uuid.UUID, email, role string) (string, error) {
+func (m *Manager) Generate(userID uuid.UUID, email, role, name string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
+		Name:   name,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   userID.String(),

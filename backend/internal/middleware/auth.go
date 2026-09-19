@@ -13,6 +13,7 @@ import (
 const (
 	ctxUserID = "auth_user_id"
 	ctxEmail  = "auth_email"
+	ctxName   = "auth_name"
 	ctxRole   = "auth_role"
 )
 
@@ -34,6 +35,7 @@ func RequireAuth(tokens *tokenx.Manager) gin.HandlerFunc {
 
 		c.Set(ctxUserID, claims.UserID.String())
 		c.Set(ctxEmail, claims.Email)
+		c.Set(ctxName, claims.Name)
 		c.Set(ctxRole, claims.Role)
 		c.Next()
 	}
@@ -51,6 +53,28 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 			httpx.Fail(c, http.StatusForbidden, "insufficient permission")
 			return
 		}
+		c.Next()
+	}
+}
+
+// OptionalAuth ถ้ามี Bearer token ที่ถูกต้อง จะฝัง user ลง context — ไม่บังคับล็อกอิน
+func OptionalAuth(tokens *tokenx.Manager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		header := c.GetHeader("Authorization")
+		parts := strings.SplitN(header, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			c.Next()
+			return
+		}
+		claims, err := tokens.Parse(parts[1])
+		if err != nil {
+			c.Next()
+			return
+		}
+		c.Set(ctxUserID, claims.UserID.String())
+		c.Set(ctxEmail, claims.Email)
+		c.Set(ctxName, claims.Name)
+		c.Set(ctxRole, claims.Role)
 		c.Next()
 	}
 }
@@ -73,4 +97,23 @@ func RoleFromContext(c *gin.Context) (string, bool) {
 	}
 	role, ok := v.(string)
 	return role, ok
+}
+
+// EmailFromContext ดึงอีเมลที่ middleware ฝังไว้
+func EmailFromContext(c *gin.Context) (string, bool) {
+	v, ok := c.Get(ctxEmail)
+	if !ok {
+		return "", false
+	}
+	email, ok := v.(string)
+	return email, ok
+}
+
+func NameFromContext(c *gin.Context) (string, bool) {
+	v, ok := c.Get(ctxName)
+	if !ok {
+		return "", false
+	}
+	name, ok := v.(string)
+	return name, ok
 }

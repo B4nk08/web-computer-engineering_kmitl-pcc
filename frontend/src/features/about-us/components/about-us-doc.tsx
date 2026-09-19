@@ -75,6 +75,60 @@ export function AboutUsStatBar({
   );
 }
 
+export function AboutUsList({
+  heading,
+  items,
+  empty,
+  ordered = false,
+}: {
+  heading?: string;
+  items: string[];
+  empty?: string;
+  ordered?: boolean;
+}) {
+  if (items.length === 0 && !empty) return null;
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-white">
+      {heading ? (
+        <h3 className="px-4 py-3 text-sm font-semibold text-[var(--ink)] sm:px-5">
+          {heading}
+        </h3>
+      ) : null}
+      {items.length === 0 ? (
+        <p
+          className={cn(
+            "px-4 py-4 text-sm text-[var(--ink-soft)] sm:px-5",
+            heading && "border-t border-[var(--border)]",
+          )}
+        >
+          {empty}
+        </p>
+      ) : (
+        <ol
+          className={cn(
+            "divide-y divide-[var(--border)]",
+            heading && "border-t border-[var(--border)]",
+          )}
+        >
+          {items.map((item, i) => (
+            <li key={`${item}-${i}`} className="flex gap-3 px-4 py-3.5 sm:px-5">
+              {ordered ? (
+                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-[11px] font-semibold text-white">
+                  {i + 1}
+                </span>
+              ) : (
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--navy-900)]" />
+              )}
+              <span className="text-sm leading-7 text-[var(--ink)]">{item}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 export function AboutUsFieldList({
   heading,
   rows,

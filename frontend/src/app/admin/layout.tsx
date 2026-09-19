@@ -22,10 +22,12 @@ export default function AdminLayout({
       <div className="admin-shell min-h-svh">
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset className="max-h-svh overflow-y-auto bg-[var(--admin-content-bg)]">
+          <SidebarInset className="max-h-svh overflow-y-auto bg-[#eef2f8]!">
             <AdminViewProvider>
               <AdminHeader />
-              <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
+              <div className="flex flex-1 flex-col gap-6 p-4 pb-8 sm:p-6 lg:px-8 lg:pb-10">
+                {children}
+              </div>
             </AdminViewProvider>
           </SidebarInset>
         </SidebarProvider>

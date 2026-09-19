@@ -13,11 +13,7 @@ export {
   logout,
   clearAuthSession,
 } from "./api";
-export {
-  AUTH_ENV,
-  isGoogleOAuthConfigured,
-  isAuthBypassEnabled,
-} from "./config/env";
+export { AUTH_ENV, isGoogleOAuthConfigured } from "./config/env";
 export type {
   AuthMode,
   AuthUser,

@@ -11,17 +11,7 @@ import {
 } from "react";
 import { getAccessToken } from "@/lib/api";
 import { fetchMe, logout as clearSession } from "../api";
-import { isAuthBypassEnabled } from "../config/env";
 import type { AuthUser } from "../types";
-
-/** user ปลอมตอน AUTH_BYPASS — ให้เข้า /admin ได้โดยไม่ login */
-const BYPASS_USER: AuthUser = {
-  id: "auth-bypass",
-  email: "dev@local",
-  displayName: "Dev (bypass)",
-  avatarUrl: "",
-  role: "admin",
-};
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -35,16 +25,10 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const bypass = isAuthBypassEnabled();
-  const [user, setUser] = useState<AuthUser | null>(bypass ? BYPASS_USER : null);
-  const [loading, setLoading] = useState(!bypass);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (isAuthBypassEnabled()) {
-      setUser(BYPASS_USER);
-      setLoading(false);
-      return;
-    }
     const token = getAccessToken();
     if (!token) {
       setUser(null);
@@ -67,10 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const logout = useCallback(() => {
-    if (isAuthBypassEnabled()) {
-      setUser(BYPASS_USER);
-      return;
-    }
     clearSession();
     setUser(null);
   }, []);

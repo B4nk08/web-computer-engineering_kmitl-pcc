@@ -14,6 +14,7 @@ type QuizListFilter struct {
 type QuizRepository interface {
 	CreateQuiz(quiz *models.Quiz) error
 	FindQuizByID(id uuid.UUID) (*models.Quiz, error)
+	FindQuizBySlug(slug string) (*models.Quiz, error)
 	ListQuizzes(filter QuizListFilter) ([]models.Quiz, error)
 	UpdateQuiz(quiz *models.Quiz) error
 	DeleteQuiz(id uuid.UUID) error
@@ -25,7 +26,7 @@ type QuizRepository interface {
 	ListOptionsByQuestionIDs(questionIDs []uuid.UUID) ([]models.QuizOption, error)
 	UpdateQuestion(q *models.QuizQuestion) error
 	DeleteQuestion(id uuid.UUID) error
-	DeleteOptionsByQuestionID(questionID uuid.UUID) error
+	ReplaceOptions(questionID uuid.UUID, opts []models.QuizOption) error
 
 	CreateAttempt(a *models.QuizAttempt) error
 	ListAttemptsByQuizID(quizID uuid.UUID) ([]models.QuizAttempt, error)
@@ -46,6 +47,14 @@ func (r *quizRepository) CreateQuiz(quiz *models.Quiz) error {
 func (r *quizRepository) FindQuizByID(id uuid.UUID) (*models.Quiz, error) {
 	var quiz models.Quiz
 	if err := r.db.First(&quiz, "id = ?", id).Error; err != nil {
+		return nil, translate(err)
+	}
+	return &quiz, nil
+}
+
+func (r *quizRepository) FindQuizBySlug(slug string) (*models.Quiz, error) {
+	var quiz models.Quiz
+	if err := r.db.First(&quiz, "slug = ?", slug).Error; err != nil {
 		return nil, translate(err)
 	}
 	return &quiz, nil
@@ -156,8 +165,16 @@ func (r *quizRepository) DeleteQuestion(id uuid.UUID) error {
 	})
 }
 
-func (r *quizRepository) DeleteOptionsByQuestionID(questionID uuid.UUID) error {
-	return r.db.Where("question_id = ?", questionID).Delete(&models.QuizOption{}).Error
+func (r *quizRepository) ReplaceOptions(questionID uuid.UUID, opts []models.QuizOption) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("question_id = ?", questionID).Delete(&models.QuizOption{}).Error; err != nil {
+			return err
+		}
+		if len(opts) == 0 {
+			return nil
+		}
+		return tx.Create(&opts).Error
+	})
 }
 
 func (r *quizRepository) CreateAttempt(a *models.QuizAttempt) error {

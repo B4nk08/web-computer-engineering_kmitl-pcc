@@ -14,6 +14,8 @@ export type CreateWhitelistInput = {
   full_name: string;
   /** ถ้าไม่ระบุ backend จะ default เป็น student */
   role?: WhitelistRole | "";
+  /** รหัสนักศึกษา เช่น 6620001 — ใช้แยกรุ่นในหน้ารายชื่อชั้นปี */
+  student_code?: string;
 };
 
 /** สถานะของแต่ละแถวจากหน้า preview */

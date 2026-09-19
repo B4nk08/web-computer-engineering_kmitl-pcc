@@ -139,8 +139,8 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border bg-background p-6 shadow-xl outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
+        <Dialog.Overlay className="admin-dialog-overlay fixed inset-0 z-50" />
+        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col outline-none">
           <div className="flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-lg font-semibold tracking-tight">
@@ -166,7 +166,7 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
 
           <div className="mt-4 flex-1 overflow-y-auto">
             {step.kind === "select" ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
+              <div className="admin-dropzone">
                 <Upload className="size-8 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">เลือกไฟล์ .csv เพื่อตรวจสอบก่อนนำเข้า</p>
@@ -215,7 +215,7 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
                   </div>
                 ) : null}
 
-                <div className="max-h-[45vh] overflow-y-auto rounded-lg border border-border">
+                <div className="max-h-[45vh] overflow-y-auto rounded-2xl border border-border/80">
                   <table className="w-full text-left text-sm">
                     <thead className="sticky top-0 bg-muted/60 text-xs text-muted-foreground">
                       <tr>
@@ -273,7 +273,7 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
             ) : null}
 
             {step.kind === "result" ? (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card px-6 py-10 text-center">
+              <div className="flex flex-col items-center gap-3 rounded-3xl border border-border/80 bg-muted/20 px-6 py-10 text-center">
                 <CheckCircle2 className="size-8 text-emerald-600" />
                 <div>
                   <p className="text-sm font-medium">นำเข้าเสร็จแล้ว</p>

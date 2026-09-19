@@ -68,7 +68,6 @@ export function StudentWorksListingView() {
       <AboutUsPageHeader
         eyebrow="STUDENT WORKS"
         title="ผลงานนักศึกษา"
-        description="โครงงานปี 4 และผลงานที่เผยแพร่ — กดปุ่มเข้าไปใช้งานเพื่อเปิดลิงก์ผลงานจริง"
       />
 
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">

@@ -118,7 +118,7 @@ func (c *Client) Put(ctx context.Context, kind, filename, contentType string, bo
 	}, nil
 }
 
-// Delete ลบ object ตาม key (เช่น uploads/image/2026/09/....jpg)
+// Delete ลบ object ตาม key (เช่น uploads/image/....jpg)
 func (c *Client) Delete(ctx context.Context, key string) error {
 	key = strings.TrimLeft(strings.TrimSpace(key), "/")
 	if key == "" {
@@ -168,15 +168,8 @@ func (c *Client) publicURL(key string) string {
 }
 
 func buildObjectKey(kind, filename string) string {
-	now := time.Now().UTC()
 	safe := sanitizeFilename(filename)
-	return path.Join(
-		"uploads",
-		kind,
-		fmt.Sprintf("%04d", now.Year()),
-		fmt.Sprintf("%02d", now.Month()),
-		fmt.Sprintf("%s-%s", uuid.NewString(), safe),
-	)
+	return path.Join("uploads", kind, fmt.Sprintf("%s-%s", uuid.NewString(), safe))
 }
 
 func sanitizeFilename(name string) string {

@@ -19,6 +19,48 @@ type ExamChoicePublic struct {
 	Text string `json:"text"`
 }
 
+type ExamSubjectFilter struct {
+	IncludeInactive bool `form:"include_inactive"`
+}
+
+type CreateExamSubjectRequest struct {
+	Code        string `json:"code" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	SortOrder   *int   `json:"sort_order"`
+}
+
+type UpdateExamSubjectRequest struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	SortOrder   *int    `json:"sort_order"`
+	IsActive    *bool   `json:"is_active"`
+}
+
+type ExamSubjectResponse struct {
+	ID          string    `json:"id"`
+	Code        string    `json:"code"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	SortOrder   int       `json:"sort_order"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func NewExamSubjectResponse(s *models.ExamSubject) ExamSubjectResponse {
+	return ExamSubjectResponse{
+		ID:          s.ID.String(),
+		Code:        s.Code,
+		Name:        s.Name,
+		Description: s.Description,
+		SortOrder:   s.SortOrder,
+		IsActive:    s.IsActive,
+		CreatedAt:   s.CreatedAt,
+		UpdatedAt:   s.UpdatedAt,
+	}
+}
+
 type CreateExamQuestionRequest struct {
 	Subject  string       `json:"subject" binding:"required"` // iot|software|network|programming
 	Mode     string       `json:"mode" binding:"required"`    // mock|real

@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCurriculum } from "../api";
+import { fetchCurricula } from "../api";
 import type { CurriculumProgram } from "../types";
 
-type State = {
-  data: CurriculumProgram | null;
+type ListState = {
+  data: CurriculumProgram[];
   loading: boolean;
   error: string | null;
 };
 
-export function useCurriculum(): State {
-  const [data, setData] = useState<CurriculumProgram | null>(null);
+export function useCurricula(): ListState {
+  const [data, setData] = useState<CurriculumProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,15 +20,15 @@ export function useCurriculum(): State {
     setLoading(true);
     setError(null);
 
-    fetchCurriculum()
-      .then((row) => {
+    fetchCurricula()
+      .then((rows) => {
         if (!alive) return;
-        setData(row);
+        setData(rows);
       })
       .catch(() => {
         if (!alive) return;
         setError("โหลดข้อมูลหลักสูตรไม่สำเร็จ");
-        setData(null);
+        setData([]);
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -40,4 +40,14 @@ export function useCurriculum(): State {
   }, []);
 
   return { data, loading, error };
+}
+
+/** คงไว้ให้หน้าแรก / โค้ดเดิม — ใช้รายการแรกจาก listing */
+export function useCurriculum() {
+  const { data, loading, error } = useCurricula();
+  return {
+    data: data[0] ?? null,
+    loading,
+    error,
+  };
 }

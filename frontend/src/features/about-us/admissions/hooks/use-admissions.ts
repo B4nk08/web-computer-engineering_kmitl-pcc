@@ -1,44 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchAdmissions } from "../api";
-import { DEFAULT_ADMISSIONS } from "../defaults";
+import { fetchAdmissionsList } from "../api";
 import type { AdmissionsInfo } from "../types";
 
-type State = {
-  data: AdmissionsInfo;
+type ListState = {
+  data: AdmissionsInfo[];
   loading: boolean;
   error: string | null;
-  fromDb: boolean;
 };
 
-export function useAdmissions(): State {
-  const [data, setData] = useState<AdmissionsInfo>(DEFAULT_ADMISSIONS);
+export function useAdmissionsList(): ListState {
+  const [data, setData] = useState<AdmissionsInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fromDb, setFromDb] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
     setError(null);
 
-    fetchAdmissions()
-      .then((row) => {
+    fetchAdmissionsList()
+      .then((rows) => {
         if (!alive) return;
-        if (row) {
-          setData(row);
-          setFromDb(true);
-        } else {
-          setData(DEFAULT_ADMISSIONS);
-          setFromDb(false);
-        }
+        setData(rows);
       })
       .catch(() => {
         if (!alive) return;
         setError("โหลดข้อมูลรับสมัครไม่สำเร็จ");
-        setData(DEFAULT_ADMISSIONS);
-        setFromDb(false);
+        setData([]);
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -49,5 +39,14 @@ export function useAdmissions(): State {
     };
   }, []);
 
-  return { data, loading, error, fromDb };
+  return { data, loading, error };
+}
+
+export function useAdmissions() {
+  const { data, loading, error } = useAdmissionsList();
+  return {
+    data: data[0] ?? null,
+    loading,
+    error,
+  };
 }

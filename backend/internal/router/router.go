@@ -20,6 +20,7 @@ type Dependencies struct {
 	Upload    *handlers.UploadHandler
 	Students  *handlers.StudentHandler
 	Whitelist *handlers.WhitelistHandler
+	Dashboard *handlers.DashboardHandler
 	Tokens    *tokenx.Manager
 }
 
@@ -60,7 +61,7 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		}
 
 		students := api.Group("/students")
-		students.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
+		students.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("student", "teacher", "admin"))
 		{
 			students.GET("", deps.Students.List)
 		}
@@ -74,6 +75,7 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		}
 
 		contents := api.Group("/contents")
+		contents.Use(middleware.OptionalAuth(deps.Tokens))
 		{
 			contents.GET("", deps.Content.List)
 			contents.GET("/:id", deps.Content.Get)
@@ -83,6 +85,7 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		}
 
 		news := api.Group("/news")
+		news.Use(middleware.OptionalAuth(deps.Tokens))
 		{
 			news.GET("", deps.News.List)
 			news.GET("/:id", deps.News.Get)
@@ -99,28 +102,40 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		}
 
 		quizzes := api.Group("/quizzes")
+		quizzes.Use(middleware.OptionalAuth(deps.Tokens))
 		{
 			quizzes.GET("", deps.Quiz.List)
 			quizzes.GET("/:id/play", deps.Quiz.Play)
 			quizzes.POST("/:id/attempts", deps.Quiz.SubmitAttempt)
-
-			quizzes.POST("", deps.Quiz.Create)
-			quizzes.GET("/:id", deps.Quiz.GetAdmin)
-			quizzes.PUT("/:id", deps.Quiz.Update)
-			quizzes.DELETE("/:id", deps.Quiz.Delete)
-			quizzes.POST("/:id/questions", deps.Quiz.AddQuestion)
-			quizzes.GET("/:id/attempts", deps.Quiz.ListAttempts)
+		}
+		quizAdmin := api.Group("/quizzes")
+		quizAdmin.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
+		{
+			quizAdmin.POST("", deps.Quiz.Create)
+			quizAdmin.GET("/:id", deps.Quiz.GetAdmin)
+			quizAdmin.PUT("/:id", deps.Quiz.Update)
+			quizAdmin.DELETE("/:id", deps.Quiz.Delete)
+			quizAdmin.POST("/:id/questions", deps.Quiz.AddQuestion)
+			quizAdmin.GET("/:id/attempts", deps.Quiz.ListAttempts)
 		}
 		quizQuestions := api.Group("/quiz-questions")
+		quizQuestions.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
 		{
 			quizQuestions.PUT("/:id", deps.Quiz.UpdateQuestion)
 			quizQuestions.DELETE("/:id", deps.Quiz.DeleteQuestion)
 		}
 
+		api.GET("/career-clusters", deps.Quiz.ListClusters)
+
 		exams := api.Group("/exams")
 		{
 			exams.POST("/start", deps.Exam.Start)
 			exams.POST("/attempts/:id/submit", deps.Exam.Submit)
+
+			exams.GET("/subjects", deps.Exam.ListSubjects)
+			exams.POST("/subjects", deps.Exam.CreateSubject)
+			exams.PUT("/subjects/:id", deps.Exam.UpdateSubject)
+			exams.DELETE("/subjects/:id", deps.Exam.DeactivateSubject)
 
 			exams.GET("/questions", deps.Exam.ListQuestions)
 			exams.POST("/questions", deps.Exam.CreateQuestion)
@@ -135,6 +150,12 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 			exams.POST("/credentials", deps.Exam.CreateCredential)
 
 			exams.GET("/attempts", deps.Exam.ListAttempts)
+		}
+
+		dashboard := api.Group("/dashboard")
+		dashboard.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
+		{
+			dashboard.GET("", deps.Dashboard.Get)
 		}
 	}
 

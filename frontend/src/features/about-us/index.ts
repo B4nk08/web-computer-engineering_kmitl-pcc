@@ -3,14 +3,18 @@ export { AboutUsPageHeader } from "./components/about-us-page-header";
 export {
   BengCurriculumView,
   fetchCurriculum,
+  fetchCurricula,
   useCurriculum,
+  useCurricula,
 } from "./curriculum";
 export type { CurriculumProgram } from "./curriculum";
 
 export {
   AdmissionsView,
   fetchAdmissions,
+  fetchAdmissionsList,
   useAdmissions,
+  useAdmissionsList,
 } from "./admissions";
 export type { AdmissionsInfo, SupportItem } from "./admissions";
 

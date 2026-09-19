@@ -21,7 +21,7 @@ var allowedNewsAudiences = map[models.NewsAudience]struct{}{
 }
 
 type NewsService interface {
-	Create(req dto.CreateNewsRequest) (*dto.NewsResponse, error)
+	Create(req dto.CreateNewsRequest, createdBy *uuid.UUID) (*dto.NewsResponse, error)
 	GetByID(id uuid.UUID) (*dto.NewsResponse, error)
 	List(filter dto.NewsFilter) ([]dto.NewsResponse, error)
 	Update(id uuid.UUID, req dto.UpdateNewsRequest) (*dto.NewsResponse, error)
@@ -36,7 +36,7 @@ func NewNewsService(news repository.NewsRepository) NewsService {
 	return &newsService{news: news}
 }
 
-func (s *newsService) Create(req dto.CreateNewsRequest) (*dto.NewsResponse, error) {
+func (s *newsService) Create(req dto.CreateNewsRequest, createdBy *uuid.UUID) (*dto.NewsResponse, error) {
 	audience, err := parseNewsAudience(req.Audience)
 	if err != nil {
 		return nil, err
@@ -53,6 +53,7 @@ func (s *newsService) Create(req dto.CreateNewsRequest) (*dto.NewsResponse, erro
 		Body:        req.Body,
 		ImageURL:    req.ImageURL,
 		IsPublished: published,
+		CreatedBy:   createdBy,
 	}
 	if published {
 		now := time.Now().UTC()

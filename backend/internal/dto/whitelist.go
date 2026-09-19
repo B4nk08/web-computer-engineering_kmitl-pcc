@@ -16,6 +16,8 @@ type WhitelistCreateRequest struct {
 	FullName string `json:"full_name" binding:"required"`
 	// Role ถ้าไม่ระบุ default เป็น student
 	Role string `json:"role"`
+	// StudentCode รหัสนักศึกษา เช่น 6620001 — ใช้แยกรุ่นในหน้ารายชื่อชั้นปี
+	StudentCode string `json:"student_code"`
 }
 
 // WhitelistImportRow แถวข้อมูลหนึ่งแถวจาก CSV (หรือจากหน้า preview ที่ user เลือกแล้ว)

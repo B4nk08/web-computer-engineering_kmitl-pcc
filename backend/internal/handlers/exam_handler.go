@@ -32,6 +32,78 @@ func optionalUserID(c *gin.Context) *uuid.UUID {
 	return &id
 }
 
+func (h *ExamHandler) ListSubjects(c *gin.Context) {
+	var filter dto.ExamSubjectFilter
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		httpx.Fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	items, err := h.exams.ListSubjects(filter.IncludeInactive)
+	if err != nil {
+		httpx.Fail(c, http.StatusInternalServerError, "failed to list subjects")
+		return
+	}
+	httpx.OK(c, items)
+}
+
+func (h *ExamHandler) CreateSubject(c *gin.Context) {
+	var req dto.CreateExamSubjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.Fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	item, err := h.exams.CreateSubject(req)
+	if err != nil {
+		if errors.Is(err, service.ErrExamSubjectDuplicate) {
+			httpx.Fail(c, http.StatusConflict, err.Error())
+			return
+		}
+		mapExamWriteError(c, err, "failed to create subject")
+		return
+	}
+	httpx.Created(c, item)
+}
+
+func (h *ExamHandler) UpdateSubject(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		httpx.Fail(c, http.StatusBadRequest, "invalid id")
+		return
+	}
+	var req dto.UpdateExamSubjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httpx.Fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	item, err := h.exams.UpdateSubject(id, req)
+	if err != nil {
+		if errors.Is(err, service.ErrExamSubjectNotFound) {
+			httpx.Fail(c, http.StatusNotFound, err.Error())
+			return
+		}
+		mapExamWriteError(c, err, "failed to update subject")
+		return
+	}
+	httpx.OK(c, item)
+}
+
+func (h *ExamHandler) DeactivateSubject(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		httpx.Fail(c, http.StatusBadRequest, "invalid id")
+		return
+	}
+	if err := h.exams.DeactivateSubject(id); err != nil {
+		if errors.Is(err, service.ErrExamSubjectNotFound) {
+			httpx.Fail(c, http.StatusNotFound, err.Error())
+			return
+		}
+		httpx.Fail(c, http.StatusInternalServerError, "failed to deactivate subject")
+		return
+	}
+	httpx.OK(c, gin.H{"deactivated": true})
+}
+
 func (h *ExamHandler) CreateQuestion(c *gin.Context) {
 	var req dto.CreateExamQuestionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -212,7 +284,7 @@ func (h *ExamHandler) ListAttempts(c *gin.Context) {
 func mapExamWriteError(c *gin.Context, err error, fallback string) {
 	switch {
 	case errors.Is(err, service.ErrInvalidTrackGroup):
-		httpx.Fail(c, http.StatusBadRequest, "subject must be iot|software|network|programming")
+		httpx.Fail(c, http.StatusBadRequest, "subject code must be 2-32 chars: a-z 0-9 _ -")
 	case errors.Is(err, service.ErrInvalidExamMode):
 		httpx.Fail(c, http.StatusBadRequest, "mode must be mock|real")
 	default:
@@ -223,7 +295,7 @@ func mapExamWriteError(c *gin.Context, err error, fallback string) {
 func mapExamStartError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, service.ErrInvalidTrackGroup):
-		httpx.Fail(c, http.StatusBadRequest, "subject must be iot|software|network|programming")
+		httpx.Fail(c, http.StatusBadRequest, "subject code must be 2-32 chars: a-z 0-9 _ -")
 	case errors.Is(err, service.ErrInvalidExamMode):
 		httpx.Fail(c, http.StatusBadRequest, "mode must be mock|real")
 	case errors.Is(err, service.ErrExamSettingNotFound):

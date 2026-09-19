@@ -13,11 +13,12 @@ import (
 
 // NewsHandler CRUD ตาราง news (ข่าวสารทั่วไป / ภายใน)
 type NewsHandler struct {
-	news service.NewsService
+	news     service.NewsService
+	activity service.ActivityRecorder
 }
 
-func NewNewsHandler(news service.NewsService) *NewsHandler {
-	return &NewsHandler{news: news}
+func NewNewsHandler(news service.NewsService, activity service.ActivityRecorder) *NewsHandler {
+	return &NewsHandler{news: news, activity: activity}
 }
 
 // List GET /api/news?audience=external&published_only=true
@@ -68,7 +69,7 @@ func (h *NewsHandler) Create(c *gin.Context) {
 		return
 	}
 
-	item, err := h.news.Create(req)
+	item, err := h.news.Create(req, optionalUserID(c))
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidNewsAudience) {
 			httpx.Fail(c, http.StatusBadRequest, "audience must be one of: external, internal")
@@ -118,6 +119,17 @@ func (h *NewsHandler) Delete(c *gin.Context) {
 		return
 	}
 
+	existing, lookupErr := h.news.GetByID(id)
+	title, targetType := "", "news"
+	if lookupErr == nil && existing != nil {
+		title = existing.Title
+		if existing.Audience == "internal" {
+			targetType = "news_internal"
+		} else {
+			targetType = "news_external"
+		}
+	}
+
 	if err := h.news.Delete(id); err != nil {
 		if errors.Is(err, service.ErrNewsNotFound) {
 			httpx.Fail(c, http.StatusNotFound, err.Error())
@@ -126,5 +138,6 @@ func (h *NewsHandler) Delete(c *gin.Context) {
 		httpx.Fail(c, http.StatusInternalServerError, "failed to delete news")
 		return
 	}
+	recordDelete(h.activity, c, targetType, title)
 	httpx.OK(c, gin.H{"deleted": true})
 }

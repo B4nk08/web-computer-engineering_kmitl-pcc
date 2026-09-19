@@ -1,33 +1,27 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { AboutUsPageHeader } from "../../components/about-us-page-header";
 import { useActivities } from "../hooks/use-activities";
-import { ActivityModal } from "./activity-modal";
-import type { ActivityItem } from "../types";
+import { ActivityCard } from "./activity-card";
 
 /**
- * หน้า /about-us/activities — listing การ์ดกิจกรรมทั้งหมด
+ * หน้า /about-us/activities — การ์ดเต็มแถว สลับรูปซ้าย/ขวา
  */
 export function ActivitiesListingView() {
   const { data, loading, error } = useActivities();
-  const [active, setActive] = useState<ActivityItem | null>(null);
-  const closeModal = useCallback(() => setActive(null), []);
 
   return (
     <div className="min-h-[calc(100svh-4rem)] bg-[var(--surface)]">
-      <AboutUsPageHeader
-        eyebrow="ACTIVITIES"
-        title="กิจกรรม"
-        description="รวมกิจกรรมของภาควิชา — กดการ์ดเพื่อดูรายละเอียดและอัลบั้มรูป"
-      />
+      <AboutUsPageHeader eyebrow="ACTIVITIES" title="กิจกรรม" />
 
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดกิจกรรม...</span>
+            <span className="ml-2 text-sm text-[var(--ink-soft)]">
+              กำลังโหลดกิจกรรม...
+            </span>
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>
@@ -36,47 +30,13 @@ export function ActivitiesListingView() {
             ยังไม่มีกิจกรรมที่เผยแพร่ — เพิ่มได้ที่ Admin → กิจกรรม
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-5">
-            {data.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActive(item)}
-                className="group flex flex-col text-left"
-              >
-                <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-hover:ring-[var(--navy-900)]/30">
-                  {item.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center px-3 text-center text-xs text-[var(--ink-soft)]">
-                      {item.title}
-                    </div>
-                  )}
-                </div>
-                {item.date ? (
-                  <p className="mt-2 text-[11px] text-[var(--ink-soft)]">{item.date}</p>
-                ) : null}
-                <span className="mt-0.5 line-clamp-2 text-sm font-medium text-[var(--ink)]">
-                  {item.title}
-                </span>
-                {item.googlePhotosUrl ? (
-                  <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-[var(--navy-900)]">
-                    <ExternalLink className="size-3" aria-hidden />
-                    มีอัลบั้มรูป
-                  </span>
-                ) : null}
-              </button>
+          <div className="space-y-5">
+            {data.map((item, index) => (
+              <ActivityCard key={item.id} item={item} reverse={index % 2 === 1} />
             ))}
           </div>
         )}
       </div>
-
-      <ActivityModal activity={active} onClose={closeModal} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ export default function AdmissionsAdminPage() {
     <ContentManager
       type="admissions"
       title="ข้อมูลรับสมัคร"
-      description="หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม จำนวนรับ"
+      description="หนึ่งรายการต่อรอบรับสมัคร เช่น TCAS 1 Portfolio, โควตา — กดแถวบนหน้าคุณสมบัติเพื่อดูรายละเอียด"
     />
   );
 }

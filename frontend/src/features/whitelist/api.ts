@@ -17,6 +17,7 @@ export async function createWhitelistEntry(
       email: input.email.trim(),
       full_name: input.full_name.trim(),
       role: input.role || undefined,
+      student_code: input.student_code?.trim() || undefined,
     },
   });
 }

@@ -4,7 +4,7 @@ export default function NewsAdminPage() {
   return (
     <NewsManager
       title="ข่าวสาร"
-      description="หน้า /news — External = ประกาศสาธารณะ (เช่น TCAS) / Internal = ข่าวภายใน แยกจากกิจกรรม"
+      description="รับสมัคร = ทุกคนเห็น (เช่น TCAS) / ภายในสาขา = เฉพาะผู้เข้าสู่ระบบ (เช่น นัดประชุม)"
     />
   );
 }

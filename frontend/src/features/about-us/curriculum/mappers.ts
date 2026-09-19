@@ -53,8 +53,8 @@ export function mapCurriculum(item: ContentDetail): CurriculumProgram {
 
   return {
     id: item.id,
-    title: str(extra, "program_name_th") || item.title,
-    titleEn: str(extra, "program_name_en"),
+    title: item.title || str(extra, "program_name_th"),
+    titleEn: str(extra, "program_name_en") || str(extra, "title_en"),
     body: item.body.trim(),
     pdfUrl: item.imageUrl,
     aboutImageUrl: str(extra, "about_image_url"),

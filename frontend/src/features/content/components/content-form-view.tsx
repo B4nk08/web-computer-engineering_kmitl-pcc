@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MapPin } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileUploadField } from "@/components/admin/file-upload-field";
+import {
+  AdminFormActions,
+  AdminFormShell,
+  AdminSection,
+  AdminSelect,
+  AdminStatus,
+  AdminTextarea,
+  AdminToggle,
+  FileUploadField,
+  GalleryUploadField,
+} from "@/components/admin";
 import { ApiError } from "@/lib/api";
 import { createContent, getContentDetail, updateContent } from "../api";
+import { listCareerClusters, type CareerClusterDto } from "@/features/quiz/api";
 import type { ApiContentType, ContentDto, CreateContentInput } from "../types";
 
 export type ContentFormMode = "create" | "edit";
@@ -44,6 +55,18 @@ type FormState = {
   qualificationsText: string;
   supportText: string;
   documentsText: string;
+  durationYears: string;
+  totalCredits: string;
+  studySystem: string;
+  systemDescription: string;
+  degreeFullTh: string;
+  degreeFullEn: string;
+  degreeShortTh: string;
+  degreeShortEn: string;
+  location: string;
+  language: string;
+  clusterCode: string;
+  galleryUrls: string[];
 };
 
 const emptyForm: FormState = {
@@ -69,18 +92,40 @@ const emptyForm: FormState = {
   qualificationsText: "",
   supportText: "",
   documentsText: "",
+  durationYears: "",
+  totalCredits: "",
+  studySystem: "",
+  systemDescription: "",
+  degreeFullTh: "",
+  degreeFullEn: "",
+  degreeShortTh: "",
+  degreeShortEn: "",
+  location: "",
+  language: "",
+  clusterCode: "",
+  galleryUrls: [],
+};
+
+const ADMISSIONS_MAX = {
+  title: 80,
+  titleEn: 80,
+  body: 200,
+  quota: 40,
+  tuition: 40,
+  lines: 20,
 };
 
 /** บอกคนทั่วไปว่าฟอร์มนี้ไปโผล่ตรงไหนบนเว็บ */
 const LOCATION_HINT: Partial<Record<ApiContentType, string>> = {
   curriculum:
-    "หน้าแรก → About Us (ข้อความด้านขวา + รูปด้านซ้าย) และหน้าหลักสูตร (/about-us/beng)",
+    "หน้า /about-us/beng เป็น listing กดดูรายละเอียด · รูป About Us ใช้บนหน้าแรก",
   video: "หน้าแรก → วิดีโอด้านบนสุด",
   staff: "หน้าแรก → ส่วนบุคลากร / คณาจารย์",
   student_work: "หน้าแรก → Student Showcase และหน้า listing /about-us/student-works",
-  admissions: "หน้า /about-us/admission-requirements — คุณสมบัติ การดูแลแรกเข้า ค่าเทอม",
+  admissions: "หน้า /about-us/admission-requirements — หนึ่งรายการต่อรอบ เช่น TCAS 1 Portfolio, โควตา",
   career_path: "หน้า /about-us/careers — อาชีพหลังจบการศึกษา",
-  activity: "หน้าแรก → About Us → กล่องกิจกรรม และหน้า listing /about-us/activities",
+  activity:
+    "หน้าแรก → About Us → กล่องกิจกรรม และหน้า /about-us/activities แบบโพสต์รูปหลายใบ",
   page: "หน้าเว็บสาธารณะตามที่กำหนด",
 };
 
@@ -139,15 +184,13 @@ function parseLines(text: string): string[] {
     .filter(Boolean);
 }
 
-function parseSupportLines(text: string): { title: string; detail: string }[] {
-  return parseLines(text).map((line) => {
-    const sep = line.indexOf("|");
-    if (sep === -1) return { title: line, detail: "" };
-    return {
-      title: line.slice(0, sep).trim(),
-      detail: line.slice(sep + 1).trim(),
-    };
-  }).filter((row) => row.title);
+function stringArrayFromExtra(extra: unknown, key: string): string[] {
+  if (!extra || typeof extra !== "object" || Array.isArray(extra)) return [];
+  const value = (extra as Record<string, unknown>)[key];
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
 }
 
 function dtoToForm(dto: ContentDto): FormState {
@@ -168,12 +211,26 @@ function dtoToForm(dto: ContentDto): FormState {
     eventDate: readExtraString(dto.extra, "event_date"),
     projectUrl: readExtraString(dto.extra, "project_url"),
     subtitle: readExtraString(dto.extra, "subtitle") || readExtraString(dto.extra, "category"),
-    titleEn: readExtraString(dto.extra, "title_en"),
+    titleEn:
+      readExtraString(dto.extra, "program_name_en") ||
+      readExtraString(dto.extra, "title_en"),
     quota: readExtraString(dto.extra, "quota"),
     applyUrl: readExtraString(dto.extra, "apply_url"),
     qualificationsText: linesFromExtra(dto.extra, "qualifications"),
     supportText: supportTextFromExtra(dto.extra),
     documentsText: linesFromExtra(dto.extra, "documents"),
+    durationYears: readExtraString(dto.extra, "duration_years"),
+    totalCredits: readExtraString(dto.extra, "total_credits"),
+    studySystem: readExtraString(dto.extra, "study_system"),
+    systemDescription: readExtraString(dto.extra, "system_description"),
+    degreeFullTh: readExtraString(dto.extra, "degree_full_th"),
+    degreeFullEn: readExtraString(dto.extra, "degree_full_en"),
+    degreeShortTh: readExtraString(dto.extra, "degree_short_th"),
+    degreeShortEn: readExtraString(dto.extra, "degree_short_en"),
+    location: readExtraString(dto.extra, "location"),
+    language: readExtraString(dto.extra, "language"),
+    clusterCode: readExtraString(dto.extra, "cluster_code"),
+    galleryUrls: stringArrayFromExtra(dto.extra, "gallery_urls"),
   };
 }
 
@@ -207,13 +264,11 @@ function buildExtra(
     if (qualifications.length > 0) extra.qualifications = qualifications;
     else delete extra.qualifications;
 
-    const supportItems = parseSupportLines(form.supportText);
-    if (supportItems.length > 0) extra.support_items = supportItems;
-    else delete extra.support_items;
-
     const documents = parseLines(form.documentsText);
     if (documents.length > 0) extra.documents = documents;
     else delete extra.documents;
+
+    delete extra.support_items;
   }
   if (type === "student_work") {
     if (form.year.trim()) extra.year = form.year.trim();
@@ -226,30 +281,45 @@ function buildExtra(
   if (type === "career_path") {
     if (form.position.trim()) extra.role = form.position.trim();
     else delete extra.role;
+    if (form.clusterCode.trim()) extra.cluster_code = form.clusterCode.trim();
+    else delete extra.cluster_code;
   }
   if (type === "curriculum") {
-    if (form.aboutImageUrl.trim()) extra.about_image_url = form.aboutImageUrl.trim();
-    else delete extra.about_image_url;
-    if (form.aboutCaption.trim()) extra.about_image_caption = form.aboutCaption.trim();
-    else delete extra.about_image_caption;
+    const setStr = (key: string, value: string) => {
+      const trimmed = value.trim();
+      if (trimmed) extra[key] = trimmed;
+      else delete extra[key];
+    };
+    setStr("program_name_th", form.title);
+    setStr("program_name_en", form.titleEn);
+    setStr("duration_years", form.durationYears);
+    setStr("total_credits", form.totalCredits);
+    setStr("study_system", form.studySystem);
+    setStr("system_description", form.systemDescription);
+    setStr("degree_full_th", form.degreeFullTh);
+    setStr("degree_full_en", form.degreeFullEn);
+    setStr("degree_short_th", form.degreeShortTh);
+    setStr("degree_short_en", form.degreeShortEn);
+    setStr("location", form.location);
+    setStr("language", form.language);
+    setStr("about_image_url", form.aboutImageUrl);
+    setStr("about_image_caption", form.aboutCaption);
   }
   if (type === "activity") {
     if (form.googlePhotosUrl.trim()) extra.google_photos_url = form.googlePhotosUrl.trim();
     else delete extra.google_photos_url;
     if (form.eventDate.trim()) extra.event_date = form.eventDate.trim();
     else delete extra.event_date;
+    const gallery = form.galleryUrls.map((url) => url.trim()).filter(Boolean);
+    if (gallery.length > 0) extra.gallery_urls = gallery;
+    else delete extra.gallery_urls;
   }
 
   return Object.keys(extra).length > 0 ? extra : undefined;
 }
 
 function Textarea(props: React.ComponentProps<"textarea">) {
-  return (
-    <textarea
-      className="flex min-h-28 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      {...props}
-    />
-  );
+  return <AdminTextarea {...props} />;
 }
 
 export function ContentFormView({
@@ -265,9 +335,25 @@ export function ContentFormView({
   const [loadingDetail, setLoadingDetail] = useState(mode === "edit");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clusters, setClusters] = useState<CareerClusterDto[]>([]);
 
   const heading = mode === "create" ? "เพิ่มข้อมูล" : "แก้ไขข้อมูล";
   const locationHint = LOCATION_HINT[type];
+
+  useEffect(() => {
+    if (type !== "career_path") return;
+    let cancelled = false;
+    void listCareerClusters()
+      .then((rows) => {
+        if (!cancelled) setClusters(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setClusters([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [type]);
 
   useEffect(() => {
     setError(null);
@@ -322,6 +408,21 @@ export function ContentFormView({
       return;
     }
 
+    if (type === "admissions") {
+      if (title.length > ADMISSIONS_MAX.title) {
+        setError(`ชื่อรอบใส่ได้ไม่เกิน ${ADMISSIONS_MAX.title} ตัวอักษร`);
+        return;
+      }
+      if (parseLines(form.qualificationsText).length > ADMISSIONS_MAX.lines) {
+        setError(`คุณสมบัติใส่ได้ไม่เกิน ${ADMISSIONS_MAX.lines} ข้อ`);
+        return;
+      }
+      if (parseLines(form.documentsText).length > ADMISSIONS_MAX.lines) {
+        setError(`เอกสารใส่ได้ไม่เกิน ${ADMISSIONS_MAX.lines} รายการ`);
+        return;
+      }
+    }
+
     const sortOrder = Number.parseInt(form.sortOrder, 10);
     const payloadBase = {
       title,
@@ -357,47 +458,24 @@ export function ContentFormView({
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={onCancel}
-              aria-label="กลับ"
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">{heading}</h2>
-              <p className="text-sm text-muted-foreground">{sectionTitle}</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {locationHint ? (
-        <div className="mb-5 flex gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm text-sky-950">
-          <MapPin className="mt-0.5 size-4 shrink-0 text-sky-700" />
-          <p>
-            <span className="font-medium">ตำแหน่งบนเว็บ: </span>
-            {locationHint}
-          </p>
-        </div>
-      ) : null}
-
+    <AdminFormShell
+      heading={heading}
+      sectionTitle={sectionTitle}
+      locationHint={locationHint ? `ตำแหน่งบนเว็บ: ${locationHint}` : undefined}
+      onBack={onCancel}
+    >
       {loadingDetail ? (
         <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           กำลังโหลด...
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-5">
+        <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-5">
+          <AdminSection title="ข้อมูลหลัก" description="ชื่อและรายละเอียดที่จะแสดงบนเว็บ">
           <div className="space-y-2">
-            <Label htmlFor="content-title">ชื่อ *</Label>
+            <Label htmlFor="content-title">
+              {type === "admissions" ? "ชื่อรอบ *" : "ชื่อ *"}
+            </Label>
             <Input
               id="content-title"
               value={form.title}
@@ -407,10 +485,19 @@ export function ContentFormView({
                   updateField("slug", slugify(form.title));
                 }
               }}
-              placeholder="ชื่อรายการ"
+              placeholder={
+                type === "admissions" ? "เช่น TCAS 1 Portfolio" : "ชื่อรายการ"
+              }
+              maxLength={type === "admissions" ? ADMISSIONS_MAX.title : undefined}
               required
               autoFocus
             />
+            {type === "admissions" ? (
+              <p className="text-xs text-muted-foreground">
+                แสดงเป็นหัวข้อบนหน้าคุณสมบัติ — หนึ่งรายการต่อหนึ่งรอบ เช่น TCAS 1,
+                โควตา, รับตรง (ไม่เกิน {ADMISSIONS_MAX.title} ตัวอักษร)
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -419,21 +506,45 @@ export function ContentFormView({
               id="content-slug"
               value={form.slug}
               onChange={(e) => updateField("slug", e.target.value)}
-              placeholder="เช่น curriculum"
+              placeholder={type === "admissions" ? "เช่น tcas-1-portfolio" : "เช่น curriculum"}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content-body">รายละเอียด</Label>
+            <Label htmlFor="content-body">
+              {type === "admissions"
+                ? "หมายเหตุรอบ (ไม่บังคับ)"
+                : type === "activity"
+                  ? "คำบรรยายโพสต์"
+                  : "รายละเอียด"}
+            </Label>
             <Textarea
               id="content-body"
               value={form.body}
               onChange={(e) => updateField("body", e.target.value)}
-              placeholder="เนื้อหา / คำอธิบาย"
+              placeholder={
+                type === "admissions"
+                  ? "เช่น ปีการศึกษาที่เปิดรับ (รุ่น 2568)"
+                  : type === "activity"
+                    ? "เช่น ภาพบรรยากาศ Workshop Network Infrastructure\n#CE #KMITLPCC"
+                    : "เนื้อหา / คำอธิบาย"
+              }
+              maxLength={type === "admissions" ? ADMISSIONS_MAX.body : undefined}
             />
+            {type === "admissions" ? (
+              <p className="text-xs text-muted-foreground">
+                ข้อความสั้นใต้หัวข้อรอบ ไม่ใช่รายการคุณสมบัติ (ไม่เกิน {ADMISSIONS_MAX.body} ตัวอักษร)
+              </p>
+            ) : type === "activity" ? (
+              <p className="text-xs text-muted-foreground">
+                ข้อความใต้ชื่อกิจกรรม — ใส่แฮชแท็กและลิงก์ได้ ขึ้นบรรทัดใหม่ได้
+              </p>
+            ) : null}
           </div>
+          </AdminSection>
 
           {type === "video" ? (
+            <AdminSection title="สื่อหน้าแรก" description="วิดีโอ รูป หรือลิงก์ YouTube">
             <>
               <FileUploadField
                 label="วิดีโอหรือรูปหน้าแรก"
@@ -453,8 +564,113 @@ export function ContentFormView({
                 />
               </div>
             </>
+            </AdminSection>
           ) : type === "curriculum" ? (
+            <AdminSection title="รายละเอียดหลักสูตร">
             <>
+              <div className="space-y-2">
+                <Label htmlFor="curriculum-title-en">ชื่อหลักสูตรภาษาอังกฤษ</Label>
+                <Input
+                  id="curriculum-title-en"
+                  value={form.titleEn}
+                  onChange={(e) => updateField("titleEn", e.target.value)}
+                  placeholder="Bachelor of Engineering Program in Computer Engineering"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="duration-years">ระยะเวลา (ปี)</Label>
+                  <Input
+                    id="duration-years"
+                    value={form.durationYears}
+                    onChange={(e) => updateField("durationYears", e.target.value)}
+                    placeholder="เช่น 4"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="total-credits">หน่วยกิตรวม</Label>
+                  <Input
+                    id="total-credits"
+                    value={form.totalCredits}
+                    onChange={(e) => updateField("totalCredits", e.target.value)}
+                    placeholder="เช่น 133"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="study-system">ระบบการศึกษา</Label>
+                  <Input
+                    id="study-system"
+                    value={form.studySystem}
+                    onChange={(e) => updateField("studySystem", e.target.value)}
+                    placeholder="เช่น ทวิภาค"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="system-description">ระบบการจัดการศึกษา</Label>
+                <Textarea
+                  id="system-description"
+                  value={form.systemDescription}
+                  onChange={(e) => updateField("systemDescription", e.target.value)}
+                  placeholder="อธิบายระบบการเรียน เช่น ภาคการศึกษาละ 16 สัปดาห์"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="degree-full-th">ชื่อปริญญาและสาขาวิชา (ภาษาไทย)</Label>
+                <Input
+                  id="degree-full-th"
+                  value={form.degreeFullTh}
+                  onChange={(e) => updateField("degreeFullTh", e.target.value)}
+                  placeholder="วิศวกรรมศาสตรบัณฑิต (วิศวกรรมคอมพิวเตอร์)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="degree-full-en">ชื่อปริญญาและสาขาวิชา (ภาษาอังกฤษ)</Label>
+                <Input
+                  id="degree-full-en"
+                  value={form.degreeFullEn}
+                  onChange={(e) => updateField("degreeFullEn", e.target.value)}
+                  placeholder="Bachelor of Engineering (Computer Engineering)"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="degree-short-th">ชื่อย่อปริญญา (ภาษาไทย)</Label>
+                  <Input
+                    id="degree-short-th"
+                    value={form.degreeShortTh}
+                    onChange={(e) => updateField("degreeShortTh", e.target.value)}
+                    placeholder="วศ.บ. (วิศวกรรมคอมพิวเตอร์)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="degree-short-en">ชื่อย่อปริญญา (ภาษาอังกฤษ)</Label>
+                  <Input
+                    id="degree-short-en"
+                    value={form.degreeShortEn}
+                    onChange={(e) => updateField("degreeShortEn", e.target.value)}
+                    placeholder="B.Eng. (Computer Engineering)"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="curriculum-location">สถานที่จัดการเรียนการสอน</Label>
+                <Input
+                  id="curriculum-location"
+                  value={form.location}
+                  onChange={(e) => updateField("location", e.target.value)}
+                  placeholder="วิทยาเขตชุมพรเขตรอุดมศักดิ์"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="curriculum-language">ภาษาที่ใช้</Label>
+                <Input
+                  id="curriculum-language"
+                  value={form.language}
+                  onChange={(e) => updateField("language", e.target.value)}
+                  placeholder="ไทย / อังกฤษ"
+                />
+              </div>
               <FileUploadField
                 label="รูป About Us (ด้านซ้ายหน้าแรก)"
                 value={form.aboutImageUrl}
@@ -481,7 +697,9 @@ export function ContentFormView({
                 hint="ไฟล์เอกสารหลักสูตรสำหรับหน้า /about-us/beng (ไม่ใช่รูป About Us)"
               />
             </>
+            </AdminSection>
           ) : type === "activity" ? (
+            <AdminSection title="สื่อกิจกรรม">
             <>
               <FileUploadField
                 label="รูปปกกิจกรรม"
@@ -489,7 +707,13 @@ export function ContentFormView({
                 onChange={(url) => updateField("imageUrl", url)}
                 kind="image"
                 accept="image/jpeg,image/png,image/webp,image/gif"
-                hint="รูปปกที่โชว์ในการ์ดกิจกรรมหน้าแรก"
+                hint="รูปแรกในกริด และรูปย่อบนหน้าแรก"
+              />
+              <GalleryUploadField
+                label="รูปเพิ่มในกริด"
+                values={form.galleryUrls}
+                onChange={(urls) => updateField("galleryUrls", urls)}
+                hint="อัปโหลดหลายรูปได้ — หน้ากิจกรรมโชว์กริด 3×2 กดรูปแล้วเลื่อนดูทีละใบ"
               />
               <div className="space-y-2">
                 <Label htmlFor="activity-date">ช่วงเวลา / วันที่</Label>
@@ -506,25 +730,38 @@ export function ContentFormView({
                   id="google-photos"
                   value={form.googlePhotosUrl}
                   onChange={(e) => updateField("googlePhotosUrl", e.target.value)}
-                  placeholder="https://photos.google.com/share/..."
+                  placeholder="https://photos.app.goo.gl/..."
                 />
                 <p className="text-xs text-muted-foreground">
-                  วางลิงก์แชร์อัลบั้ม — นักศึกษาคลิกแล้วไปเอารูปได้เอง
+                  วางลิงก์แชร์อัลบั้ม — กดกริดรูปหรือลิงก์แล้วไปดูรูปทั้งหมด
                 </p>
               </div>
             </>
+            </AdminSection>
           ) : type === "admissions" ? (
+            <AdminSection title="รายละเอียดรอบรับสมัคร">
             <>
               <div className="space-y-2">
-                <Label htmlFor="admissions-title-en">ชื่อภาษาอังกฤษ</Label>
+                <Label htmlFor="admissions-title-en">ชื่อรอง / ภาษาอังกฤษ (ไม่บังคับ)</Label>
                 <Input
                   id="admissions-title-en"
                   value={form.titleEn}
                   onChange={(e) => updateField("titleEn", e.target.value)}
-                  placeholder="Bachelor of Engineering Program in Computer Engineering"
+                  placeholder="เช่น TCAS 1 Portfolio"
+                  maxLength={ADMISSIONS_MAX.titleEn}
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="content-quota">จำนวนรับ</Label>
+                  <Input
+                    id="content-quota"
+                    value={form.quota}
+                    onChange={(e) => updateField("quota", e.target.value)}
+                    placeholder="เช่น 40 คน"
+                    maxLength={ADMISSIONS_MAX.quota}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="content-tuition">ค่าเทอม</Label>
                   <Input
@@ -532,20 +769,12 @@ export function ContentFormView({
                     value={form.tuition}
                     onChange={(e) => updateField("tuition", e.target.value)}
                     placeholder="เช่น 25,000 บาท / เทอม"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content-quota">จำนวนรับ</Label>
-                  <Input
-                    id="content-quota"
-                    value={form.quota}
-                    onChange={(e) => updateField("quota", e.target.value)}
-                    placeholder="เช่น 40 คน / ปี"
+                    maxLength={ADMISSIONS_MAX.tuition}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="apply-url">ลิงก์สมัคร / เว็บรับสมัคร</Label>
+                <Label htmlFor="apply-url">ลิงก์สมัครของรอบนี้ (ไม่บังคับ)</Label>
                 <Input
                   id="apply-url"
                   value={form.applyUrl}
@@ -559,23 +788,12 @@ export function ContentFormView({
                   id="qualifications"
                   value={form.qualificationsText}
                   onChange={(e) => updateField("qualificationsText", e.target.value)}
-                  placeholder={
-                    "สำเร็จการศึกษาไม่ต่ำกว่ามัธยมศึกษาตอนปลายสายวิทยาศาสตร์-คณิตศาสตร์\nมีผลการเรียนเฉลี่ยสะสมเป็นไปตามเกณฑ์ที่คณะกำหนด"
-                  }
+                  placeholder={"GPAX ขั้นต่ำ\nคะแนน TGAT/TPAT\nเกณฑ์ Portfolio"}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="support-items">
-                  การดูแลนักศึกษาแรกเข้า (บรรทัดละ 1 รายการ: หัวข้อ | รายละเอียด)
-                </Label>
-                <Textarea
-                  id="support-items"
-                  value={form.supportText}
-                  onChange={(e) => updateField("supportText", e.target.value)}
-                  placeholder={
-                    "ปฐมนิเทศนักศึกษาใหม่ | แนะนำหลักสูตร กฎระเบียบ และการใช้ชีวิต\nอาจารย์ที่ปรึกษาประจำ | ดูแลให้คำปรึกษารายบุคคล"
-                  }
-                />
+                <p className="text-xs text-muted-foreground">
+                  {parseLines(form.qualificationsText).length}/{ADMISSIONS_MAX.lines} ข้อ —
+                  ขึ้นบรรทัดใหม่ = 1 ข้อ
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="documents">เอกสารที่ต้องใช้ (หนึ่งรายการต่อบรรทัด)</Label>
@@ -585,9 +803,15 @@ export function ContentFormView({
                   onChange={(e) => updateField("documentsText", e.target.value)}
                   placeholder={"สำเนาบัตรประชาชน\nใบแสดงผลการเรียน"}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {parseLines(form.documentsText).length}/{ADMISSIONS_MAX.lines} รายการ —
+                  ขึ้นบรรทัดใหม่ = 1 รายการ
+                </p>
               </div>
             </>
+            </AdminSection>
           ) : (
+            <AdminSection title="รูปภาพ">
             <FileUploadField
               label="รูปภาพ"
               value={form.imageUrl}
@@ -596,9 +820,12 @@ export function ContentFormView({
               accept="image/jpeg,image/png,image/webp,image/gif"
               hint="อัปโหลดไป S3 หรือวาง URL เอง"
             />
+            </AdminSection>
           )}
 
           {type === "staff" || type === "career_path" ? (
+            <AdminSection title={type === "staff" ? "ข้อมูลบุคลากร" : "ข้อมูลอาชีพ"}>
+            <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="content-position">
                 {type === "staff" ? "ตำแหน่ง" : "บทบาท / อาชีพ"}
@@ -612,9 +839,32 @@ export function ContentFormView({
                 }
               />
             </div>
+          {type === "career_path" ? (
+            <div className="space-y-2">
+              <Label htmlFor="content-cluster">กลุ่มสายงาน</Label>
+              <AdminSelect
+                id="content-cluster"
+                value={form.clusterCode}
+                onChange={(e) => updateField("clusterCode", e.target.value)}
+              >
+                <option value="">ยังไม่ระบุกลุ่ม</option>
+                {clusters.map((cluster) => (
+                  <option key={cluster.code} value={cluster.code}>
+                    {cluster.name}
+                  </option>
+                ))}
+              </AdminSelect>
+              <p className="text-xs text-muted-foreground">
+                ใช้ผูกอาชีพนี้กับผลควิซแนะนำสาย เช่น ได้กลุ่มสร้างซอฟต์แวร์แล้วโชว์อาชีพในกลุ่มนี้
+              </p>
+            </div>
+          ) : null}
+            </div>
+            </AdminSection>
           ) : null}
 
           {type === "student_work" ? (
+            <AdminSection title="รายละเอียดผลงาน">
             <>
               <div className="space-y-2">
                 <Label htmlFor="content-subtitle">หมวด / ประเภทผลงาน</Label>
@@ -647,8 +897,10 @@ export function ContentFormView({
                 </p>
               </div>
             </>
+            </AdminSection>
           ) : null}
 
+          <AdminSection title="การเผยแพร่">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="content-sort">ลำดับการแสดง</Label>
@@ -659,31 +911,18 @@ export function ContentFormView({
                 onChange={(e) => updateField("sortOrder", e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="content-published">การเผยแพร่</Label>
-              <label
-                htmlFor="content-published"
-                className="flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm"
-              >
-                <input
-                  id="content-published"
-                  type="checkbox"
-                  checked={form.isPublished}
-                  onChange={(e) => updateField("isPublished", e.target.checked)}
-                  className="size-4 accent-foreground"
-                />
-                แสดงบนเว็บทันที
-              </label>
-            </div>
+            <AdminToggle
+              id="content-published"
+              checked={form.isPublished}
+              onChange={(checked) => updateField("isPublished", checked)}
+              label="แสดงบนเว็บทันที"
+            />
           </div>
+          </AdminSection>
 
-          {error ? (
-            <p className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-              {error}
-            </p>
-          ) : null}
+          {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-          <div className="flex flex-wrap justify-end gap-2 border-t pt-5">
+          <AdminFormActions>
             <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
               ยกเลิก
             </Button>
@@ -699,9 +938,9 @@ export function ContentFormView({
                 "บันทึกการแก้ไข"
               )}
             </Button>
-          </div>
+          </AdminFormActions>
         </form>
       )}
-    </div>
+    </AdminFormShell>
   );
 }

@@ -1,45 +1,38 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import type { QuizAnswers, QuizQuestion } from "./types";
+import type { ExternalQuizResultDto } from "./api";
 
-/**
- * general-quiz-result.tsx
- * -------------------------
- * หน้าผลลัพธ์ของ "Quizz วัดความพร้อม": รวมคะแนน weight ของคำตอบทั้งหมด
- * แล้วคิดเป็นเปอร์เซ็นต์เทียบกับคะแนนเต็มที่เป็นไปได้ (แต่ละข้อ weight สูงสุด 3)
- */
+const BAND_COPY: Record<string, string> = {
+  high: "พร้อมเริ่มต้นได้ดี",
+  fair: "พอไปได้ ควรเสริมบางจุด",
+  prepare: "ควรเตรียมตัวเพิ่มก่อนลงเรียน",
+  low: "เริ่มจากพื้นฐานก่อนจะช่วยได้มาก",
+};
+
 export function GeneralQuizResult({
-  answers,
-  questions,
+  result,
   onRetake,
 }: {
-  answers: QuizAnswers;
-  questions: QuizQuestion[];
+  result: ExternalQuizResultDto | null;
   onRetake: () => void;
 }) {
-  let totalScore = 0;
-  let maxScore = 0;
-  for (const question of questions) {
-    const questionMax = Math.max(...question.choices.map((c) => c.weight ?? 0));
-    maxScore += questionMax;
-
-    const choiceId = answers[question.id];
-    const choice = question.choices.find((c) => c.id === choiceId);
-    totalScore += choice?.weight ?? 0;
-  }
-  const percent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+  const percent = result?.percent ?? 0;
+  const band = result?.band ? BAND_COPY[result.band] : null;
 
   return (
-    <section className="relative flex min-h-[70vh] flex-col items-center justify-center bg-white px-4 py-16 text-center">
+    <section className="relative flex min-h-svh flex-1 flex-col items-center justify-center px-4 py-24 text-center">
       <h1 className="max-w-md text-xl font-semibold leading-relaxed text-[var(--navy-900)] sm:text-2xl">
         ความพร้อมสำหรับการเข้าเรียนวิศวกรรมคอมพิวเตอร์
       </h1>
       <p className="mt-2 text-sm text-[var(--ink-soft)]">
-        ความพร้อมสำหรับสายนี้: <span className="font-semibold text-[var(--accent)]">{percent}%</span>
+        ความพร้อมสำหรับสายนี้:{" "}
+        <span className="font-semibold text-[var(--accent)]">{percent}%</span>
       </p>
+      {band ? (
+        <p className="mt-1 text-sm text-[var(--ink-soft)]">{band}</p>
+      ) : null}
 
-      {/* ช่องใส่รูปมาสคอส — เว้นว่างไว้ก่อน จะเพิ่มรูปเองภายหลัง */}
       <div className="mt-8 flex h-48 w-48 items-center justify-center rounded-xl border-4 border-[var(--accent)] text-xs text-[var(--ink-soft)] sm:h-56 sm:w-56">
         ใส่รูปมาสคอสตรงนี้
       </div>

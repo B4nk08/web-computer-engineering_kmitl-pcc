@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
-import { AboutUsPageHeader } from "@/features/about-us";
+import { ChevronRight, Loader2 } from "lucide-react";
 import { usePublishedNews } from "../hooks/use-published-news";
+import { NewsBody } from "./news-body";
+import { NewsPageHeader } from "./news-page-header";
 import type { NewsAudience, NewsItem } from "../types";
+
+function newsDate(item: NewsItem) {
+  return item.publishedAt || item.createdAt || "";
+}
 
 function formatDate(iso?: string | null) {
   if (!iso) return "";
@@ -15,110 +20,121 @@ function formatDate(iso?: string | null) {
   }
 }
 
-function NewsCard({ item }: { item: NewsItem }) {
+function sortNewest(items: NewsItem[]) {
+  return [...items].sort((a, b) => {
+    const aTime = Date.parse(newsDate(a)) || 0;
+    const bTime = Date.parse(newsDate(b)) || 0;
+    return bTime - aTime;
+  });
+}
+
+function NewsRow({ item }: { item: NewsItem }) {
   return (
     <Link
       href={`/news/${item.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-white transition duration-300 hover:-translate-y-1 hover:border-[var(--navy-900)]/25 hover:shadow-sm"
+      className="group flex items-start gap-4 py-4 transition-colors sm:gap-6"
     >
-      <div className="aspect-[16/9] overflow-hidden bg-[var(--surface)]">
-        {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.imageUrl}
-            alt={item.title}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-[var(--ink-soft)]">
-            ข่าวสาร
-          </div>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span
-            className={
-              item.audience === "internal"
-                ? "rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800"
-                : "rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-800"
-            }
-          >
-            {item.audience === "internal" ? "ข่าวภายใน" : "ประกาศภายนอก"}
-          </span>
-          {item.publishedAt || item.createdAt ? (
-            <span className="text-[11px] text-[var(--ink-soft)]">
-              {formatDate(item.publishedAt || item.createdAt)}
-            </span>
-          ) : null}
-        </div>
-        <h2 className="text-base font-semibold leading-snug text-[var(--ink)]">{item.title}</h2>
+      <time
+        dateTime={newsDate(item) || undefined}
+        className="w-24 shrink-0 pt-0.5 text-xs font-medium text-[var(--ink-soft)] sm:w-28 sm:text-sm"
+      >
+        {formatDate(newsDate(item)) || "—"}
+      </time>
+      <div className="min-w-0 flex-1">
+        <h3 className="text-sm font-semibold leading-snug text-[var(--ink)] group-hover:text-[var(--navy-900)] sm:text-[15px]">
+          {item.title}
+        </h3>
         {item.body ? (
-          <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-[var(--ink-soft)]">
-            {item.body}
-          </p>
-        ) : (
-          <div className="flex-1" />
-        )}
+          <NewsBody
+            text={item.body}
+            className="mt-1 line-clamp-2 text-sm leading-relaxed text-[var(--ink-soft)]"
+          />
+        ) : null}
       </div>
+      <ChevronRight
+        className="mt-0.5 size-4 shrink-0 text-[var(--ink-soft)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--navy-900)]"
+        aria-hidden
+      />
     </Link>
   );
 }
 
-const COPY: Record<
-  "all" | NewsAudience,
-  { eyebrow: string; title: string; description: string }
-> = {
-  all: {
-    eyebrow: "NEWS",
-    title: "ข่าวสาร",
-    description: "ประกาศรับสมัครและข่าวภายในภาควิชา — แยกจากกิจกรรม",
-  },
-  external: {
-    eyebrow: "EXTERNAL",
-    title: "ประกาศภายนอก",
-    description: "ประกาศสำหรับผู้สนใจเข้าศึกษา เช่น TCAS และรอบรับสมัคร",
-  },
-  internal: {
-    eyebrow: "INTERNAL",
-    title: "ข่าวภายใน",
-    description: "ข่าวสารสำหรับนักศึกษาและบุคลากรภายในภาควิชา",
-  },
-};
+function FeaturedAdmission({ item }: { item: NewsItem }) {
+  return (
+    <Link href={`/news/${item.id}`} className="group block">
+      <p className="text-xs font-medium text-[var(--ink-soft)]">
+        {formatDate(newsDate(item))}
+      </p>
+      <h2 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-[var(--ink)] group-hover:text-[var(--navy-900)] sm:text-xl">
+        {item.title}
+      </h2>
+      {item.body ? (
+        <NewsBody
+          text={item.body}
+          className="mt-3 max-w-3xl text-sm leading-8 text-[var(--ink-soft)] sm:text-[15px] sm:leading-8"
+        />
+      ) : null}
+      {item.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.imageUrl}
+          alt=""
+          className="mt-5 aspect-[16/8] w-full object-cover"
+        />
+      ) : null}
+    </Link>
+  );
+}
 
-/**
- * หน้า /news /news/external /news/internal
- */
-export function NewsListingView({ audience }: { audience?: NewsAudience }) {
-  const { data, loading, error } = usePublishedNews(audience);
-  const copy = COPY[audience ?? "all"];
+function NewsListCard({ items }: { items: NewsItem[] }) {
+  if (items.length === 0) return null;
 
   return (
-    <div className="min-h-[calc(100svh-4rem)] bg-[var(--surface)]">
-      <AboutUsPageHeader
-        eyebrow={copy.eyebrow}
-        title={copy.title}
-        description={copy.description}
-      />
+    <div className="divide-y divide-[var(--ink)]/15 border-y border-[var(--ink)]/15">
+      {items.map((item) => (
+        <NewsRow key={item.id} item={item} />
+      ))}
+    </div>
+  );
+}
 
-      <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
+/**
+ * หน้า /news (รับสมัคร = ข่าวเด่น + รายการ) และ /news/internal (รายการอย่างเดียว)
+ */
+export function NewsListingView({ audience }: { audience: NewsAudience }) {
+  const { data, loading, error } = usePublishedNews(audience);
+  const items = sortNewest(data);
+  const featured = audience === "external" ? items[0] : null;
+  const rest = audience === "external" ? items.slice(1) : items;
+
+  return (
+    <div className="min-h-[calc(100svh-4rem)] bg-white">
+      <NewsPageHeader audience={audience} />
+
+      <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-10">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดข่าวสาร...</span>
+            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดประกาศ...</span>
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>
-        ) : data.length === 0 ? (
+        ) : items.length === 0 ? (
           <p className="text-sm text-[var(--ink-soft)]">
-            ยังไม่มีข่าวที่เผยแพร่ — เพิ่มได้ที่ Admin → ข่าวสาร
+            ยังไม่มีประกาศที่เผยแพร่ — เพิ่มได้ที่ Admin → ข่าวสาร
           </p>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {data.map((item) => (
-              <NewsCard key={item.id} item={item} />
-            ))}
+        ) : audience === "external" ? (
+          <div className="space-y-8">
+            {featured ? <FeaturedAdmission item={featured} /> : null}
+            {rest.length > 0 ? (
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-[var(--ink)]">ประกาศก่อนหน้า</h2>
+                <NewsListCard items={rest} />
+              </section>
+            ) : null}
           </div>
+        ) : (
+          <NewsListCard items={rest} />
         )}
       </div>
     </div>

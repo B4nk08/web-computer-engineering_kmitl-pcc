@@ -22,10 +22,12 @@ var allowedWhitelistRoles = map[string]bool{
 }
 
 var (
-	ErrWhitelistInvalidEmail   = errors.New("invalid email")
-	ErrWhitelistNameRequired   = errors.New("full_name is required")
-	ErrWhitelistInvalidRole    = errors.New("invalid role")
-	ErrWhitelistDuplicateEmail = errors.New("email already exists in ce_whitelist")
+	ErrWhitelistInvalidEmail         = errors.New("invalid email")
+	ErrWhitelistNameRequired         = errors.New("full_name is required")
+	ErrWhitelistInvalidRole          = errors.New("invalid role")
+	ErrWhitelistInvalidStudentCode   = errors.New("invalid student_code")
+	ErrWhitelistDuplicateEmail       = errors.New("email already exists in ce_whitelist")
+	ErrWhitelistDuplicateStudentCode = errors.New("student_code already exists in ce_whitelist")
 )
 
 // WhitelistService จัดการรายชื่อ ce_whitelist (เพิ่มทีละคน + นำเข้าไฟล์ CSV แบบ preview/commit)
@@ -62,10 +64,16 @@ func (s *whitelistService) Create(req dto.WhitelistCreateRequest) (dto.Whitelist
 		return dto.WhitelistEntryResponse{}, err
 	}
 
+	studentCode, err := normalizeWhitelistStudentCode(req.StudentCode)
+	if err != nil {
+		return dto.WhitelistEntryResponse{}, err
+	}
+
 	entry := &models.CEWhitelist{
-		Email:    email,
-		FullName: fullName,
-		Role:     models.WhitelistRole(role),
+		Email:       email,
+		FullName:    fullName,
+		Role:        models.WhitelistRole(role),
+		StudentCode: studentCode,
 	}
 	if err := s.whitelist.Create(entry); err != nil {
 		if errors.Is(err, repository.ErrDuplicate) {
@@ -240,6 +248,17 @@ func normalizeWhitelistEmail(raw string) (string, error) {
 		return "", fmt.Errorf("%w: %q", ErrWhitelistInvalidEmail, raw)
 	}
 	return email, nil
+}
+
+func normalizeWhitelistStudentCode(raw string) (*string, error) {
+	code := strings.TrimSpace(raw)
+	if code == "" {
+		return nil, nil
+	}
+	if _, ok := cecohort.Prefix(code); !ok {
+		return nil, fmt.Errorf("%w: ต้องขึ้นต้นด้วยตัวเลข 2 หลัก เช่น 6620001", ErrWhitelistInvalidStudentCode)
+	}
+	return &code, nil
 }
 
 func whitelistEntryToResponse(row models.CEWhitelist) dto.WhitelistEntryResponse {

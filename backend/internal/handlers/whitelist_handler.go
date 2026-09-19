@@ -93,11 +93,13 @@ func (h *WhitelistHandler) ImportCommit(c *gin.Context) {
 
 func (h *WhitelistHandler) failWrite(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, service.ErrWhitelistDuplicateEmail):
-		httpx.Fail(c, http.StatusConflict, "อีเมลนี้มีอยู่ในรายชื่อแล้ว — ใช้ import CSV (อัปเดต) หรือเลือกอีเมลอื่น")
+	case errors.Is(err, service.ErrWhitelistDuplicateEmail),
+		errors.Is(err, service.ErrWhitelistDuplicateStudentCode):
+		httpx.Fail(c, http.StatusConflict, "อีเมลหรือรหัสนักศึกษานี้มีอยู่ในรายชื่อแล้ว")
 	case errors.Is(err, service.ErrWhitelistInvalidEmail),
 		errors.Is(err, service.ErrWhitelistNameRequired),
-		errors.Is(err, service.ErrWhitelistInvalidRole):
+		errors.Is(err, service.ErrWhitelistInvalidRole),
+		errors.Is(err, service.ErrWhitelistInvalidStudentCode):
 		httpx.Fail(c, http.StatusBadRequest, err.Error())
 	default:
 		httpx.Fail(c, http.StatusInternalServerError, "failed to create whitelist entry")

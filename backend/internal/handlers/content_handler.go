@@ -14,10 +14,11 @@ import (
 // ContentHandler CRUD ตาราง contents (แยกชนิดด้วย field type)
 type ContentHandler struct {
 	contents service.ContentService
+	activity service.ActivityRecorder
 }
 
-func NewContentHandler(contents service.ContentService) *ContentHandler {
-	return &ContentHandler{contents: contents}
+func NewContentHandler(contents service.ContentService, activity service.ActivityRecorder) *ContentHandler {
+	return &ContentHandler{contents: contents, activity: activity}
 }
 
 // List GET /api/contents?type=staff&published_only=true
@@ -68,7 +69,7 @@ func (h *ContentHandler) Create(c *gin.Context) {
 		return
 	}
 
-	item, err := h.contents.Create(req)
+	item, err := h.contents.Create(req, optionalUserID(c))
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidContentType) {
 			httpx.Fail(c, http.StatusBadRequest, "type must be one of: page, staff, student_work, video, career_path, admissions, curriculum, activity")
@@ -114,6 +115,13 @@ func (h *ContentHandler) Delete(c *gin.Context) {
 		return
 	}
 
+	existing, lookupErr := h.contents.GetByID(id)
+	title, targetType := "", "page"
+	if lookupErr == nil && existing != nil {
+		title = existing.Title
+		targetType = existing.Type
+	}
+
 	if err := h.contents.Delete(id); err != nil {
 		if errors.Is(err, service.ErrContentNotFound) {
 			httpx.Fail(c, http.StatusNotFound, err.Error())
@@ -122,5 +130,6 @@ func (h *ContentHandler) Delete(c *gin.Context) {
 		httpx.Fail(c, http.StatusInternalServerError, "failed to delete content")
 		return
 	}
+	recordDelete(h.activity, c, targetType, title)
 	httpx.OK(c, gin.H{"deleted": true})
 }

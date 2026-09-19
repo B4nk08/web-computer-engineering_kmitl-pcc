@@ -74,13 +74,29 @@ func (h *QuizHandler) GetAdmin(c *gin.Context) {
 	httpx.OK(c, item)
 }
 
+func (h *QuizHandler) ListClusters(c *gin.Context) {
+	items, err := h.quizzes.ListCareerClusters()
+	if err != nil {
+		httpx.Fail(c, http.StatusInternalServerError, "failed to list career clusters")
+		return
+	}
+	httpx.OK(c, items)
+}
+
 func (h *QuizHandler) Play(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		httpx.Fail(c, http.StatusBadRequest, "invalid id")
 		return
 	}
-	item, err := h.quizzes.GetQuizPlay(id)
+	var userID *uuid.UUID
+	if idStr, ok := middleware.UserIDFromContext(c); ok {
+		if id, err := uuid.Parse(idStr); err == nil {
+			userID = &id
+		}
+	}
+
+	item, err := h.quizzes.GetQuizPlay(id, userID)
 	if err != nil {
 		if errors.Is(err, service.ErrQuizNotFound) {
 			httpx.Fail(c, http.StatusNotFound, err.Error())
@@ -88,6 +104,10 @@ func (h *QuizHandler) Play(c *gin.Context) {
 		}
 		if errors.Is(err, service.ErrQuizInactive) {
 			httpx.Fail(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, service.ErrQuizLoginRequired) {
+			httpx.Fail(c, http.StatusUnauthorized, "login required for this quiz")
 			return
 		}
 		httpx.Fail(c, http.StatusInternalServerError, "failed to load quiz")
@@ -226,6 +246,14 @@ func (h *QuizHandler) SubmitAttempt(c *gin.Context) {
 		}
 		if errors.Is(err, service.ErrQuizInactive) {
 			httpx.Fail(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, service.ErrQuizLoginRequired) {
+			httpx.Fail(c, http.StatusUnauthorized, "login required for this quiz")
+			return
+		}
+		if errors.Is(err, service.ErrQuizIncomplete) {
+			httpx.Fail(c, http.StatusBadRequest, "please answer every question")
 			return
 		}
 		httpx.Fail(c, http.StatusInternalServerError, "failed to submit attempt")

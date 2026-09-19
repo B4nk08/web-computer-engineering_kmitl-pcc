@@ -1,6 +1,6 @@
-import { NewsListingView } from "@/features/news";
+import { redirect } from "next/navigation";
 
-/** หน้า /news/external — ประกาศภายนอก เช่น TCAS */
-export default function ExternalNewsPage() {
-  return <NewsListingView audience="external" />;
+/** เดิม /news/external — รวมเข้าหน้าประกาศรับสมัครแล้ว */
+export default function ExternalNewsRedirectPage() {
+  redirect("/news");
 }

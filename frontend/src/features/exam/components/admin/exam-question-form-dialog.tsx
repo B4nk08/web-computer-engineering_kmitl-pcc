@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import {
+  AdminDialogFrame,
+  AdminFormActions,
+  AdminStatus,
+  AdminTextarea,
+  AdminToggle,
+} from "@/components/admin";
 import { createExamQuestion, updateExamQuestion } from "../../api";
 import type { ExamChoiceAdminDto, ExamQuestionAdminDto } from "../../types";
 
@@ -140,29 +147,16 @@ export function ExamQuestionFormDialog({
         if (!submitting) onOpenChange(next);
       }}
     >
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border bg-background p-6 shadow-xl outline-none">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="text-lg font-semibold tracking-tight">
-                {isEdit ? "แก้ไขข้อสอบ" : "เพิ่มข้อสอบ"}
-              </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                กลุ่ม <span className="font-medium text-foreground">{subjectCode}</span> · โหมด Mock
-              </Dialog.Description>
-            </div>
-            <Dialog.Close asChild>
-              <Button type="button" variant="ghost" size="icon" disabled={submitting} aria-label="ปิด">
-                <X className="size-4" />
-              </Button>
-            </Dialog.Close>
-          </div>
-
+      <AdminDialogFrame
+        title={isEdit ? "แก้ไขข้อสอบ" : "เพิ่มข้อสอบ"}
+        description={`กลุ่ม ${subjectCode} · โหมด Mock`}
+        submitting={submitting}
+        wide
+      >
           <form className="mt-4 flex-1 space-y-4 overflow-y-auto" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="exam-q-prompt">คำถาม</Label>
-              <textarea
+              <AdminTextarea
                 id="exam-q-prompt"
                 required
                 value={prompt}
@@ -170,7 +164,6 @@ export function ExamQuestionFormDialog({
                 rows={3}
                 disabled={submitting}
                 placeholder="พิมพ์โจทย์ข้อสอบ..."
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               />
             </div>
 
@@ -205,23 +198,16 @@ export function ExamQuestionFormDialog({
               </p>
             </div>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                disabled={submitting}
-              />
-              เปิดใช้งานข้อนี้ (ถ้าปิด จะไม่ถูกสุ่มออกมาตอนสอบ)
-            </label>
+            <AdminToggle
+              checked={isActive}
+              onChange={setIsActive}
+              disabled={submitting}
+              label="เปิดใช้งานข้อนี้ (ถ้าปิด จะไม่ถูกสุ่มออกมาตอนสอบ)"
+            />
 
-            {error ? (
-              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </p>
-            ) : null}
+            {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-            <div className="flex justify-end gap-2 border-t border-border pt-4">
+            <AdminFormActions>
               <Dialog.Close asChild>
                 <Button type="button" variant="outline" disabled={submitting}>
                   ยกเลิก
@@ -231,10 +217,9 @@ export function ExamQuestionFormDialog({
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
                 {isEdit ? "บันทึกการแก้ไข" : "เพิ่มข้อสอบ"}
               </Button>
-            </div>
+            </AdminFormActions>
           </form>
-        </Dialog.Content>
-      </Dialog.Portal>
+      </AdminDialogFrame>
     </Dialog.Root>
   );
 }

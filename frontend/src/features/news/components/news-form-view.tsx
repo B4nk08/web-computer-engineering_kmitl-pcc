@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileUploadField } from "@/components/admin/file-upload-field";
+import {
+  AdminFormActions,
+  AdminFormShell,
+  AdminSection,
+  AdminSelect,
+  AdminStatus,
+  AdminTextarea,
+  AdminToggle,
+  FileUploadField,
+} from "@/components/admin";
 import { ApiError } from "@/lib/api";
 import { createNews, getNews, updateNews } from "../api";
 import type { NewsAudience } from "../types";
@@ -37,12 +46,7 @@ const emptyForm: FormState = {
 };
 
 function Textarea(props: React.ComponentProps<"textarea">) {
-  return (
-    <textarea
-      className="flex min-h-28 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-      {...props}
-    />
-  );
+  return <AdminTextarea {...props} />;
 }
 
 export function NewsFormView({
@@ -130,27 +134,23 @@ export function NewsFormView({
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-      <div className="mb-6 flex items-center gap-3">
-        <Button type="button" variant="ghost" size="icon" onClick={onCancel} aria-label="กลับ">
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div>
-          <p className="text-xs text-muted-foreground">{sectionTitle}</p>
-          <h2 className="text-xl font-semibold tracking-tight">{heading}</h2>
-        </div>
-      </div>
-
+    <AdminFormShell
+      heading={heading}
+      sectionTitle={sectionTitle}
+      locationHint="รับสมัครโชว์ที่ /news · ภายในสาขาโชว์ที่ /news/internal หลังล็อกอิน"
+      onBack={onCancel}
+    >
       {loadingDetail ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
           กำลังโหลด...
         </div>
       ) : (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto max-w-2xl space-y-5">
+        <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto max-w-3xl space-y-5">
+          <AdminSection title="เนื้อหาข่าว">
           <div className="space-y-2">
             <Label htmlFor="news-audience">ประเภทข่าว</Label>
-            <select
+            <AdminSelect
               id="news-audience"
               value={form.audience}
               onChange={(e) =>
@@ -159,14 +159,10 @@ export function NewsFormView({
                   audience: e.target.value as NewsAudience,
                 }))
               }
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="external">External — ข่าวสารทั่วไป (หน้าเว็บสาธารณะ)</option>
-              <option value="internal">Internal — ข่าวภายใน (นักศึกษา/บุคลากร)</option>
-            </select>
-            <p className="text-xs text-muted-foreground">
-              External แสดงบนหน้า Home · Internal เก็บสำหรับผู้ล็อกอินภายใน
-            </p>
+              <option value="external">ประกาศรับสมัคร — ทุกคนเห็น (ผู้เยี่ยมชมและคนในภาควิชา)</option>
+              <option value="internal">ประกาศภายในสาขา — เฉพาะผู้เข้าสู่ระบบ</option>
+            </AdminSelect>
           </div>
 
           <div className="space-y-2">
@@ -186,30 +182,31 @@ export function NewsFormView({
               id="news-body"
               value={form.body}
               onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
-              placeholder="รายละเอียดข่าว"
+              placeholder={"คุณสมบัติผู้สมัคร ...\nสมัครออนไลน์: ..."}
             />
+            <p className="text-xs text-muted-foreground">
+              ขึ้นบรรทัดใหม่ได้ — แต่ละบรรทัดจะแสดงแยกกันบนหน้า News
+            </p>
           </div>
+          </AdminSection>
 
+          <AdminSection title="สื่อและการเผยแพร่">
           <FileUploadField
             label="รูปภาพประกอบ"
             value={form.imageUrl}
             onChange={(url) => setForm((f) => ({ ...f, imageUrl: url }))}
             kind="image"
           />
+          <AdminToggle
+            checked={form.isPublished}
+            onChange={(checked) => setForm((f) => ({ ...f, isPublished: checked }))}
+            label="เผยแพร่ทันที"
+          />
+          </AdminSection>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isPublished}
-              onChange={(e) => setForm((f) => ({ ...f, isPublished: e.target.checked }))}
-              className="size-4 rounded border"
-            />
-            เผยแพร่ทันที
-          </label>
+          {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-          <div className="flex justify-end gap-2 pt-2">
+          <AdminFormActions>
             <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
               ยกเลิก
             </Button>
@@ -217,9 +214,9 @@ export function NewsFormView({
               {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
               บันทึก
             </Button>
-          </div>
+          </AdminFormActions>
         </form>
       )}
-    </div>
+    </AdminFormShell>
   );
 }

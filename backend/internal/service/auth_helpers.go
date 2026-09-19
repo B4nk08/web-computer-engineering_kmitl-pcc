@@ -26,7 +26,7 @@ func (s *authService) resolveRole(email string) models.UserRole {
 }
 
 func (s *authService) buildAuthResponse(user *models.User) (*dto.AuthResponse, error) {
-	token, err := s.tokens.Generate(user.ID, user.Email, string(user.Role))
+	token, err := s.tokens.Generate(user.ID, user.Email, string(user.Role), user.DisplayName)
 	if err != nil {
 		return nil, err
 	}

@@ -1,11 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAdminView } from "@/components/admin";
+import {
+  AdminConfirmDialog,
+  AdminEmptyState,
+  AdminPageFrame,
+  AdminSelectionBar,
+  AdminStatus,
+  deleteConfirmCopy,
+  deleteMany,
+  useAdminSelection,
+  useAdminView,
+  type PendingDelete,
+} from "@/components/admin";
 import { ApiError } from "@/lib/api";
-import { listContents } from "../api";
+import { deleteContent, listContents } from "../api";
 import type { ContentItem, ContentManagerProps } from "../types";
 import { isApiContentType } from "../types";
 import { ContentFormView, type ContentFormMode } from "./content-form-view";
@@ -21,9 +32,20 @@ export function ContentManager({ type, title, description }: ContentManagerProps
 
   const [items, setItems] = useState<ContentItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(supported);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<ViewState>({ kind: "list" });
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+  const selection = useAdminSelection(itemIds);
+
+  function flash(message: string) {
+    setNotice(message);
+    window.setTimeout(() => setNotice(null), 3500);
+  }
 
   const load = useCallback(
     async (mode: "initial" | "refresh" = "initial") => {
@@ -99,6 +121,24 @@ export function ContentManager({ type, title, description }: ContentManagerProps
     await load("refresh");
   }
 
+  async function handleConfirmDelete() {
+    if (!pendingDelete?.ids.length) return;
+    setDeleting(true);
+    try {
+      const result = await deleteMany(pendingDelete.ids, deleteContent);
+      selection.clear();
+      setPendingDelete(null);
+      await load("refresh");
+      if (result.failed > 0) {
+        setError(result.message ?? "ลบบางรายการไม่สำเร็จ");
+      } else {
+        flash(result.ok > 1 ? `ลบ ${result.ok} รายการแล้ว` : "ลบรายการแล้ว");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (supported && view.kind === "form") {
     return (
       <ContentFormView
@@ -113,13 +153,11 @@ export function ContentManager({ type, title, description }: ContentManagerProps
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <AdminPageFrame
+      title={title}
+      description={description}
+      actions={
+        <>
           {supported ? (
             <Button
               type="button"
@@ -138,34 +176,70 @@ export function ContentManager({ type, title, description }: ContentManagerProps
             <Plus className="size-4" />
             เพิ่มข้อมูล
           </Button>
-        </div>
-      </header>
-
+        </>
+      }
+    >
       {!supported ? (
-        <div className="rounded-lg border border-dashed bg-muted/30 px-4 py-12 text-center">
-          <p className="text-sm font-medium">ยังไม่มี API สำหรับประเภทนี้</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Backend รองรับเฉพาะ page, staff, student_work, video, career_path, admissions
-          </p>
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-10 text-center">
-          <AlertCircle className="size-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium text-foreground">โหลดข้อมูลไม่สำเร็จ</p>
-            <p className="mt-1 text-sm text-muted-foreground">{error}</p>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
-            ลองอีกครั้ง
-          </Button>
-        </div>
-      ) : (
-        <ContentList
-          items={items}
-          loading={loading || refreshing}
-          onEdit={openEdit}
+        <AdminEmptyState
+          title="ยังไม่มี API สำหรับประเภทนี้"
+          description="Backend รองรับเฉพาะ page, staff, student_work, video, career_path, admissions"
         />
+      ) : (
+        <>
+          {notice ? (
+            <div className="mb-4">
+              <AdminStatus tone="success">{notice}</AdminStatus>
+            </div>
+          ) : null}
+          {error ? (
+            <div className="mb-4 space-y-3">
+              <AdminStatus tone="error">{error}</AdminStatus>
+              <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
+                ลองอีกครั้ง
+              </Button>
+            </div>
+          ) : null}
+          {!error || items.length > 0 ? (
+            <>
+              <AdminSelectionBar
+                total={items.length}
+                selectedCount={selection.count}
+                allSelected={selection.allSelected}
+                someSelected={selection.someSelected}
+                onToggleAll={selection.setAll}
+                onDeleteSelected={() =>
+                  setPendingDelete({
+                    ids: selection.selectedIds,
+                    label: `${selection.count} รายการที่เลือก`,
+                  })
+                }
+                deleting={deleting}
+              />
+              <ContentList
+                items={items}
+                loading={loading || refreshing}
+                selectedIds={selection.selected}
+                onToggle={selection.toggle}
+                onEdit={openEdit}
+                onDelete={(item) =>
+                  setPendingDelete({ ids: [item.id], label: item.title || "รายการนี้" })
+                }
+                deleting={deleting}
+              />
+            </>
+          ) : null}
+          <AdminConfirmDialog
+            open={pendingDelete != null}
+            title={deleteConfirmCopy(pendingDelete).title}
+            description={deleteConfirmCopy(pendingDelete).description}
+            confirming={deleting}
+            onConfirm={() => void handleConfirmDelete()}
+            onOpenChange={(open) => {
+              if (!open && !deleting) setPendingDelete(null);
+            }}
+          />
+        </>
       )}
-    </div>
+    </AdminPageFrame>
   );
 }

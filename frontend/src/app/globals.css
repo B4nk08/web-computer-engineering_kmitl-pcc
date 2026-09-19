@@ -33,6 +33,17 @@
   --input: #e5e7eb;
   --ring: var(--accent);
   --radius: 0.75rem;
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --sidebar: #faf8f3;
+  --sidebar-foreground: #3d3429;
+  --sidebar-primary: #c9784a;
+  --sidebar-primary-foreground: #fffefb;
+  --sidebar-accent: #efe8dc;
+  --sidebar-accent-foreground: #2c241c;
+  --sidebar-border: #e8e2d6;
+  --sidebar-ring: #c9784a;
+  --admin-content-bg: #f4f1ea;
   /* Quiz */
   --navy-900: #101d3f;
   --accent: #2f5fd6;
@@ -48,6 +59,26 @@
 }
 .quiz-fade-in {
   animation: fadeIn 0.35s ease both;
+}
+
+/* พื้นหลังวงกลมหน้า Quiz — ตรึงไว้ตอนเลื่อนผลลัพธ์ */
+.quiz-canvas {
+  isolation: isolate;
+  background-color: #fff;
+}
+
+.quiz-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: #fff url("/quiz-bg.svg") center / cover no-repeat;
+}
+
+/* พื้นหลังเบลอของหน้าคำถามทีละข้อ */
+.quiz-question-bg {
+  background: #fff url("/quiz-question-bg.png") center / cover no-repeat;
 }
 
 @theme inline {
@@ -68,8 +99,144 @@
   --color-navy-900: var(--navy-900);
   --color-navy-800: var(--navy-800);
   --color-navy-700: var(--navy-700);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --radius-lg: var(--radius);
   --font-sans: "Prompt", "Inter", system-ui, sans-serif;
+}
+
+/* Admin studio — แถบข้างกรมท่าเข้ม + พื้นที่ทำงานสว่าง แยกจากเว็บสาธารณะ */
+.admin-shell {
+  --background: #f3f5f9;
+  --foreground: #152038;
+  --primary: #d4652b;
+  --primary-foreground: #fffaf6;
+  --secondary: #e8edf5;
+  --secondary-foreground: #152038;
+  --muted: #e8edf5;
+  --muted-foreground: #5d6b82;
+  --accent: #d4652b;
+  --accent-foreground: #fffaf6;
+  --border: #d7dee8;
+  --input: #cfd7e3;
+  --ring: #d4652b;
+  --card: #ffffff;
+  --card-foreground: #152038;
+  --navy-800: #b55320;
+  --navy-900: #152038;
+  --radius: 1.15rem;
+  --admin-content-bg: #e9eef6;
+  --sidebar: #0c1426;
+  --sidebar-foreground: #f4efe6;
+  --sidebar-primary: #e07a3d;
+  --sidebar-primary-foreground: #fffaf6;
+  --sidebar-accent: #1b2744;
+  --sidebar-accent-foreground: #fff7ef;
+  --sidebar-border: #243154;
+  --sidebar-ring: #e07a3d;
+  color: var(--foreground);
+  background:
+    radial-gradient(900px 420px at 100% 0%, rgba(212, 101, 43, 0.14), transparent 55%),
+    radial-gradient(700px 380px at 0% 100%, rgba(15, 29, 63, 0.08), transparent 50%),
+    var(--admin-content-bg);
+}
+
+.admin-shell .admin-card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid rgba(21, 32, 56, 0.08);
+  border-radius: 1.35rem;
+  box-shadow:
+    0 1px 2px rgba(15, 29, 63, 0.04),
+    0 18px 40px rgba(15, 29, 63, 0.07);
+}
+
+.admin-shell .admin-control,
+.admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.admin-shell textarea,
+.admin-shell select {
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--input);
+  background: #fff;
+  color: var(--foreground);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  box-shadow: inset 0 1px 2px rgba(15, 29, 63, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-shell textarea,
+.admin-shell .admin-control.min-h-28 {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.admin-shell input:focus-visible,
+.admin-shell textarea:focus-visible,
+.admin-shell select:focus-visible,
+.admin-shell .admin-control:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--input));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.admin-dialog-overlay {
+  background: rgba(8, 14, 28, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.admin-dialog-content {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: #fff;
+  padding: 1.6rem;
+  box-shadow:
+    0 24px 70px rgba(8, 14, 28, 0.28),
+    0 2px 8px rgba(8, 14, 28, 0.08);
+}
+
+.admin-shell table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-shell button.rounded-lg {
+  border-radius: 0.95rem;
+}
+
+.admin-shell .admin-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 9rem;
+  padding: 1.4rem;
+  border-radius: 1.25rem;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border));
+  background:
+    linear-gradient(180deg, #fff 0%, #f7f4ef 100%);
+  text-align: center;
+}
+
+.admin-shell [data-slot="sidebar-inner"] {
+  background:
+    linear-gradient(180deg, #121c33 0%, #0c1426 42%, #0a1222 100%);
+}
+
+.admin-shell [data-sidebar="menu-button"] svg {
+  color: inherit;
 }
 
 html {

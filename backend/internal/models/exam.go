@@ -27,6 +27,25 @@ const (
 	AttemptExpired    AttemptStatus = "expired"
 )
 
+// ExamSubject — กลุ่มข้อสอบที่แอดมินสร้างเอง (code อ้างใน questions/settings)
+type ExamSubject struct {
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Code        string    `gorm:"type:varchar(32);not null;uniqueIndex" json:"code"`
+	Name        string    `gorm:"size:255;not null" json:"name"`
+	Description string    `gorm:"type:text" json:"description"`
+	SortOrder   int       `gorm:"not null;default:0" json:"sort_order"`
+	IsActive    bool      `gorm:"default:true" json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (e *ExamSubject) BeforeCreate(tx *gorm.DB) error {
+	ensureUUID(&e.ID)
+	return nil
+}
+
+func (ExamSubject) TableName() string { return "exam_subjects" }
+
 type ExamQuestion struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	Subject      TrackGroup     `gorm:"type:varchar(32);not null;index" json:"subject"`

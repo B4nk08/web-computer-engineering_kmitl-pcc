@@ -74,3 +74,28 @@ func (n *News) BeforeCreate(tx *gorm.DB) error {
 }
 
 func (News) TableName() string { return "news" }
+
+type ActivityAction string
+
+const (
+	ActivityCreate ActivityAction = "create"
+	ActivityDelete ActivityAction = "delete"
+)
+
+// AdminActivityLog บันทึกการเพิ่ม/ลบข้อมูลโดยแอดมิน (ใช้คู่กับ created_at ของ contents/news)
+type AdminActivityLog struct {
+	ID          uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	Action      ActivityAction `gorm:"type:varchar(16);not null;index" json:"action"`
+	TargetType  string         `gorm:"type:varchar(64);not null;index" json:"target_type"`
+	TargetTitle string         `gorm:"size:500" json:"target_title"`
+	ActorName   string         `gorm:"size:255" json:"actor_name"`
+	ActorID     *uuid.UUID     `gorm:"type:uuid;index" json:"actor_id,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+}
+
+func (a *AdminActivityLog) BeforeCreate(tx *gorm.DB) error {
+	ensureUUID(&a.ID)
+	return nil
+}
+
+func (AdminActivityLog) TableName() string { return "admin_activity_logs" }

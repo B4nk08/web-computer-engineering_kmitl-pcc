@@ -1,23 +1,34 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/kmitl-pcc/ce-web/backend/internal/dto"
+	"github.com/kmitl-pcc/ce-web/backend/internal/models"
 	"github.com/kmitl-pcc/ce-web/backend/internal/pkg/cecohort"
 	"github.com/kmitl-pcc/ce-web/backend/internal/repository"
 )
 
+var (
+	ErrNotCEMember        = errors.New("not in ce_whitelist")
+	ErrMissingStudentCode = errors.New("student_code required")
+	ErrInvalidStudentCode = errors.New("invalid student_code")
+)
+
 type StudentService interface {
-	List(opts StudentListInput) ([]dto.StudentResponse, error)
+	// ListForViewer รายชื่อตามสิทธิ์ผู้เรียก
+	// นักศึกษา: เฉพาะรุ่นเดียวกับตนเอง (จากรหัส เช่น 6620001 → 66)
+	// อาจารย์/แอดมิน: กรองตาม query ได้
+	ListForViewer(opts StudentViewerInput) ([]dto.StudentResponse, error)
 }
 
-type StudentListInput struct {
-	// Cohort เช่น CE01 หรือ 01 — แปลงเป็น prefix รหัส
+type StudentViewerInput struct {
+	Email  string
+	Role   string
 	Cohort string
-	// Prefix รหัสโดยตรง เช่น 64
 	Prefix string
 	Query  string
 }
@@ -30,7 +41,56 @@ func NewStudentService(whitelist repository.WhitelistRepository) StudentService 
 	return &studentService{whitelist: whitelist}
 }
 
-func (s *studentService) List(opts StudentListInput) ([]dto.StudentResponse, error) {
+func (s *studentService) ListForViewer(opts StudentViewerInput) ([]dto.StudentResponse, error) {
+	email := strings.ToLower(strings.TrimSpace(opts.Email))
+	entry, err := s.whitelist.FindByEmail(email)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return nil, err
+	}
+
+	role := strings.ToLower(strings.TrimSpace(opts.Role))
+	if entry != nil {
+		role = string(entry.Role)
+	}
+
+	if isStaffRole(role) {
+		items, listErr := s.list(studentListOpts{
+			Prefix: strings.TrimSpace(opts.Prefix),
+			Cohort: opts.Cohort,
+			Query:  opts.Query,
+		})
+		if listErr != nil {
+			return nil, listErr
+		}
+		return markSelf(items, email, true), nil
+	}
+
+	if entry == nil || entry.Role != models.WhitelistStudent {
+		return nil, ErrNotCEMember
+	}
+	if entry.StudentCode == nil || strings.TrimSpace(*entry.StudentCode) == "" {
+		return nil, ErrMissingStudentCode
+	}
+
+	prefix, ok := cecohort.PrefixDigits(*entry.StudentCode)
+	if !ok {
+		return nil, ErrInvalidStudentCode
+	}
+
+	items, err := s.list(studentListOpts{Prefix: prefix, Query: opts.Query})
+	if err != nil {
+		return nil, err
+	}
+	return markSelf(items, email, false), nil
+}
+
+type studentListOpts struct {
+	Prefix string
+	Cohort string
+	Query  string
+}
+
+func (s *studentService) list(opts studentListOpts) ([]dto.StudentResponse, error) {
 	prefix := strings.TrimSpace(opts.Prefix)
 	if prefix == "" {
 		prefix = prefixFromCohortQuery(opts.Cohort)
@@ -61,6 +121,24 @@ func (s *studentService) List(opts StudentListInput) ([]dto.StudentResponse, err
 		out = append(out, item)
 	}
 	return out, nil
+}
+
+func markSelf(items []dto.StudentResponse, email string, keepPrivateFields bool) []dto.StudentResponse {
+	for i := range items {
+		items[i].IsSelf = email != "" && strings.EqualFold(items[i].Email, email)
+		if !keepPrivateFields {
+			items[i].Email = ""
+			items[i].StudentCode = nil
+		}
+	}
+	return items
+}
+
+func isStaffRole(role string) bool {
+	return role == string(models.WhitelistTeacher) ||
+		role == string(models.WhitelistAdmin) ||
+		role == string(models.RoleTeacher) ||
+		role == string(models.RoleAdmin)
 }
 
 // prefixFromCohortQuery รับ "CE01" / "ce01" / "01" → "64"

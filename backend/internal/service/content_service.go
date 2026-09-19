@@ -29,7 +29,7 @@ var allowedContentTypes = map[models.ContentType]struct{}{
 }
 
 type ContentService interface {
-	Create(req dto.CreateContentRequest) (*dto.ContentResponse, error)
+	Create(req dto.CreateContentRequest, createdBy *uuid.UUID) (*dto.ContentResponse, error)
 	GetByID(id uuid.UUID) (*dto.ContentResponse, error)
 	List(filter dto.ContentFilter) ([]dto.ContentResponse, error)
 	Update(id uuid.UUID, req dto.UpdateContentRequest) (*dto.ContentResponse, error)
@@ -44,7 +44,7 @@ func NewContentService(contents repository.ContentRepository) ContentService {
 	return &contentService{contents: contents}
 }
 
-func (s *contentService) Create(req dto.CreateContentRequest) (*dto.ContentResponse, error) {
+func (s *contentService) Create(req dto.CreateContentRequest, createdBy *uuid.UUID) (*dto.ContentResponse, error) {
 	contentType, err := parseContentType(req.Type)
 	if err != nil {
 		return nil, err
@@ -64,6 +64,7 @@ func (s *contentService) Create(req dto.CreateContentRequest) (*dto.ContentRespo
 		Extra:       datatypes.JSON(req.Extra),
 		SortOrder:   req.SortOrder,
 		IsPublished: published,
+		CreatedBy:   createdBy,
 	}
 	if published {
 		now := time.Now().UTC()

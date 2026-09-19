@@ -5,7 +5,7 @@ export default function CurriculumAdminPage() {
     <ContentManager
       type="curriculum"
       title="About Us / หลักสูตร"
-      description="หน้าแรก → About Us — ข้อความหลักสูตร ตัวเลขสรุป รูปด้านซ้าย และหน้าหลักสูตร (/about-us/beng)"
+      description="หน้า /about-us/beng เป็น listing — เพิ่มได้หลายหลักสูตร · รายการที่มีรูป About Us ใช้บนหน้าแรก"
     />
   );
 }

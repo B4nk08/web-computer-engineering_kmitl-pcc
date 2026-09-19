@@ -1,1 +1,1 @@
-export { fetchAdmissions } from "./queries";
+export { fetchAdmissions, fetchAdmissionsList } from "./queries";

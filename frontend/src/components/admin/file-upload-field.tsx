@@ -91,7 +91,7 @@ export function FileUploadField({
       <Label>{label}</Label>
 
       {value && isImage ? (
-        <div className="relative overflow-hidden rounded-md border bg-muted/30">
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={value} alt="" className="mx-auto max-h-48 object-contain" />
           <Button
@@ -108,7 +108,7 @@ export function FileUploadField({
       ) : null}
 
       {value && isVideo ? (
-        <div className="relative overflow-hidden rounded-md border bg-muted/30">
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20">
           <video
             src={value}
             className="mx-auto max-h-48 w-full object-contain"
@@ -128,14 +128,12 @@ export function FileUploadField({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="flex-1"
-        />
-        <div className="flex gap-2">
+      {!value ? (
+        <div className="admin-dropzone">
+          <div className="flex size-10 items-center justify-center rounded-2xl bg-card text-muted-foreground shadow-sm">
+            <Upload className="size-4" />
+          </div>
+          <p className="text-sm font-medium text-foreground">อัปโหลดไฟล์ หรือวางลิงก์</p>
           <input
             ref={inputRef}
             type="file"
@@ -155,14 +153,53 @@ export function FileUploadField({
                 กำลังอัปโหลด...
               </>
             ) : (
-              <>
-                <Upload className="size-4" />
-                อัปโหลด
-              </>
+              "เลือกไฟล์"
             )}
           </Button>
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="max-w-md bg-card"
+          />
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1"
+          />
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="file"
+              accept={accept}
+              className="hidden"
+              onChange={(e) => void handleFile(e.target.files?.[0])}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  กำลังอัปโหลด...
+                </>
+              ) : (
+                <>
+                  <Upload className="size-4" />
+                  เปลี่ยนไฟล์
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {value && !isImage && !isVideo ? (
         <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
@@ -172,7 +209,7 @@ export function FileUploadField({
       ) : null}
 
       {error ? (
-        <p className="text-xs text-destructive">{error}</p>
+        <p className="text-xs text-rose-700">{error}</p>
       ) : (
         <p className="text-xs text-muted-foreground">{hint}</p>
       )}

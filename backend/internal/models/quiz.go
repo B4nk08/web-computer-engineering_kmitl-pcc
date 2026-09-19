@@ -29,11 +29,13 @@ const (
 )
 
 type Quiz struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	Kind        QuizKind  `gorm:"type:varchar(20);not null;index" json:"kind"`
-	Title       string    `gorm:"size:255" json:"title"`
-	Description string    `gorm:"type:text" json:"description"`
-	IsActive    bool      `gorm:"default:true" json:"is_active"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Kind          QuizKind  `gorm:"type:varchar(20);not null;index" json:"kind"`
+	Slug          *string   `gorm:"size:120;uniqueIndex" json:"slug,omitempty"`
+	Title         string    `gorm:"size:255" json:"title"`
+	Description   string    `gorm:"type:text" json:"description"`
+	QuestionCount int       `gorm:"not null;default:0" json:"question_count"` // 0 = ใช้ทุกข้อในคลัง
+	IsActive      bool      `gorm:"default:true" json:"is_active"`
 }
 
 func (q *Quiz) BeforeCreate(tx *gorm.DB) error {

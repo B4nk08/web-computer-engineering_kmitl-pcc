@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,9 +31,18 @@ var (
 	ErrExamAttemptNotFound    = errors.New("exam attempt not found")
 	ErrExamAttemptClosed      = errors.New("exam attempt already submitted or expired")
 	ErrExamOutsideWindow      = errors.New("exam is outside allowed time window")
+	ErrExamSubjectNotFound    = errors.New("exam subject not found")
+	ErrExamSubjectDuplicate   = errors.New("exam subject code already exists")
 )
 
+var examSubjectCodeRe = regexp.MustCompile(`^[a-z0-9_-]{2,32}$`)
+
 type ExamService interface {
+	ListSubjects(includeInactive bool) ([]dto.ExamSubjectResponse, error)
+	CreateSubject(req dto.CreateExamSubjectRequest) (*dto.ExamSubjectResponse, error)
+	UpdateSubject(id uuid.UUID, req dto.UpdateExamSubjectRequest) (*dto.ExamSubjectResponse, error)
+	DeactivateSubject(id uuid.UUID) error
+
 	CreateQuestion(req dto.CreateExamQuestionRequest, createdBy *uuid.UUID) (*dto.ExamQuestionAdminResponse, error)
 	ListQuestions(filter dto.ExamQuestionFilter) ([]dto.ExamQuestionAdminResponse, error)
 	UpdateQuestion(id uuid.UUID, req dto.UpdateExamQuestionRequest) (*dto.ExamQuestionAdminResponse, error)
@@ -58,12 +69,96 @@ func NewExamService(exams repository.ExamRepository) ExamService {
 }
 
 func parseTrackGroup(v string) (models.TrackGroup, error) {
-	switch models.TrackGroup(v) {
-	case models.TrackIoT, models.TrackSoftware, models.TrackNetwork, models.TrackProgramming:
-		return models.TrackGroup(v), nil
-	default:
+	code := strings.ToLower(strings.TrimSpace(v))
+	if !examSubjectCodeRe.MatchString(code) {
 		return "", ErrInvalidTrackGroup
 	}
+	return models.TrackGroup(code), nil
+}
+
+func (s *examService) ListSubjects(includeInactive bool) ([]dto.ExamSubjectResponse, error) {
+	items, err := s.exams.ListSubjects(includeInactive)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]dto.ExamSubjectResponse, 0, len(items))
+	for i := range items {
+		out = append(out, dto.NewExamSubjectResponse(&items[i]))
+	}
+	return out, nil
+}
+
+func (s *examService) CreateSubject(req dto.CreateExamSubjectRequest) (*dto.ExamSubjectResponse, error) {
+	code, err := parseTrackGroup(req.Code)
+	if err != nil {
+		return nil, err
+	}
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		return nil, ErrInvalidTrackGroup
+	}
+	sortOrder := 0
+	if req.SortOrder != nil {
+		sortOrder = *req.SortOrder
+	}
+	item := &models.ExamSubject{
+		Code:        string(code),
+		Name:        name,
+		Description: strings.TrimSpace(req.Description),
+		SortOrder:   sortOrder,
+		IsActive:    true,
+	}
+	if err := s.exams.CreateSubject(item); err != nil {
+		if errors.Is(err, repository.ErrDuplicate) {
+			return nil, ErrExamSubjectDuplicate
+		}
+		return nil, err
+	}
+	res := dto.NewExamSubjectResponse(item)
+	return &res, nil
+}
+
+func (s *examService) UpdateSubject(id uuid.UUID, req dto.UpdateExamSubjectRequest) (*dto.ExamSubjectResponse, error) {
+	item, err := s.exams.FindSubjectByID(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrExamSubjectNotFound
+		}
+		return nil, err
+	}
+	if req.Name != nil {
+		name := strings.TrimSpace(*req.Name)
+		if name == "" {
+			return nil, ErrInvalidTrackGroup
+		}
+		item.Name = name
+	}
+	if req.Description != nil {
+		item.Description = strings.TrimSpace(*req.Description)
+	}
+	if req.SortOrder != nil {
+		item.SortOrder = *req.SortOrder
+	}
+	if req.IsActive != nil {
+		item.IsActive = *req.IsActive
+	}
+	if err := s.exams.UpdateSubject(item); err != nil {
+		return nil, err
+	}
+	res := dto.NewExamSubjectResponse(item)
+	return &res, nil
+}
+
+func (s *examService) DeactivateSubject(id uuid.UUID) error {
+	item, err := s.exams.FindSubjectByID(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrExamSubjectNotFound
+		}
+		return err
+	}
+	item.IsActive = false
+	return s.exams.UpdateSubject(item)
 }
 
 func parseExamMode(v string) (models.ExamMode, error) {

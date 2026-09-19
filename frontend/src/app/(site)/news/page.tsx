@@ -1,6 +1,6 @@
 import { NewsListingView } from "@/features/news";
 
-/** หน้า /news — ข่าวสารทั้งหมดที่เผยแพร่ */
+/** หน้า /news — ประกาศรับสมัคร (ทุกคนเห็น) */
 export default function NewsPage() {
-  return <NewsListingView />;
+  return <NewsListingView audience="external" />;
 }

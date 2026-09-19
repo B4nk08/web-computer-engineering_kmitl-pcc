@@ -1,6 +1,11 @@
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { RequireMember } from "@/components/layout/require-member";
+import { StudentsByYearListingView } from "@/features/faculty";
 
-// route "/faculty/students-by-year" — เข้าถึงจากเมนู Faculty > รายชื่อชั้นปี (เฉพาะบทบาท member)
+// route "/faculty/students-by-year" — นักศึกษา/อาจารย์/แอดมินจาก ce_whitelist
 export default function StudentsByYearPage() {
-  return <PlaceholderPage title="รายชื่อชั้นปี" description="รายชื่อนักศึกษาแยกตามชั้นปี อยู่ระหว่างการพัฒนา" />;
+  return (
+    <RequireMember description="หน้ารายชื่อชั้นปีเห็นเฉพาะนักศึกษาและบุคลากรสาขาที่เข้าสู่ระบบแล้ว">
+      <StudentsByYearListingView />
+    </RequireMember>
+  );
 }
