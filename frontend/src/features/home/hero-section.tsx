@@ -4,7 +4,7 @@
  * hero-section.tsx
  * -----------------
  * Hero เต็มจอแบบเรียบ: วิดีโอเล่นเงียบอัตโนมัติ
- * ปุ่มเปิดเสียงอยู่มุมล่างซ้าย (ไม่ทับกลางจอ) — กดวิดีโอก็เปิดเสียงได้
+ * ปุ่มเสียงอยู่มุมล่างซ้าย (ไม่ทับกลางจอ) — กดวิดีโอเพื่อสลับเปิด/ปิดเสียง
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -60,10 +60,7 @@ function CinematicVideo({ src, title }: { src: string; title: string }) {
     <>
       <video
         ref={ref}
-        className={cn(
-          "absolute inset-0 h-full w-full object-cover",
-          muted && "cursor-pointer"
-        )}
+        className="absolute inset-0 h-full w-full cursor-pointer object-cover"
         src={src}
         muted
         loop
@@ -71,9 +68,7 @@ function CinematicVideo({ src, title }: { src: string; title: string }) {
         preload="auto"
         title={title}
         aria-label={title}
-        onClick={() => {
-          if (muted) setMutedState(false);
-        }}
+        onClick={() => setMutedState(!muted)}
       />
       <SoundChip muted={muted} onToggle={() => setMutedState(!muted)} />
     </>
@@ -81,34 +76,43 @@ function CinematicVideo({ src, title }: { src: string; title: string }) {
 }
 
 function CinematicYoutube({ videoId, title }: { videoId: string; title: string }) {
-  const [unmuted, setUnmuted] = useState(false);
-  const mutedSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&rel=0&modestbranding=1&playsinline=1`;
-  const unmutedSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0&modestbranding=1&playsinline=1`;
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [muted, setMuted] = useState(true);
+  const src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+
+  function command(func: string) {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func, args: [] }),
+      "*"
+    );
+  }
+
+  function toggle() {
+    const next = !muted;
+    command(next ? "mute" : "unMute");
+    if (!next) command("playVideo");
+    setMuted(next);
+  }
 
   return (
     <>
       <iframe
-        key={unmuted ? "on" : "off"}
+        ref={iframeRef}
         className="pointer-events-none absolute inset-0 h-full w-full border-0"
-        src={unmuted ? unmutedSrc : mutedSrc}
+        src={src}
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
         loading="eager"
         referrerPolicy="strict-origin-when-cross-origin"
       />
-      {/* คลิกพื้นหลังเพื่อเปิดเสียงครั้งแรก */}
-      {!unmuted ? (
-        <button
-          type="button"
-          className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
-          aria-label="เปิดเสียงวิดีโอ"
-          onClick={() => setUnmuted(true)}
-        />
-      ) : null}
-      {!unmuted ? (
-        <SoundChip muted onToggle={() => setUnmuted(true)} />
-      ) : null}
+      <button
+        type="button"
+        className="absolute inset-0 z-[5] cursor-pointer bg-transparent"
+        aria-label={muted ? "เปิดเสียงวิดีโอ" : "ปิดเสียงวิดีโอ"}
+        onClick={toggle}
+      />
+      <SoundChip muted={muted} onToggle={toggle} />
     </>
   );
 }
@@ -124,9 +128,10 @@ function SoundChip({ muted, onToggle }: { muted: boolean; onToggle: () => void }
       }}
       aria-label={muted ? "เปิดเสียง" : "ปิดเสียง"}
       className={cn(
-        "absolute bottom-6 left-4 z-20 flex items-center gap-2 rounded-full px-3.5 py-2",
-        "border border-white/20 bg-black/40 text-sm text-white/95 backdrop-blur-md",
-        "transition hover:bg-black/55 sm:bottom-8 sm:left-6",
+        "absolute top-20 right-3 z-20 flex items-center gap-1.5 rounded-full px-2.5 py-1.5",
+        "border border-white/20 bg-black/45 text-sm text-white/95 backdrop-blur-md",
+        "transition hover:bg-black/55",
+        "sm:top-auto sm:right-auto sm:bottom-8 sm:left-6 sm:gap-2 sm:px-3.5 sm:py-2",
         "hero-fade-up"
       )}
       style={{ animationDelay: "0.6s" }}
@@ -173,43 +178,46 @@ export function HeroSection() {
     } satisfies HomeHeroMedia);
 
   return (
-    <section className="relative h-svh min-h-[560px] w-full overflow-hidden bg-black">
-      {loading && !data ? (
-        <div className="absolute inset-0 animate-pulse bg-neutral-900" aria-hidden />
-      ) : (
-        <HeroMedia media={media} />
-      )}
+    <section className="relative w-full overflow-hidden bg-black sm:h-svh sm:min-h-[560px]">
+      {/* มือถือ: สูงราว 3/4 จอ ตัดขอบน้อยกว่าเต็มจอ — จอใหญ่: เต็มจอ */}
+      <div className="relative h-[72svh] min-h-[420px] w-full overflow-hidden bg-black sm:absolute sm:inset-0 sm:h-auto sm:min-h-0">
+        {loading && !data ? (
+          <div className="absolute inset-0 animate-pulse bg-neutral-900" aria-hidden />
+        ) : (
+          <HeroMedia media={media} />
+        )}
 
-      {/* ไล่สีเบา ๆ เฉพาะขอบ — ไม่กลบกลางคลิป */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/50"
-        aria-hidden
-      />
+        {/* ไล่สีเบา ๆ เฉพาะขอบ — ไม่กลบกลางคลิป */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70 sm:from-black/40 sm:to-black/50"
+          aria-hidden
+        />
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-4 pb-10 pt-16 sm:pb-12">
-        <p
-          className="hero-fade-up text-center text-[11px] font-medium uppercase tracking-[0.2em] text-white/65 sm:text-xs"
-          style={{ animationDelay: "0.2s" }}
-        >
-          Computer Engineering
-        </p>
-        <h1
-          className="hero-fade-up mt-1.5 max-w-2xl text-center text-xl font-semibold leading-snug text-white sm:text-2xl md:text-3xl"
-          style={{ animationDelay: "0.35s" }}
-        >
-          ภาควิชาวิศวกรรมคอมพิวเตอร์
-        </h1>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-4 pb-8 sm:pt-16 sm:pb-12">
+          <p
+            className="hero-fade-up text-center text-[10px] font-medium uppercase tracking-[0.2em] text-white/70 sm:text-xs"
+            style={{ animationDelay: "0.2s" }}
+          >
+            Computer Engineering
+          </p>
+          <h1
+            className="hero-fade-up mt-1 max-w-2xl text-center text-lg font-semibold leading-snug text-white sm:mt-1.5 sm:text-2xl md:text-3xl"
+            style={{ animationDelay: "0.35s" }}
+          >
+            ภาควิชาวิศวกรรมคอมพิวเตอร์
+          </h1>
 
-        <button
-          type="button"
-          onClick={scrollToAbout}
-          className="hero-fade-up pointer-events-auto mt-6 flex flex-col items-center gap-0.5 text-white/70 transition hover:text-white"
-          style={{ animationDelay: "0.55s" }}
-          aria-label="เลื่อนไป About Us"
-        >
-          <span className="text-xs tracking-wide">รู้จักภาควิชา</span>
-          <ChevronDown className="h-4 w-4 animate-bounce" />
-        </button>
+          <button
+            type="button"
+            onClick={scrollToAbout}
+            className="hero-fade-up pointer-events-auto mt-6 hidden flex-col items-center gap-0.5 text-white/70 transition hover:text-white sm:flex"
+            style={{ animationDelay: "0.55s" }}
+            aria-label="เลื่อนไป About Us"
+          >
+            <span className="text-xs tracking-wide">รู้จักภาควิชา</span>
+            <ChevronDown className="h-4 w-4 animate-bounce" />
+          </button>
+        </div>
       </div>
     </section>
   );

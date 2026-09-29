@@ -35,6 +35,10 @@
   --radius: 0.75rem;
   --card: #ffffff;
   --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
   --sidebar: #faf8f3;
   --sidebar-foreground: #3d3429;
   --sidebar-primary: #c9784a;
@@ -73,12 +77,32 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: #fff url("/quiz-bg.svg") center / cover no-repeat;
+  /* backgroundquizzfor student not login */
+  background: #fff url("/quiz/quiz-intro-bg.png") center / cover no-repeat;
+}
+
+/* หน้าผล — ใช้พื้นหลังผลแทนวงกรมท่าของ intro (กันโผล่ใต้ navbar ใส) */
+html.quiz-on-result .quiz-canvas::before {
+  background-color: #fff;
+  background-image: image-set(
+    url("/quiz/quiz-result-bg.png") 1x,
+    url("/quiz/quiz-result-bg@2x.png") 2x
+  );
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(0.35px);
 }
 
 /* พื้นหลังเบลอของหน้าคำถามทีละข้อ */
 .quiz-question-bg {
-  background: #fff url("/quiz-question-bg.png") center / cover no-repeat;
+  background: #fff url("/quiz/quiz-question-bg.png") center / cover no-repeat;
+}
+
+/* พื้นหลังหน้าผล Quiz — เนื้อหาโปร่ง ให้ canvas::before เป็นตัวจริง */
+.quiz-result-bg {
+  min-height: 100svh;
+  background: transparent;
 }
 
 @theme inline {
@@ -101,6 +125,10 @@
   --color-navy-700: var(--navy-700);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -113,50 +141,54 @@
   --font-sans: "Prompt", "Inter", system-ui, sans-serif;
 }
 
-/* Admin studio — แถบข้างกรมท่าเข้ม + พื้นที่ทำงานสว่าง แยกจากเว็บสาธารณะ */
+/* Admin — พื้นกระดาษอ่อน แถบข้างขาว เน้นน้ำเงินภาควิชา */
 .admin-shell {
-  --background: #f3f5f9;
-  --foreground: #152038;
-  --primary: #d4652b;
-  --primary-foreground: #fffaf6;
-  --secondary: #e8edf5;
-  --secondary-foreground: #152038;
-  --muted: #e8edf5;
-  --muted-foreground: #5d6b82;
-  --accent: #d4652b;
-  --accent-foreground: #fffaf6;
-  --border: #d7dee8;
-  --input: #cfd7e3;
-  --ring: #d4652b;
+  --background: #f4f6f9;
+  --foreground: #1c2430;
+  --primary: #1f4b82;
+  --primary-foreground: #f7f9fc;
+  --secondary: #e7ebf1;
+  --secondary-foreground: #1c2430;
+  --muted: #eef1f5;
+  --muted-foreground: #5c6778;
+  --accent: #1f4b82;
+  --accent-foreground: #f7f9fc;
+  --border: #e1e5ec;
+  --input: #d5dbe4;
+  --ring: #1f4b82;
   --card: #ffffff;
-  --card-foreground: #152038;
-  --navy-800: #b55320;
-  --navy-900: #152038;
-  --radius: 1.15rem;
-  --admin-content-bg: #e9eef6;
-  --sidebar: #0c1426;
-  --sidebar-foreground: #f4efe6;
-  --sidebar-primary: #e07a3d;
-  --sidebar-primary-foreground: #fffaf6;
-  --sidebar-accent: #1b2744;
-  --sidebar-accent-foreground: #fff7ef;
-  --sidebar-border: #243154;
-  --sidebar-ring: #e07a3d;
+  --card-foreground: #1c2430;
+  --popover: #ffffff;
+  --popover-foreground: #1c2430;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --navy-800: #16325c;
+  --navy-900: #1c2430;
+  --radius: 0.9rem;
+  --admin-content-bg: #f4f6f9;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c2430;
+  --sidebar-primary: #1f4b82;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8eef6;
+  --sidebar-accent-foreground: #16325c;
+  --sidebar-border: #e3e7ee;
+  --sidebar-ring: #1f4b82;
   color: var(--foreground);
-  background:
-    radial-gradient(900px 420px at 100% 0%, rgba(212, 101, 43, 0.14), transparent 55%),
-    radial-gradient(700px 380px at 0% 100%, rgba(15, 29, 63, 0.08), transparent 50%),
-    var(--admin-content-bg);
+  background: #e7ebf2;
+  position: fixed;
+  inset: 0;
+  height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .admin-shell .admin-card {
   background: var(--card);
   color: var(--card-foreground);
-  border: 1px solid rgba(21, 32, 56, 0.08);
-  border-radius: 1.35rem;
-  box-shadow:
-    0 1px 2px rgba(15, 29, 63, 0.04),
-    0 18px 40px rgba(15, 29, 63, 0.07);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(28, 36, 48, 0.04);
 }
 
 .admin-shell .admin-control,
@@ -165,14 +197,14 @@
 .admin-shell select {
   width: 100%;
   min-height: 2.75rem;
-  border-radius: 0.95rem;
+  border-radius: 0.7rem;
   border: 1px solid var(--input);
   background: #fff;
   color: var(--foreground);
   padding: 0.6rem 0.9rem;
   font-size: 0.9rem;
   line-height: 1.45;
-  box-shadow: inset 0 1px 2px rgba(15, 29, 63, 0.03);
+  box-shadow: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -192,18 +224,78 @@
 }
 
 .admin-dialog-overlay {
-  background: rgba(8, 14, 28, 0.55);
+  background: rgba(15, 29, 63, 0.45);
   backdrop-filter: blur(6px);
 }
 
 .admin-dialog-content {
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  background: #fff;
-  padding: 1.6rem;
-  box-shadow:
-    0 24px 70px rgba(8, 14, 28, 0.28),
-    0 2px 8px rgba(8, 14, 28, 0.08);
+  border-radius: 1.15rem;
+  border: 1px solid #e3e8f0;
+  background: #ffffff;
+  color: #1c2430;
+  padding: 0;
+  box-shadow: 0 24px 70px rgba(22, 50, 92, 0.18);
+}
+
+.admin-dialog-content .text-muted-foreground {
+  color: #5c6778;
+}
+
+.admin-dialog-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.admin-dialog-content textarea,
+.admin-dialog-content select {
+  border-color: #d5dbe4;
+  background: #ffffff;
+  color: #1c2430;
+}
+
+.admin-dialog-content label {
+  color: #1c2430;
+}
+
+.admin-dialog-content .admin-form-actions {
+  position: static;
+  z-index: auto;
+  margin-top: 1.25rem;
+  margin-right: -1.25rem;
+  margin-left: -1.25rem;
+  border-top: 1px solid #e6ebf2;
+  background: #f7f9fc;
+  padding: 0.75rem 1rem;
+  box-shadow: none;
+}
+
+.admin-dialog-content .admin-form-actions button[type="button"],
+.admin-dialog-content .admin-dialog-cancel {
+  border: 1px solid #d5dbe4;
+  background: #ffffff;
+  color: #1c2430;
+}
+
+.admin-dialog-content .admin-form-actions button[type="button"]:hover,
+.admin-dialog-content .admin-dialog-cancel:hover {
+  background: #f4f6f9;
+}
+
+.admin-dialog-content .admin-form-actions button[type="submit"],
+.admin-dialog-content .admin-dialog-confirm {
+  border-color: transparent;
+  background: #1f4b82;
+  color: #ffffff;
+}
+
+.admin-dialog-content .admin-form-actions button[type="submit"]:hover,
+.admin-dialog-content .admin-dialog-confirm:hover {
+  background: #16325c;
+}
+
+.admin-dialog-content .admin-dialog-confirm-danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.admin-dialog-content .admin-dialog-confirm-danger:hover {
+  background: #b91c1c;
 }
 
 .admin-shell table {
@@ -212,7 +304,7 @@
 }
 
 .admin-shell button.rounded-lg {
-  border-radius: 0.95rem;
+  border-radius: 0.7rem;
 }
 
 .admin-shell .admin-dropzone {
@@ -223,16 +315,39 @@
   gap: 0.7rem;
   min-height: 9rem;
   padding: 1.4rem;
-  border-radius: 1.25rem;
-  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border));
-  background:
-    linear-gradient(180deg, #fff 0%, #f7f4ef 100%);
+  border-radius: 0.9rem;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: #f7f9fc;
   text-align: center;
 }
 
+.admin-shell [data-slot="sidebar-wrapper"] {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #e7ebf2;
+}
+
+.admin-shell [data-slot="sidebar"][data-state="collapsed"] [data-slot="sidebar-container"] {
+  width: calc(var(--sidebar-width-icon) + 1rem);
+}
+
 .admin-shell [data-slot="sidebar-inner"] {
-  background:
-    linear-gradient(180deg, #121c33 0%, #0c1426 42%, #0a1222 100%);
+  background: #ffffff;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 1rem;
+}
+
+.admin-shell [data-slot="sidebar-inset"] {
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  margin: 0.5rem 0.5rem 0.5rem 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  border-radius: 1rem;
 }
 
 .admin-shell [data-sidebar="menu-button"] svg {

@@ -1,44 +1,50 @@
 "use client";
 
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useHomeStaff } from "@/features/home";
 import type { HomeStaffMember } from "@/features/home";
+import { FacultyDetailModal } from "./faculty-detail-modal";
 import { FacultyPageHeader } from "./faculty-page-header";
 
-function FacultyCard({ member }: { member: HomeStaffMember }) {
+function FacultyCard({
+  member,
+  onOpen,
+}: {
+  member: HomeStaffMember;
+  onOpen: () => void;
+}) {
   return (
-    <article className="group flex h-full flex-col rounded-xl border border-[var(--border)] bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-[var(--navy-900)]/25 hover:shadow-sm sm:p-6">
-      <div className="flex items-start gap-4">
-        <div className="size-20 shrink-0 overflow-hidden rounded-full bg-[var(--surface)] ring-1 ring-black/5">
-          {member.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={member.imageUrl}
-              alt={member.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-[11px] text-[var(--ink-soft)]">
-              รูป
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 pt-0.5">
-          <h2 className="text-base font-semibold leading-snug text-[var(--ink)]">
-            {member.name}
-          </h2>
-          {member.position ? (
-            <p className="mt-1 text-sm text-[var(--ink-soft)]">{member.position}</p>
-          ) : null}
-        </div>
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      className="flex cursor-pointer flex-col items-center rounded-xl border border-[var(--border)] bg-white px-4 py-5 text-center transition duration-300 hover:-translate-y-0.5 hover:border-[var(--navy-900)]/20 hover:shadow-[0_10px_24px_rgba(15,29,63,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy-900)]/30"
+    >
+      <div className="size-28 overflow-hidden rounded-full bg-[var(--surface)] ring-4 ring-[var(--navy-900)]/8 sm:size-32">
+        {member.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={member.imageUrl}
+            alt=""
+            className="h-full w-full object-cover object-top"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-[var(--ink-soft)]">
+            รูป
+          </div>
+        )}
       </div>
-      {member.bio ? (
-        <p className="mt-4 line-clamp-4 flex-1 text-sm leading-7 text-[var(--ink-soft)]">
-          {member.bio}
-        </p>
-      ) : (
-        <div className="flex-1" />
-      )}
+      <h2 className="mt-3 text-base font-semibold leading-snug whitespace-pre-line text-[var(--ink)]">
+        {member.name}
+      </h2>
     </article>
   );
 }
@@ -48,6 +54,7 @@ function FacultyCard({ member }: { member: HomeStaffMember }) {
  */
 export function FacultyListingView() {
   const { data, loading, error } = useHomeStaff();
+  const [selected, setSelected] = useState<HomeStaffMember | null>(null);
 
   return (
     <div className="min-h-[calc(100svh-4rem)] bg-[var(--surface)]">
@@ -66,13 +73,27 @@ export function FacultyListingView() {
             ยังไม่มีข้อมูลบุคลากรที่เผยแพร่ — เพิ่มได้ที่ Admin → คณาจารย์ / บุคลากร
           </p>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {data.map((member) => (
-              <FacultyCard key={member.id} member={member} />
-            ))}
-          </div>
+          <>
+            <p className="mb-6 text-center text-sm text-[var(--ink-soft)]">
+              อาจารย์ประจำสาขาวิชาวิศวกรรมคอมพิวเตอร์
+              <span className="mx-2 text-[var(--border)]">/</span>
+              {data.length} คน
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.map((member) => (
+                <FacultyCard
+                  key={member.id}
+                  member={member}
+                  onOpen={() => setSelected(member)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
+      {selected ? (
+        <FacultyDetailModal member={selected} onClose={() => setSelected(null)} />
+      ) : null}
     </div>
   );
 }

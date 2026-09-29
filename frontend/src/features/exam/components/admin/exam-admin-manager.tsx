@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Save, Trash2 } from "lucide-react";
+import { Loader2, Save, Trash2 } from "lucide-react";
 import {
   AdminBadge,
   AdminCheckbox,
@@ -338,7 +338,22 @@ export function ExamAdminManager() {
                   return (
                     <li
                       key={q.id}
-                      className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm"
+                      role="button"
+                      tabIndex={deleting ? undefined : 0}
+                      onClick={() => {
+                        if (deleting) return;
+                        setEditing(q);
+                        setFormOpen(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget || deleting) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setEditing(q);
+                          setFormOpen(true);
+                        }
+                      }}
+                      className="cursor-pointer rounded-2xl border border-border/70 bg-white p-4 text-left shadow-sm transition hover:border-primary/30 hover:bg-sky-50/40"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <AdminCheckbox
@@ -349,7 +364,7 @@ export function ExamAdminManager() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex size-7 items-center justify-center rounded-xl bg-[#d4652b] text-xs font-semibold text-white">
+                            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-xs font-semibold text-primary-foreground">
                               {idx + 1}
                             </span>
                             {!q.is_active ? <AdminBadge tone="warning">ปิดใช้งาน</AdminBadge> : null}
@@ -379,31 +394,20 @@ export function ExamAdminManager() {
                             </p>
                           )}
                         </div>
-                        <div className="flex shrink-0 gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label="แก้ไข"
-                            onClick={() => {
-                              setEditing(q);
-                              setFormOpen(true);
-                            }}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
+                        <div className="flex shrink-0">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             aria-label="ลบ"
                             disabled={deleting}
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setPendingDelete({
                                 ids: [q.id],
                                 label: q.prompt.slice(0, 80) || "ข้อนี้",
-                              })
-                            }
+                              });
+                            }}
                           >
                             <Trash2 className="size-4 text-red-600" />
                           </Button>

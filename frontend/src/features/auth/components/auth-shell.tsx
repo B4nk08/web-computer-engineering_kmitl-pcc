@@ -14,7 +14,7 @@ export function AuthShell({ children }: AuthShellProps) {
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/auth/spheres-bg.png')" }}
+        style={{ backgroundImage: "url('/auth/auth-spheres-bg.png')" }}
       />
       <div
         aria-hidden

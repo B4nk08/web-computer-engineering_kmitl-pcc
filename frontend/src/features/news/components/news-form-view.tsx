@@ -146,7 +146,7 @@ export function NewsFormView({
           กำลังโหลด...
         </div>
       ) : (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto max-w-3xl space-y-5">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
           <AdminSection title="เนื้อหาข่าว">
           <div className="space-y-2">
             <Label htmlFor="news-audience">ประเภทข่าว</Label>

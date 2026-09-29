@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Inbox,
   MapPin,
+  SquarePen,
   X,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -24,7 +25,7 @@ export function AdminStatus({
   const styles = {
     success: "border-emerald-200 bg-emerald-50 text-emerald-800",
     error: "border-rose-200 bg-rose-50 text-rose-800",
-    info: "border-[#f0d2b4] bg-[#fff6ec] text-[#7a3f16]",
+    info: "border-sky-200 bg-sky-50 text-sky-950",
   }[tone];
   const Icon = tone === "success" ? CheckCircle2 : tone === "error" ? AlertCircle : MapPin;
 
@@ -78,7 +79,7 @@ export function AdminSection({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-[1.25rem] border border-border/80 bg-white p-5 shadow-[0_8px_24px_rgba(15,29,63,0.04)] sm:p-6",
+        "space-y-4 rounded-xl border border-border bg-white p-5 sm:p-6",
         className
       )}
     >
@@ -143,8 +144,8 @@ export function AdminToggle({
       className={cn(
         "flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2.5 text-sm transition-colors",
         checked
-          ? "border-[#f0d2b4] bg-[#fff6ec]"
-          : "border-border/80 bg-muted/40",
+          ? "border-sky-200 bg-sky-50"
+          : "border-border bg-muted/50",
         disabled && "cursor-not-allowed opacity-50"
       )}
     >
@@ -171,7 +172,7 @@ export function AdminBadge({
   const styles = {
     success: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
     muted: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
-    accent: "bg-[#fff1e6] text-[#9a4a1c] ring-1 ring-[#f0d2b4]",
+    accent: "bg-sky-50 text-sky-900 ring-1 ring-sky-200",
     info: "bg-sky-50 text-sky-800 ring-1 ring-sky-200",
     warning: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
   }[tone];
@@ -198,10 +199,10 @@ export function AdminPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm transition-all",
+        "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm transition-colors",
         active
-          ? "border-transparent bg-[#d4652b] text-white shadow-[0_8px_18px_rgba(212,101,43,0.28)]"
-          : "border-border bg-white text-foreground hover:-translate-y-0.5 hover:border-[#d4652b]/40 hover:shadow-sm",
+          ? "border-transparent bg-primary text-primary-foreground"
+          : "border-border bg-white text-foreground hover:border-primary/40 hover:bg-sky-50",
         muted && "opacity-50"
       )}
     >
@@ -249,33 +250,59 @@ export function AdminFormShell({
   );
 }
 
+function DialogMark({
+  children,
+  tone = "info",
+}: {
+  children: ReactNode;
+  tone?: "info" | "danger";
+}) {
+  return (
+    <span
+      className={cn(
+        "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border",
+        tone === "danger"
+          ? "border-rose-200 bg-rose-50 text-rose-600"
+          : "border-sky-200 bg-sky-50 text-[#1f4b82]"
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function AdminDialogFrame({
   title,
   description,
   submitting,
   children,
   wide,
+  icon,
 }: {
   title: string;
   description?: string;
   submitting?: boolean;
   children: ReactNode;
   wide?: boolean;
+  icon?: ReactNode;
 }) {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="admin-dialog-overlay fixed inset-0 z-50" />
       <Dialog.Content
         className={cn(
-          "admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col outline-none",
+          "admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden outline-none",
           wide ? "max-w-xl" : "max-w-lg"
         )}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Dialog.Title className="text-lg font-semibold tracking-tight">{title}</Dialog.Title>
+        <div className="flex items-start gap-3 px-5 pt-5 pb-4">
+          <DialogMark>{icon ?? <SquarePen className="size-4" aria-hidden />}</DialogMark>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <Dialog.Title className="text-[15px] font-semibold leading-snug text-[#1c2430]">
+              {title}
+            </Dialog.Title>
             {description ? (
-              <Dialog.Description className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              <Dialog.Description className="mt-1 text-[13px] leading-relaxed text-[#5c6778]">
                 {description}
               </Dialog.Description>
             ) : (
@@ -287,7 +314,7 @@ export function AdminDialogFrame({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-xl"
+              className="h-8 w-8 shrink-0 rounded-lg text-[#5c6778] hover:bg-sky-50 hover:text-[#1f4b82]"
               disabled={submitting}
               aria-label="ปิด"
             >
@@ -295,7 +322,7 @@ export function AdminDialogFrame({
             </Button>
           </Dialog.Close>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5">{children}</div>
       </Dialog.Content>
     </Dialog.Portal>
   );
@@ -303,7 +330,7 @@ export function AdminDialogFrame({
 
 export function AdminFormActions({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-border/70 bg-white/90 pt-5 backdrop-blur">
+    <div className="admin-form-actions sticky bottom-0 z-20 -mx-6 mt-2 flex flex-wrap items-center justify-end gap-3 border-t border-border/70 bg-white px-6 py-4 shadow-[0_-8px_16px_rgba(255,255,255,0.9)] sm:-mx-8 sm:px-8">
       {children}
     </div>
   );

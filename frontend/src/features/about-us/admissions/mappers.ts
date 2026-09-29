@@ -1,19 +1,16 @@
 import type { ContentDetail } from "@/features/content";
-import type { AdmissionsInfo, SupportItem } from "./types";
+import {
+  blocksFromSection,
+  sectionFromExtraValue,
+  type AdmissionsInfo,
+  type SupportItem,
+} from "./types";
 
 function str(extra: Record<string, unknown> | null, key: string): string {
   const value = extra?.[key];
   if (typeof value === "string") return value.trim();
   if (typeof value === "number") return String(value);
   return "";
-}
-
-function stringList(extra: Record<string, unknown> | null, key: string): string[] {
-  const value = extra?.[key];
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => (typeof item === "string" ? item.trim() : ""))
-    .filter(Boolean);
 }
 
 function supportList(extra: Record<string, unknown> | null): SupportItem[] {
@@ -33,6 +30,8 @@ function supportList(extra: Record<string, unknown> | null): SupportItem[] {
 
 export function mapAdmissions(item: ContentDetail): AdmissionsInfo {
   const extra = item.extra;
+  const qualificationsSection = sectionFromExtraValue(extra?.qualifications);
+  const documentsSection = sectionFromExtraValue(extra?.documents);
   return {
     id: item.id,
     title: item.title.trim(),
@@ -41,8 +40,10 @@ export function mapAdmissions(item: ContentDetail): AdmissionsInfo {
     tuition: str(extra, "tuition"),
     quota: str(extra, "quota"),
     applyUrl: str(extra, "apply_url"),
-    qualifications: stringList(extra, "qualifications"),
+    qualificationsSection,
+    documentsSection,
+    qualifications: blocksFromSection(qualificationsSection),
     supportItems: supportList(extra),
-    documents: stringList(extra, "documents"),
+    documents: blocksFromSection(documentsSection),
   };
 }

@@ -19,13 +19,13 @@ export default function AdminLayout({
 }>) {
   return (
     <AdminGuard>
-      <div className="admin-shell min-h-svh">
-        <SidebarProvider>
+      <div className="admin-shell">
+        <SidebarProvider className="h-full min-h-0">
           <AppSidebar />
-          <SidebarInset className="max-h-svh overflow-y-auto bg-[#eef2f8]!">
+          <SidebarInset className="admin-main flex min-h-0 flex-col overflow-hidden bg-[#f4f6f9]!">
             <AdminViewProvider>
               <AdminHeader />
-              <div className="flex flex-1 flex-col gap-6 p-4 pb-8 sm:p-6 lg:px-8 lg:pb-10">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-none p-4 pb-8 sm:p-6 lg:px-8 lg:pb-10">
                 {children}
               </div>
             </AdminViewProvider>

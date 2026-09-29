@@ -16,51 +16,49 @@ export const CE_MEMBER_ROLES = ["student", "teacher", "admin"] as const;
 export const STUDENT_ONLY_ROLES = ["student"] as const;
 export const STAFF_ROLES = ["teacher", "admin"] as const;
 
-export const ABOUT_US_ITEMS: NavItem[] = [
-  { label: "หลักสูตร", href: "/about-us/beng" },
-  { label: "คุณสมบัติ", href: "/about-us/admission-requirements" },
-  { label: "เส้นทางอาชีพ", href: "/about-us/careers" },
-  { label: "กิจกรรม", href: "/about-us/activities" },
-  { label: "ผลงานนักศึกษา", href: "/about-us/student-works" },
-];
+export interface NavGroup {
+  key: string;
+  label: string;
+  items: NavItem[];
+}
 
-export const NEWS_PUBLIC_ITEMS: NavItem[] = [
-  { label: "ประกาศรับสมัคร", href: "/news" },
-];
-
-export const NEWS_MEMBER_ITEMS: NavItem[] = [
+/** เมนูหลักจัดตามกลุ่มผู้ใช้ — ตรงกับกลุ่มใน Admin sidebar */
+export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "ประกาศภายในสาขา",
-    href: "/news/internal",
-    roles: CE_MEMBER_ROLES,
-  },
-];
-
-export const NEWS_ITEMS: NavItem[] = [...NEWS_PUBLIC_ITEMS, ...NEWS_MEMBER_ITEMS];
-
-export const ACADEMICS_ITEMS: NavItem[] = [
-  { label: "Quizz", href: "/academics/quiz" },
-];
-
-export const FACULTY_ITEMS: NavItem[] = [
-  { label: "Faculty", href: "/faculty/facultyce" },
-  {
-    label: "รายชื่อชั้นปี",
-    href: "/faculty/students-by-year",
-    roles: CE_MEMBER_ROLES,
-  },
-];
-
-export const STUDENT_ITEMS: NavItem[] = [
-  {
-    label: "Quizz แนะนำ",
-    href: "/student/quiz-recommend",
-    roles: CE_MEMBER_ROLES,
+    key: "about",
+    label: "About Us",
+    items: [
+      { label: "หลักสูตร", href: "/about-us/beng" },
+      { label: "คณาจารย์", href: "/faculty/facultyce" },
+      { label: "กิจกรรม", href: "/about-us/activities" },
+      { label: "ผลงานนักศึกษา", href: "/about-us/student-works" },
+    ],
   },
   {
-    label: "CE exit exam",
-    href: "/student/exam",
-    roles: CE_MEMBER_ROLES,
+    key: "admissions",
+    label: "Admissions",
+    items: [
+      { label: "คุณสมบัติผู้สมัคร", href: "/about-us/admission-requirements" },
+      { label: "แบบทดสอบความพร้อม", href: "/academics/quiz" },
+      { label: "เส้นทางอาชีพ", href: "/about-us/careers" },
+    ],
+  },
+  {
+    key: "news",
+    label: "News",
+    items: [
+      { label: "ประกาศรับสมัคร", href: "/news" },
+      { label: "ประกาศภายในสาขา", href: "/news/internal", roles: CE_MEMBER_ROLES },
+    ],
+  },
+  {
+    key: "student",
+    label: "Student",
+    items: [
+      { label: "แบบทดสอบค้นหาสายงาน", href: "/student/quiz-recommend", roles: CE_MEMBER_ROLES },
+      { label: "ข้อสอบวัดความรู้", href: "/student/exam", roles: CE_MEMBER_ROLES },
+      { label: "รายชื่อนักศึกษาแต่ละรุ่น", href: "/faculty/students-by-year", roles: CE_MEMBER_ROLES },
+    ],
   },
 ];
 
@@ -73,6 +71,3 @@ export function visibleNavItems(
     return Boolean(role && item.roles.includes(role));
   });
 }
-
-/** @deprecated ใช้ FACULTY_ITEMS */
-export const FACUITY_ITEMS = FACULTY_ITEMS;

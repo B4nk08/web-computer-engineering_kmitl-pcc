@@ -6,15 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, X, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { isStaffRole, staffPanelLabel } from "@/config/staff-role";
-import {
-  ABOUT_US_ITEMS,
-  ACADEMICS_ITEMS,
-  FACULTY_ITEMS,
-  NEWS_ITEMS,
-  STUDENT_ITEMS,
-  visibleNavItems,
-  type NavItem,
-} from "@/config/nav-items";
+import { NAV_GROUPS, visibleNavItems, type NavItem } from "@/config/nav-items";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,7 +34,12 @@ function DropdownItem({
   href,
   onNavigate,
   light = false,
-}: NavItem & { onNavigate?: () => void; light?: boolean }) {
+  glass = false,
+}: NavItem & { onNavigate?: () => void; light?: boolean; glass?: boolean }) {
+  const pathname = usePathname();
+  const active = pathname === href;
+  const onLight = light && !glass;
+
   return (
     <Link
       href={href}
@@ -50,11 +47,16 @@ function DropdownItem({
         onNavigate?.();
         scrollToHash(href);
       }}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "block rounded-md px-4 py-2.5 text-sm transition-colors focus-visible:outline-none",
-        light
-          ? "text-[var(--navy-900)] hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)]"
-          : "text-white/90 hover:bg-[var(--navy-800)] hover:text-white focus-visible:bg-[var(--navy-800)] focus-visible:text-white",
+        "block rounded-xl px-4 py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none md:text-center",
+        onLight
+          ? active
+            ? "bg-[var(--navy-900)] text-white"
+            : "text-[var(--navy-900)] hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)]"
+          : active
+            ? "bg-white text-[var(--navy-900)] shadow-sm"
+            : "text-white/90 hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white",
       )}
     >
       {label}
@@ -62,9 +64,12 @@ function DropdownItem({
   );
 }
 
+/**
+ * เมนูกลุ่ม — ตั้งแต่ 2 รายการ: กดหรือชี้ที่ชื่อเพื่อเปิดรายการ (ชื่อไม่พาไปหน้าไหน)
+ * เหลือรายการเดียว: แสดงเป็นลิงก์ตรง ไม่มีลูกศร
+ */
 function NavDropdown({
   label,
-  href,
   items,
   mobileOpen,
   onToggleMobile,
@@ -72,7 +77,6 @@ function NavDropdown({
   light = false,
 }: {
   label: string;
-  href?: string;
   items: NavItem[];
   mobileOpen?: boolean;
   onToggleMobile?: () => void;
@@ -90,64 +94,67 @@ function NavDropdown({
       : "text-white/90 hover:text-[var(--accent)]",
   );
 
+  if (items.length === 0) return null;
+
+  if (items.length === 1) {
+    const only = items[0];
+    return (
+      <Link
+        href={only.href}
+        onClick={() => {
+          onNavigate?.();
+          scrollToHash(only.href);
+        }}
+        className={labelClass}
+      >
+        {label}
+      </Link>
+    );
+  }
+
   return (
     <div
       className="relative"
       onMouseEnter={() => !isMobileControlled && setHoverOpen(true)}
       onMouseLeave={() => !isMobileControlled && setHoverOpen(false)}
     >
-      <div className="flex items-center gap-1">
-        {href ? (
-          <Link
-            href={href}
-            onClick={() => {
-              onNavigate?.();
-              scrollToHash(href);
-            }}
-            className={labelClass}
-          >
-            {label}
-          </Link>
-        ) : (
-          <button type="button" onClick={onToggleMobile} className={labelClass}>
-            {label}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onToggleMobile}
-          aria-label={`เปิดเมนูย่อย ${label}`}
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => {
+          if (isMobileControlled) onToggleMobile?.();
+          else setHoverOpen((v) => !v);
+        }}
+        className={cn(labelClass, "flex items-center gap-1")}
+      >
+        {label}
+        <ChevronDown
           className={cn(
-            "flex items-center py-2 transition-colors hover:text-[var(--accent)]",
-            light ? "text-[var(--navy-900)]" : "text-white/90",
+            "h-3.5 w-3.5 transition-transform duration-200",
+            open && "rotate-180",
           )}
-        >
-          <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 transition-transform duration-200",
-              open && "rotate-180",
-            )}
-          />
-        </button>
-      </div>
+        />
+      </button>
 
       <div
         className={cn(
-          "absolute left-0 top-full z-40 hidden w-52 origin-top rounded-xl p-2 shadow-xl backdrop-blur transition-all duration-150 md:block",
-          light
-            ? "bg-white/95 ring-1 ring-black/5"
-            : "bg-[var(--navy-950)]/95 ring-1 ring-white/10",
+          "absolute top-full left-1/2 z-40 hidden w-max min-w-48 origin-top whitespace-nowrap -translate-x-1/2 space-y-1 rounded-2xl p-2 before:absolute before:inset-x-0 before:-top-3 before:h-3 before:content-[''] shadow-[0_16px_40px_rgba(5,12,32,0.35)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-150 md:block",
+          "bg-[var(--navy-950)]/80 ring-1 ring-white/15",
           open
-            ? "visible translate-y-1 opacity-100"
-            : "invisible -translate-y-1 opacity-0",
+            ? "visible mt-2 opacity-100"
+            : "invisible mt-0 opacity-0",
         )}
       >
         {items.map((item) => (
           <DropdownItem
             key={item.label}
             {...item}
-            light={light}
-            onNavigate={onNavigate}
+            glass
+            onNavigate={() => {
+              setHoverOpen(false);
+              onNavigate?.();
+            }}
           />
         ))}
       </div>
@@ -197,9 +204,10 @@ export function Navbar() {
     ? mobileMenuOpen
     : !overlayNav || scrolled || mobileMenuOpen;
   const role = user?.role;
-  const newsItems = visibleNavItems(NEWS_ITEMS, role);
-  const facultyItems = visibleNavItems(FACULTY_ITEMS, role);
-  const studentItems = visibleNavItems(STUDENT_ITEMS, role);
+  const navGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: visibleNavItems(group.items, role),
+  })).filter((group) => group.items.length > 0);
   const showStaffPanel = isStaffRole(role);
   const panelLabel = staffPanelLabel(role);
 
@@ -264,7 +272,7 @@ export function Navbar() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logoce.png"
+              src="/brand/logo-ce.png"
               alt="KMITL Computer Logo"
               className="h-full w-full object-contain object-left"
             />
@@ -274,37 +282,14 @@ export function Navbar() {
             <Link href="/" className={linkClass}>
               Home
             </Link>
-            <NavDropdown
-              label="About Us"
-              href="/#about"
-              items={ABOUT_US_ITEMS}
-              light={isQuiz}
-            />
-            <NavDropdown
-              label="News"
-              href="/news"
-              items={newsItems}
-              light={isQuiz}
-            />
-            <NavDropdown
-              label="Academics"
-              items={ACADEMICS_ITEMS}
-              light={isQuiz}
-            />
-            {facultyItems.length > 0 ? (
+            {navGroups.map((group) => (
               <NavDropdown
-                label="Faculty"
-                items={facultyItems}
+                key={group.key}
+                label={group.label}
+                items={group.items}
                 light={isQuiz}
               />
-            ) : null}
-            {studentItems.length > 0 ? (
-              <NavDropdown
-                label="Student"
-                items={studentItems}
-                light={isQuiz}
-              />
-            ) : null}
+            ))}
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
@@ -369,64 +354,19 @@ export function Navbar() {
             <Link href="/" onClick={closeMobile} className={linkClass}>
               Home
             </Link>
-            <NavDropdown
-              label="About Us"
-              href="/#about"
-              items={ABOUT_US_ITEMS}
-              mobileOpen={mobileDropdown === "about"}
-              onToggleMobile={() =>
-                setMobileDropdown((d) => (d === "about" ? null : "about"))
-              }
-              onNavigate={closeMobile}
-              light={isQuiz}
-            />
-            <NavDropdown
-              label="News"
-              href="/news"
-              items={newsItems}
-              mobileOpen={mobileDropdown === "news"}
-              onToggleMobile={() =>
-                setMobileDropdown((d) => (d === "news" ? null : "news"))
-              }
-              onNavigate={closeMobile}
-              light={isQuiz}
-            />
-            <NavDropdown
-              label="Academics"
-              items={ACADEMICS_ITEMS}
-              mobileOpen={mobileDropdown === "academics"}
-              onToggleMobile={() =>
-                setMobileDropdown((d) =>
-                  d === "academics" ? null : "academics",
-                )
-              }
-              onNavigate={closeMobile}
-              light={isQuiz}
-            />
-            {facultyItems.length > 0 ? (
+            {navGroups.map((group) => (
               <NavDropdown
-                label="Faculty"
-                items={facultyItems}
-                mobileOpen={mobileDropdown === "faculty"}
+                key={group.key}
+                label={group.label}
+                items={group.items}
+                mobileOpen={mobileDropdown === group.key}
                 onToggleMobile={() =>
-                  setMobileDropdown((d) => (d === "faculty" ? null : "faculty"))
+                  setMobileDropdown((d) => (d === group.key ? null : group.key))
                 }
                 onNavigate={closeMobile}
                 light={isQuiz}
               />
-            ) : null}
-            {studentItems.length > 0 ? (
-              <NavDropdown
-                label="Student"
-                items={studentItems}
-                mobileOpen={mobileDropdown === "student"}
-                onToggleMobile={() =>
-                  setMobileDropdown((d) => (d === "student" ? null : "student"))
-                }
-                onNavigate={closeMobile}
-                light={isQuiz}
-              />
-            ) : null}
+            ))}
             {!authLoading && showStaffPanel ? (
               <Link
                 href="/admin"

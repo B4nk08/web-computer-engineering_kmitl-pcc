@@ -1,9 +1,39 @@
 import type { ContentDetail } from "@/features/content";
-import type { HomeHeroMedia, HomeStaffMember } from "./types";
+import type {
+  HomeHeroMedia,
+  HomeStaffMember,
+  StaffEducation,
+  StaffEducationLevel,
+} from "./types";
 
 function extraString(extra: Record<string, unknown> | null, key: string): string {
   const value = extra?.[key];
   return typeof value === "string" ? value.trim() : "";
+}
+
+const EDUCATION_ORDER: StaffEducationLevel[] = ["doctorate", "master", "bachelor"];
+
+function staffEducation(extra: Record<string, unknown> | null): StaffEducation[] {
+  const raw = extra?.education;
+  if (!Array.isArray(raw)) return [];
+  const rows: StaffEducation[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const e = entry as Record<string, unknown>;
+    const level = e.level;
+    if (level !== "bachelor" && level !== "master" && level !== "doctorate") continue;
+    const degree = typeof e.degree === "string" ? e.degree.trim() : "";
+    if (!degree) continue;
+    rows.push({
+      level,
+      degree,
+      institution: typeof e.institution === "string" ? e.institution.trim() : "",
+      year: typeof e.year === "string" ? e.year.trim() : String(e.year ?? "").trim(),
+    });
+  }
+  return rows.sort(
+    (a, b) => EDUCATION_ORDER.indexOf(a.level) - EDUCATION_ORDER.indexOf(b.level)
+  );
 }
 
 export function mapStaffToHome(item: ContentDetail): HomeStaffMember {
@@ -18,6 +48,7 @@ export function mapStaffToHome(item: ContentDetail): HomeStaffMember {
     position: position === "-" ? "อาจารย์" : position,
     bio: item.body,
     imageUrl: item.imageUrl,
+    education: staffEducation(item.extra),
   };
 }
 

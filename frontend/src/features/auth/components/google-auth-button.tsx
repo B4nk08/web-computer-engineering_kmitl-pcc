@@ -34,7 +34,6 @@ export function GoogleAuthButton({
   const onErrorRef = useRef(onError);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
-  const [originHint, setOriginHint] = useState("");
 
   onSuccessRef.current = onSuccess;
   onErrorRef.current = onError;
@@ -58,7 +57,6 @@ export function GoogleAuthButton({
     if (!el) return;
 
     let cancelled = false;
-    setOriginHint(currentOriginHint());
 
     void (async () => {
       try {
@@ -83,7 +81,7 @@ export function GoogleAuthButton({
           },
           {
             text: variant === "register" ? "signup_with" : "signin_with",
-            width: variant === "login" ? 260 : 280,
+            width: Math.max(240, Math.round(el.getBoundingClientRect().width) || 320),
           }
         );
         if (!cancelled) setReady(true);
@@ -125,36 +123,65 @@ export function GoogleAuthButton({
     );
   }
 
+  const label =
+    variant === "register" ? "Sign up with Google" : "Continue with Google";
+
   return (
     <div
       className={cn(
-        "relative flex w-full flex-col items-center gap-2",
+        "group relative h-10 w-full transition",
         className
       )}
     >
-      {loading ? (
-        <p className="text-xs" style={{ color: AUTH_THEME.muted }}>
-          กำลังเข้าสู่ระบบด้วย Google...
-        </p>
-      ) : null}
-      {!ready && !loading ? (
-        <p className="text-xs" style={{ color: AUTH_THEME.muted }}>
-          กำลังโหลดปุ่ม Google...
-        </p>
-      ) : null}
+      <div
+        className="pointer-events-none flex h-full w-full items-center justify-center gap-2 border bg-white text-sm font-medium transition group-hover:bg-[#f7f8fb]"
+        style={{
+          borderColor: "#C9D2E3",
+          borderRadius: 12,
+          color: AUTH_THEME.title,
+          boxShadow: "0 1px 2px rgba(0, 34, 80, 0.05)",
+        }}
+      >
+        <GoogleMark />
+        <span>
+          {loading
+            ? "กำลังเข้าสู่ระบบ..."
+            : !ready
+              ? "กำลังโหลด Google..."
+              : label}
+        </span>
+      </div>
       <div
         ref={hostRef}
         className={cn(
-          "flex min-h-11 w-full max-w-[280px] items-center justify-center overflow-hidden rounded-full",
-          loading && "pointer-events-none opacity-60"
+          "absolute inset-0 z-10 flex items-center justify-center overflow-hidden opacity-0",
+          (loading || !ready) && "pointer-events-none"
         )}
+        style={{ borderRadius: 12 }}
       />
-      {originHint ? (
-        <p className="max-w-[280px] text-center text-[10px] leading-snug text-neutral-400">
-          Origin ที่ต้องอนุญาตใน Google Cloud:{" "}
-          <span className="font-mono text-neutral-500">{originHint}</span>
-        </p>
-      ) : null}
     </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.86 2.7-6.62z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.95 10.7A5.41 5.41 0 0 1 3.66 9c0-.59.1-1.16.29-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.03l2.99-2.33z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"
+      />
+    </svg>
   );
 }

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Loader2, Trash2 } from "lucide-react";
+import { Info, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -22,12 +22,8 @@ type AdminConfirmDialogProps = {
 };
 
 const TONE_ICON: Record<ConfirmTone, ReactNode> = {
-  danger: (
-    <span className="flex size-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-      <Trash2 className="size-5" aria-hidden />
-    </span>
-  ),
-  neutral: null,
+  danger: <Trash2 className="size-4" aria-hidden />,
+  neutral: <Info className="size-4" aria-hidden />,
 };
 
 export function AdminConfirmDialog({
@@ -54,35 +50,49 @@ export function AdminConfirmDialog({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="admin-dialog-overlay fixed inset-0 z-50 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-[26rem] -translate-x-1/2 -translate-y-1/2 bg-white outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
-          {headingIcon ? <div className="mb-4">{headingIcon}</div> : null}
-          <Dialog.Title className="text-lg font-semibold tracking-tight text-foreground">
-            {title}
-          </Dialog.Title>
-          <Dialog.Description className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </Dialog.Description>
-          <div className="mt-7 flex flex-wrap justify-end gap-2">
+        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-[26rem] -translate-x-1/2 -translate-y-1/2 overflow-hidden outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
+          <div className="flex items-start gap-3 px-5 pt-5 pb-4">
+            <span
+              className={cn(
+                "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border",
+                tone === "danger"
+                  ? "border-rose-200 bg-rose-50 text-rose-600"
+                  : "border-sky-200 bg-sky-50 text-[#1f4b82]"
+              )}
+            >
+              {headingIcon}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <Dialog.Title className="text-[15px] font-semibold leading-snug text-[#1c2430]">
+                {title}
+              </Dialog.Title>
+              <Dialog.Description className="mt-1 text-[13px] leading-relaxed text-[#5c6778]">
+                {description}
+              </Dialog.Description>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2 border-t border-[#e6ebf2] bg-[#f7f9fc] px-4 py-3">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               disabled={confirming}
-              className="h-10 rounded-full border-[#152038]/20 px-5 text-[#152038] hover:bg-[#152038] hover:text-white"
+              className="admin-dialog-cancel h-8 rounded-lg px-3.5"
               onClick={() => onOpenChange(false)}
             >
               {cancelLabel}
             </Button>
             <Button
               type="button"
-              variant={tone === "danger" ? "destructive" : "default"}
+              size="sm"
               disabled={confirming}
               className={cn(
-                "h-10 rounded-full px-5",
-                tone === "danger" && "bg-red-600 hover:bg-red-700",
+                "admin-dialog-confirm h-8 rounded-lg px-3.5",
+                tone === "danger" && "admin-dialog-confirm-danger"
               )}
               onClick={onConfirm}
             >
-              {confirming ? <Loader2 className="size-4 animate-spin" /> : null}
+              {confirming ? <Loader2 className="size-3.5 animate-spin" /> : null}
               {confirmLabel}
             </Button>
           </div>

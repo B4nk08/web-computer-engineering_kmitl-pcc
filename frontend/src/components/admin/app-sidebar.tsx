@@ -4,10 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
   Compass,
+  ExternalLink,
   Globe2,
   LayoutDashboard,
   LogOut,
@@ -21,7 +20,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -87,9 +85,9 @@ function NavItems({
               isActive={isActive}
               tooltip={item.title}
               className={cn(
-                "rounded-xl text-sidebar-foreground/85 hover:bg-white/10 hover:text-white",
+                "rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 isActive &&
-                  "bg-[#e07a3d]! text-white! font-medium shadow-[0_8px_18px_rgba(224,122,61,0.35)]"
+                  "bg-sidebar-primary! text-sidebar-primary-foreground! font-medium"
               )}
             >
               <Link href={item.href}>
@@ -125,7 +123,7 @@ function CollapsedGroup({
           <SidebarMenuButton
             tooltip={label}
             isActive={groupActive}
-            className="rounded-xl text-sidebar-foreground/85 data-[state=open]:bg-white/10 data-[state=open]:text-white"
+            className="rounded-lg text-sidebar-foreground/80 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Icon />
             <span>{label}</span>
@@ -135,7 +133,7 @@ function CollapsedGroup({
           side={isMobile ? "bottom" : "right"}
           align="start"
           sideOffset={8}
-          className="min-w-56 rounded-2xl border-border/80 p-1.5"
+          className="min-w-56 rounded-2xl border-border/80 bg-popover p-1.5 text-popover-foreground shadow-[0_12px_40px_rgba(15,29,63,0.16)]"
         >
           <DropdownMenuLabel className="px-2 text-xs font-medium text-muted-foreground">
             {label}
@@ -171,6 +169,7 @@ function NavUser() {
   const name = user?.displayName || user?.email || "Staff";
   const email = user?.email || "";
   const initials = initialsFrom(name, email);
+  const roleLabel = staffPanelLabel(user?.role);
 
   return (
     <SidebarMenu>
@@ -179,53 +178,59 @@ function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="rounded-2xl border border-white/10 bg-white/5 data-[state=open]:bg-white/10 data-[state=open]:text-white"
+              className="rounded-xl border border-sidebar-border bg-sidebar data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-xl">
-                <AvatarFallback className="rounded-xl bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
+              <Avatar className="size-8 rounded-xl">
+                <AvatarFallback className="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium text-white">{name}</span>
+              <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium text-sidebar-foreground">{name}</span>
                 <span className="truncate text-xs text-sidebar-foreground/55">{email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground/50" />
+              <ChevronsUpDown className="ml-auto size-4 shrink-0 text-sidebar-foreground/45" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-2xl"
+            className="min-w-64 rounded-2xl border-border/80 bg-popover p-1.5 text-popover-foreground shadow-[0_12px_40px_rgba(15,29,63,0.16)]"
             side={isMobile ? "bottom" : "right"}
             align="end"
-            sideOffset={8}
+            sideOffset={10}
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-xl">
-                  <AvatarFallback className="rounded-xl bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
+              <div className="flex items-start gap-3 px-2 py-2.5">
+                <Avatar className="size-10 shrink-0 rounded-xl">
+                  <AvatarFallback className="rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{name}</span>
-                  <span className="truncate text-xs text-muted-foreground">{email}</span>
+                <div className="grid min-w-0 flex-1 gap-0.5 text-left leading-snug">
+                  <span className="truncate text-[15px] font-semibold text-foreground">
+                    {name}
+                  </span>
+                  {email ? (
+                    <span className="truncate text-[13px] text-muted-foreground">
+                      {email}
+                    </span>
+                  ) : null}
+                  <span className="mt-1 w-fit rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-primary uppercase">
+                    {roleLabel}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="rounded-xl">
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem className="rounded-xl">
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="my-1.5" />
+            <DropdownMenuItem asChild className="cursor-pointer rounded-xl px-2.5 py-2 text-[13px]">
+              <Link href="/" target="_blank" rel="noopener noreferrer">
+                <ExternalLink />
+                View website
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="my-1.5" />
             <DropdownMenuItem
-              className="rounded-xl"
+              variant="destructive"
+              className="cursor-pointer rounded-xl px-2.5 py-2 text-[13px]"
               onClick={() => {
                 logout();
                 window.location.href = "/login";
@@ -258,21 +263,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
-      <SidebarHeader className="px-3 pt-3">
+      <SidebarHeader className="px-3 pt-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pt-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               asChild
               tooltip="CE KMITL-PCC"
-              className="rounded-2xl text-white hover:bg-white/10 group-data-[collapsible=icon]:justify-center"
+              className="rounded-xl text-sidebar-foreground hover:bg-sidebar-accent group-data-[collapsible=icon]:justify-center"
             >
               <Link href="/admin">
-                <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-[#e07a3d] text-[11px] font-semibold tracking-wide text-white shadow-[0_8px_18px_rgba(224,122,61,0.4)]">
+                <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-sidebar-primary text-[11px] font-semibold tracking-wide text-sidebar-primary-foreground group-data-[collapsible=icon]:size-8">
                   CE
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-semibold text-white">CE Studio</span>
+                  <span className="truncate font-semibold text-sidebar-foreground">CE Studio</span>
                   <span className="truncate text-xs text-sidebar-foreground/55">
                     {staffPanelLabel(role)} Panel
                   </span>
@@ -283,7 +288,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
         <SidebarGroup className="pt-1">
           <SidebarGroupLabel className="px-3 text-[11px] font-medium tracking-[0.16em] text-sidebar-foreground/40 uppercase">
             Overview
@@ -296,9 +301,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={isDashboard}
                   tooltip="Dashboard"
                   className={cn(
-                    "rounded-xl text-sidebar-foreground/85 hover:bg-white/10 hover:text-white",
+                    "rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     isDashboard &&
-                      "bg-[#e07a3d]! text-white! font-medium shadow-[0_8px_18px_rgba(224,122,61,0.35)]"
+                      "bg-sidebar-primary! text-sidebar-primary-foreground! font-medium"
                   )}
                 >
                   <Link href="/admin">
@@ -353,7 +358,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="px-3 pb-3">
+      <SidebarFooter className="px-3 pb-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-2">
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

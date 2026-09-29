@@ -173,17 +173,23 @@ export function LoginForm({ googleEnabled = true }: { googleEnabled?: boolean })
             : AUTH_COPY.loginSubmit}
       </AuthSubmitButton>
 
-      <div className="flex justify-center pt-1">
-        <GoogleAuthButton
-          variant="login"
-          enabled={googleEnabled && !success}
-          onSuccess={(user) => finishAuth(user, AUTH_COPY.loginSuccessGoogle)}
-          onError={(msg) => {
-            setSuccess(null);
-            setError(msg);
-          }}
-        />
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-[#D0D6E4]" />
+        <span className="text-sm" style={{ color: AUTH_THEME.muted }}>
+          {AUTH_COPY.or}
+        </span>
+        <div className="h-px flex-1 bg-[#D0D6E4]" />
       </div>
+
+      <GoogleAuthButton
+        variant="login"
+        enabled={googleEnabled && !success}
+        onSuccess={(user) => finishAuth(user, AUTH_COPY.loginSuccessGoogle)}
+        onError={(msg) => {
+          setSuccess(null);
+          setError(msg);
+        }}
+      />
     </form>
   );
 }

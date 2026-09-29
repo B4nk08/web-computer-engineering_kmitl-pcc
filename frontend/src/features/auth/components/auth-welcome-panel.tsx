@@ -33,7 +33,7 @@ export function AuthWelcomePanel({ mode, className }: AuthWelcomePanelProps) {
           <h2 className="text-2xl font-semibold tracking-tight sm:text-[1.75rem] lg:text-[2rem]">
             {title}
           </h2>
-          <p className="mt-2 max-w-[15rem] text-sm leading-relaxed text-white/85 sm:mt-3 sm:max-w-[16rem] sm:text-[0.95rem]">
+          <p className="mt-2 max-w-[18rem] text-sm leading-relaxed text-white/85 sm:mt-3 sm:max-w-[20rem] sm:text-[0.95rem]">
             {subtitle}
           </p>
         </div>

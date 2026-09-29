@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminBadge, AdminCheckbox, AdminEmptyState } from "@/components/admin";
@@ -70,11 +70,24 @@ export function NewsList({
         return (
           <li
             key={item.id}
+            role={onEdit ? "button" : undefined}
+            tabIndex={onEdit && !deleting ? 0 : undefined}
+            onClick={() => {
+              if (onEdit && !deleting) onEdit(item.id);
+            }}
+            onKeyDown={(e) => {
+              if (e.target !== e.currentTarget || !onEdit || deleting) return;
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onEdit(item.id);
+              }
+            }}
             className={cn(
-              "group flex items-center gap-3 rounded-2xl border bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(15,29,63,0.08)] sm:gap-4",
+              "group flex items-center gap-3 rounded-xl border bg-white px-4 py-4 text-left transition sm:gap-4",
+              onEdit && !deleting && "cursor-pointer",
               selected
-                ? "border-[#d4652b]/50 bg-[#fff6ec]"
-                : "border-border/80 hover:border-[#d4652b]/35"
+                ? "border-primary/40 bg-sky-50"
+                : "border-border hover:border-primary/30 hover:bg-sky-50/40"
             )}
           >
             {onToggle ? (
@@ -84,7 +97,7 @@ export function NewsList({
                 disabled={deleting}
               />
             ) : null}
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#fff1e6] text-sm font-semibold text-[#d4652b]">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sm font-semibold text-primary">
               {item.title.trim().slice(0, 1) || "ข"}
             </div>
             <div className="min-w-0 flex-1">
@@ -101,18 +114,7 @@ export function NewsList({
             ) : (
               <AdminBadge>ร่าง</AdminBadge>
             )}
-            <div className="flex shrink-0 items-center gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                aria-label={`แก้ไข ${item.title}`}
-                onClick={() => onEdit?.(item.id)}
-                disabled={!onEdit || deleting}
-              >
-                <Pencil className="size-3.5" />
-                แก้ไข
-              </Button>
+            <div className="flex shrink-0 items-center">
               {onDelete ? (
                 <Button
                   type="button"
@@ -120,7 +122,10 @@ export function NewsList({
                   size="icon"
                   className="h-8 w-8"
                   aria-label={`ลบ ${item.title}`}
-                  onClick={() => onDelete(item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(item);
+                  }}
                   disabled={deleting}
                 >
                   <Trash2 className="size-4 text-red-600" />

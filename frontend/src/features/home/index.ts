@@ -17,6 +17,8 @@ export {
 } from "./hooks/use-home-contents";
 export type {
   HomeStaffMember,
+  StaffEducation,
+  StaffEducationLevel,
   HomeShowcaseItem,
   HomeHeroMedia,
   HomeActivity,

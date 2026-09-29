@@ -12,9 +12,9 @@ import {
 } from "recharts";
 import type { DashboardTrendPoint } from "./api";
 
-export const EXTERNAL_QUIZ_COLOR = "#c9784a";
-export const INTERNAL_QUIZ_COLOR = "#8a8178";
-export const EXAM_COLOR = "#5b7c6a";
+export const EXTERNAL_QUIZ_COLOR = "#1f4b82";
+export const INTERNAL_QUIZ_COLOR = "#6b7c93";
+export const EXAM_COLOR = "#2f8f6b";
 
 function ChartFrame({
   height,

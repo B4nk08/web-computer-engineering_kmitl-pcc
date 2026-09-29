@@ -62,7 +62,7 @@ export function groupCareersByCluster(
     byCode.set(career.clusterCode, list);
   }
 
-  const grouped = clusters
+  const grouped: { cluster: CareerClusterDto | null; items: CareerPath[] }[] = clusters
     .map((cluster) => ({ cluster, items: byCode.get(cluster.code) ?? [] }))
     .filter((group) => group.items.length > 0);
 

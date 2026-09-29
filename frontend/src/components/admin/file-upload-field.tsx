@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { FileText, Link2, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
 import { uploadFileToS3, type UploadKind } from "@/lib/api/upload";
+import { cn } from "@/lib/utils";
 
 const MAX_UPLOAD_BYTES = 500 * 1024 * 1024; // ต้องตรงกับ backend
 
@@ -18,6 +19,7 @@ type FileUploadFieldProps = {
   accept?: string;
   placeholder?: string;
   hint?: string;
+  className?: string;
 };
 
 function formatMb(bytes: number) {
@@ -32,10 +34,12 @@ export function FileUploadField({
   accept = "image/jpeg,image/png,image/webp,image/gif",
   placeholder = "https://...",
   hint = "อัปโหลดไป S3 หรือวาง URL เอง",
+  className,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLink, setShowLink] = useState(false);
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
@@ -86,132 +90,170 @@ export function FileUploadField({
       /\.(jpe?g|png|gif|webp)(\?|$)/i.test(value) ||
       value.includes("/uploads/image/"));
 
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={accept}
+      className="hidden"
+      onChange={(e) => void handleFile(e.target.files?.[0])}
+    />
+  );
+
+  const changeButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={uploading}
+      onClick={() => inputRef.current?.click()}
+    >
+      {uploading ? (
+        <>
+          <Loader2 className="size-3.5 animate-spin" />
+          กำลังอัปโหลด...
+        </>
+      ) : (
+        <>
+          <Upload className="size-3.5" />
+          เปลี่ยนไฟล์
+        </>
+      )}
+    </Button>
+  );
+
   return (
-    <div className="space-y-2">
+    <div className={cn("flex h-full flex-col gap-2", className)}>
       <Label>{label}</Label>
-
-      {value && isImage ? (
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="" className="mx-auto max-h-48 object-contain" />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="absolute right-2 top-2 h-8 w-8"
-            onClick={() => onChange("")}
-            aria-label="ลบรูป"
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
-      ) : null}
-
-      {value && isVideo ? (
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20">
-          <video
-            src={value}
-            className="mx-auto max-h-48 w-full object-contain"
-            controls
-            preload="metadata"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="absolute right-2 top-2 h-8 w-8"
-            onClick={() => onChange("")}
-            aria-label="ลบวิดีโอ"
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
-      ) : null}
+      {fileInput}
 
       {!value ? (
         <div className="admin-dropzone">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-card text-muted-foreground shadow-sm">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-white text-primary">
             <Upload className="size-4" />
           </div>
-          <p className="text-sm font-medium text-foreground">อัปโหลดไฟล์ หรือวางลิงก์</p>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            className="hidden"
-            onChange={(e) => void handleFile(e.target.files?.[0])}
-          />
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-foreground">อัปโหลดไฟล์</p>
+            <p className="text-xs text-muted-foreground">เลือกจากเครื่องได้เลย</p>
+          </div>
           <Button
             type="button"
             variant="outline"
+            size="sm"
             disabled={uploading}
             onClick={() => inputRef.current?.click()}
           >
             {uploading ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
                 กำลังอัปโหลด...
               </>
             ) : (
               "เลือกไฟล์"
             )}
           </Button>
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="max-w-md bg-card"
-          />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="flex-1"
-          />
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="file"
-              accept={accept}
-              className="hidden"
-              onChange={(e) => void handleFile(e.target.files?.[0])}
+          <button
+            type="button"
+            className="text-xs text-primary underline-offset-4 hover:underline"
+            onClick={() => setShowLink((open) => !open)}
+          >
+            {showLink ? "ซ่อนช่องลิงก์" : "หรือวางลิงก์"}
+          </button>
+          {showLink ? (
+            <Input
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="max-w-md bg-white"
             />
+          ) : null}
+        </div>
+      ) : isImage || isVideo ? (
+        <div className="overflow-hidden rounded-xl border border-border bg-white">
+          <div className="relative flex h-[28rem] items-center justify-center bg-[#eef1f5] px-6">
+            {isImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={value}
+                alt=""
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : (
+              <video
+                src={value}
+                className="max-h-full max-w-full"
+                controls
+                preload="metadata"
+              />
+            )}
             <Button
               type="button"
               variant="outline"
-              disabled={uploading}
-              onClick={() => inputRef.current?.click()}
+              size="icon"
+              className="absolute right-3 top-3 h-8 w-8 rounded-full border-white/80 bg-white/95 shadow-sm"
+              onClick={() => onChange("")}
+              aria-label={isVideo ? "ลบวิดีโอ" : "ลบรูป"}
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  กำลังอัปโหลด...
-                </>
-              ) : (
-                <>
-                  <Upload className="size-4" />
-                  เปลี่ยนไฟล์
-                </>
-              )}
+              <X className="size-4" />
             </Button>
           </div>
+          <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+            <p className="text-sm text-muted-foreground">{isVideo ? "วิดีโอ" : "รูปภาพ"}</p>
+            {changeButton}
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-primary">
+            <FileText className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">ไฟล์พร้อมใช้งาน</p>
+            <p className="truncate text-xs text-muted-foreground">อัปโหลดแล้ว</p>
+          </div>
+          {changeButton}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={() => onChange("")}
+            aria-label="ลบไฟล์"
+          >
+            <X className="size-4" />
+          </Button>
         </div>
       )}
 
-      {value && !isImage && !isVideo ? (
-        <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-          <ImageIcon className="size-3.5 shrink-0" />
-          {value}
-        </p>
+      {value && showLink ? (
+        <div className="flex items-center gap-2">
+          <Link2 className="size-4 shrink-0 text-muted-foreground" />
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+          />
+        </div>
       ) : null}
 
       {error ? (
         <p className="text-xs text-rose-700">{error}</p>
       ) : (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="text-xs text-muted-foreground">
+          {hint}
+          {value ? (
+            <>
+              {" "}
+              <button
+                type="button"
+                className="text-primary underline-offset-4 hover:underline"
+                onClick={() => setShowLink((open) => !open)}
+              >
+                {showLink ? "ซ่อนลิงก์" : "แก้ไขลิงก์"}
+              </button>
+            </>
+          ) : null}
+        </p>
       )}
     </div>
   );

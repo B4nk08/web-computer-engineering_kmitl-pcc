@@ -25,6 +25,7 @@ export function AdminCheckbox({
 }) {
   return (
     <label
+      onClick={(e) => e.stopPropagation()}
       className={cn(
         "inline-flex cursor-pointer items-center gap-2 text-sm",
         disabled && "cursor-not-allowed opacity-50",
@@ -41,7 +42,7 @@ export function AdminCheckbox({
         }}
         onChange={(e) => onCheckedChange(e.target.checked)}
         onClick={(e) => e.stopPropagation()}
-        className="size-4 shrink-0 accent-[#d4652b]"
+        className="size-4 shrink-0 accent-primary"
       />
       {label ? <span>{label}</span> : null}
     </label>
@@ -65,31 +66,47 @@ export function AdminSelectionBar({
   onDeleteSelected: () => void;
   deleting?: boolean;
 }) {
-  if (total === 0) return null;
+  if (total === 0 || selectedCount === 0) return null;
 
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-muted/30 px-4 py-3">
-      <AdminCheckbox
-        checked={allSelected}
-        indeterminate={someSelected}
-        onCheckedChange={onToggleAll}
-        disabled={deleting}
-        label={
-          selectedCount > 0
-            ? `เลือกแล้ว ${selectedCount} รายการ`
-            : "เลือกทั้งหมด"
-        }
-      />
-      <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        disabled={selectedCount === 0 || deleting}
-        onClick={onDeleteSelected}
-      >
-        <Trash2 className="size-3.5" />
-        ลบที่เลือก
-      </Button>
+    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#1f4b82]/15 bg-white py-2 pr-2 pl-4 shadow-[0_16px_40px_rgba(22,50,92,0.18)]">
+        <span className="text-sm font-medium text-[#1c2430]">
+          เลือก {selectedCount}
+          <span className="font-normal text-[#5c6778]"> / {total}</span>
+        </span>
+        {!allSelected && someSelected ? (
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={() => onToggleAll(true)}
+            className="rounded-full px-2.5 py-1 text-sm font-medium text-[#1f4b82] hover:bg-sky-50 disabled:opacity-50"
+          >
+            ทั้งหมด
+          </button>
+        ) : null}
+        <span className="mx-0.5 h-4 w-px bg-[#e3e8f0]" aria-hidden />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={deleting}
+          onClick={() => onToggleAll(false)}
+          className="h-8 rounded-full px-3 text-[#5c6778] hover:bg-[#f4f6f9]"
+        >
+          ยกเลิก
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          disabled={deleting}
+          onClick={onDeleteSelected}
+          className="h-8 rounded-full bg-rose-600 px-3.5 text-white hover:bg-rose-700"
+        >
+          <Trash2 className="size-3.5" />
+          ลบ
+        </Button>
+      </div>
     </div>
   );
 }

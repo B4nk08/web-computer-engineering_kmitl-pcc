@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { QuizToast } from "./quiz-toast";
 import type { PlayAnswers, PlayQuestion } from "./types";
@@ -45,6 +45,18 @@ export function QuizFlow({
     () => (total > 0 ? Math.round(((currentIndex + 1) / total) * 100) : 0),
     [currentIndex, total],
   );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (stage === "result") {
+      root.classList.add("quiz-on-result");
+    } else {
+      root.classList.remove("quiz-on-result");
+    }
+    return () => {
+      root.classList.remove("quiz-on-result");
+    };
+  }, [stage]);
 
   function reset() {
     setStage("intro");
@@ -231,7 +243,7 @@ export function QuizFlow({
   }
 
   return (
-    <div className="quiz-fade-in">
+    <div className="quiz-fade-in quiz-result-bg">
       {renderResult({ answers, onRetake: reset })}
     </div>
   );

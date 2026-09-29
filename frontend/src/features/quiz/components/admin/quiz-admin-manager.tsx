@@ -1,18 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Minus, Plus, Search, Trash2 } from "lucide-react";
 import {
-  AdminBadge,
   AdminCheckbox,
   AdminConfirmDialog,
   AdminEmptyState,
   AdminPageFrame,
-  AdminPill,
-  AdminSection,
   AdminSelectionBar,
   AdminStatus,
-  AdminToggle,
   deleteConfirmCopy,
   deleteMany,
   useAdminSelection,
@@ -22,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { generalQuizQuestions } from "../../data/general-quiz-questions";
 import {
   addQuizQuestion,
@@ -37,7 +34,7 @@ import type {
   QuizQuestionAdminDto,
   QuizSummaryDto,
 } from "../../api";
-import { QuizQuestionAddButton, QuizQuestionFormDialog } from "./quiz-question-form-dialog";
+import { QuizQuestionFormDialog } from "./quiz-question-form-dialog";
 
 type QuizKind = "internal" | "external";
 
@@ -107,6 +104,59 @@ function optionHint(
   return clusterLabel(scoreMap, clusters);
 }
 
+type QuizMeta = {
+  title: string;
+  description: string;
+  questionCount: number;
+  isActive: boolean;
+};
+
+const OPTION_LETTERS = ["A", "B", "C", "D"];
+
+function StatusSwitch({
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50",
+        checked ? "bg-emerald-500" : "bg-slate-300"
+      )}
+    >
+      <span
+        className={cn(
+          "inline-block size-5 rounded-full bg-white shadow-sm transition-transform",
+          checked ? "translate-x-5.5" : "translate-x-0.5"
+        )}
+      />
+    </button>
+  );
+}
+
+function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-white px-4 py-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
+      {hint ? <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
 export function QuizAdminManager({ kind }: { kind: QuizKind }) {
   const [quizzes, setQuizzes] = useState<QuizSummaryDto[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -126,6 +176,27 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
   const [isActive, setIsActive] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [savedMeta, setSavedMeta] = useState<QuizMeta | null>(null);
+  const [query, setQuery] = useState("");
+
+  const metaDirty =
+    savedMeta != null &&
+    (savedMeta.title !== title ||
+      savedMeta.description !== description ||
+      savedMeta.questionCount !== questionCount ||
+      savedMeta.isActive !== isActive);
+
+  const visibleQuestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const indexed = questions.map((question, index) => ({ question, index }));
+    if (!q) return indexed;
+    return indexed.filter(({ question }) =>
+      [question.prompt, ...question.options.map((o) => o.label)]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [questions, query]);
 
   const questionIds = useMemo(() => questions.map((item) => item.id), [questions]);
   const selection = useAdminSelection(questionIds);
@@ -168,6 +239,12 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
       setDescription(detail.quiz.description);
       setQuestionCount(detail.quiz.question_count ?? 0);
       setIsActive(detail.quiz.is_active);
+      setSavedMeta({
+        title: detail.quiz.title,
+        description: detail.quiz.description,
+        questionCount: detail.quiz.question_count ?? 0,
+        isActive: detail.quiz.is_active,
+      });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "โหลดคำถามไม่สำเร็จ");
       setQuestions([]);
@@ -232,19 +309,38 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
     }
   }
 
-  async function handleSaveMeta() {
+  async function handleSaveMeta(override?: Partial<QuizMeta>) {
     if (!selectedId) return;
+    const next: QuizMeta = {
+      title: (override?.title ?? title).trim(),
+      description: (override?.description ?? description).trim(),
+      questionCount: Math.max(0, Math.floor(override?.questionCount ?? questionCount) || 0),
+      isActive: override?.isActive ?? isActive,
+    };
     setSavingMeta(true);
     setError(null);
     try {
       const saved = await updateQuiz(selectedId, {
-        title: title.trim(),
-        description: description.trim(),
-        question_count: Number.isFinite(questionCount) ? Math.max(0, Math.floor(questionCount)) : 0,
-        is_active: isActive,
+        title: next.title,
+        description: next.description,
+        question_count: next.questionCount,
+        is_active: next.isActive,
       });
       setQuizzes((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
-      flash("บันทึกข้อมูลควิซแล้ว");
+      if (!override) {
+        setTitle(next.title);
+        setDescription(next.description);
+        setQuestionCount(next.questionCount);
+      }
+      setIsActive(next.isActive);
+      setSavedMeta(next);
+      flash(
+        override?.isActive !== undefined
+          ? next.isActive
+            ? "เปิดให้ทำควิซแล้ว"
+            : "ปิดควิซแล้ว"
+          : "บันทึกข้อมูลควิซแล้ว"
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "บันทึกควิซไม่สำเร็จ");
     } finally {
@@ -284,24 +380,15 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
                 สร้างควิซ{meta.label}
               </Button>
             ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleCreateQuiz()}
-                  disabled={creatingQuiz}
-                >
-                  {creatingQuiz ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-                  สร้างควิซใหม่
-                </Button>
-                <QuizQuestionAddButton
-                  disabled={!selectedId || creatingQuiz}
-                  onClick={() => {
-                    setEditing(null);
-                    setFormOpen(true);
-                  }}
-                />
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleCreateQuiz()}
+                disabled={creatingQuiz}
+              >
+                {creatingQuiz ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                สร้างควิซใหม่
+              </Button>
             )}
           </>
         }
@@ -309,63 +396,121 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
         {notice ? <AdminStatus tone="success">{notice}</AdminStatus> : null}
         {error ? <AdminStatus tone="error">{error}</AdminStatus> : null}
 
-        <AdminSection title="ชุดควิซ" description={meta.publicHint}>
-          {loadingList ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              กำลังโหลดควิซ...
-            </div>
-          ) : quizzes.length === 0 ? (
-            <AdminEmptyState title={meta.empty} />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {quizzes.map((quiz) => (
-                <AdminPill
+        {loadingList ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            กำลังโหลดควิซ...
+          </div>
+        ) : quizzes.length === 0 ? (
+          <AdminEmptyState title={meta.empty} />
+        ) : (
+          <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1">
+            {quizzes.map((quiz) => {
+              const active = quiz.id === selectedId;
+              return (
+                <button
                   key={quiz.id}
-                  active={quiz.id === selectedId}
-                  muted={!quiz.is_active}
-                  onClick={() => setSelectedId(quiz.id)}
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setSelectedId(quiz.id);
+                  }}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition",
+                    active
+                      ? "bg-white font-semibold text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
+                  <span
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      quiz.is_active ? "bg-emerald-500" : "bg-slate-400"
+                    )}
+                    aria-hidden
+                  />
                   {quiz.title}
-                  {!quiz.is_active ? <span className="text-xs opacity-80">(ปิด)</span> : null}
-                </AdminPill>
-              ))}
-            </div>
-          )}
-        </AdminSection>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {selectedQuiz ? (
           <>
-            <AdminSection
-              title="ตั้งค่าควิซ"
-              description="ชื่อ คำอธิบาย จำนวนข้อที่สุ่ม และสถานะเปิดให้ทำ"
-            >
-              <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatTile label="คำถามในคลัง" value={`${questions.length} ข้อ`} />
+              <StatTile
+                label="สุ่มให้ทำต่อครั้ง"
+                value={
+                  questionCount > 0 && questionCount < questions.length
+                    ? `${questionCount} ข้อ`
+                    : "ทุกข้อ"
+                }
+                hint={questionCount > 0 && questionCount < questions.length ? undefined : "ใช้คำถามทั้งหมด"}
+              />
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-white px-4 py-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">สถานะ</p>
+                  <p
+                    className={cn(
+                      "mt-1 text-xl font-semibold tracking-tight",
+                      savedMeta?.isActive ? "text-emerald-600" : "text-slate-500"
+                    )}
+                  >
+                    {savedMeta?.isActive ? "เปิดอยู่" : "ปิดอยู่"}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{meta.publicHint}</p>
+                </div>
+                <StatusSwitch
+                  checked={savedMeta?.isActive ?? isActive}
+                  disabled={savingMeta || !savedMeta}
+                  label={meta.audience}
+                  onChange={(value) => {
+                    if (!savedMeta) return;
+                    void handleSaveMeta({ ...savedMeta, isActive: value });
+                  }}
+                />
+              </div>
+            </div>
+
+            <section className="rounded-2xl border border-border/70 bg-white">
+              <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-4 sm:px-6">
+                <div>
+                  <h3 className="text-[15px] font-semibold tracking-tight">ข้อมูลควิซ</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">ชื่อและคำอธิบายที่ผู้ทำจะเห็นก่อนเริ่ม</p>
+                </div>
+                {metaDirty ? (
+                  <div className="flex items-center gap-2">
+                    <span className="hidden text-xs text-amber-600 sm:inline">มีการแก้ไขที่ยังไม่บันทึก</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={savingMeta}
+                      onClick={() => {
+                        if (!savedMeta) return;
+                        setTitle(savedMeta.title);
+                        setDescription(savedMeta.description);
+                        setQuestionCount(savedMeta.questionCount);
+                      }}
+                    >
+                      ยกเลิก
+                    </Button>
+                    <Button type="button" size="sm" onClick={() => void handleSaveMeta()} disabled={savingMeta}>
+                      {savingMeta ? <Loader2 className="size-4 animate-spin" /> : null}
+                      บันทึก
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+              <div className="grid gap-4 px-5 py-5 sm:px-6 lg:grid-cols-[1fr_auto]">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="quiz-title">ชื่อควิซ</Label>
-                    <Input
-                      id="quiz-title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
+                    <Input id="quiz-title" value={title} onChange={(e) => setTitle(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="quiz-qcount">จำนวนข้อที่ให้ทำ</Label>
-                    <Input
-                      id="quiz-qcount"
-                      type="number"
-                      min={0}
-                      value={questionCount}
-                      onChange={(e) => setQuestionCount(Number(e.target.value) || 0)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      คลังมี {questions.length} ข้อ — ใส่ 0 เพื่อใช้ทุกข้อ
-                      {questions.length > 0 && questionCount > 0 && questionCount < questions.length
-                        ? ` · จะสุ่มมา ${questionCount} ข้อตอนเริ่มทำ`
-                        : null}
-                    </p>
-                  </div>
-                  <div className="space-y-2 lg:col-span-2">
                     <Label htmlFor="quiz-desc">คำอธิบาย</Label>
                     <Input
                       id="quiz-desc"
@@ -373,28 +518,72 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
                       onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
-                  <AdminToggle
-                    checked={isActive}
-                    onChange={setIsActive}
-                    label={meta.audience}
-                  />
-                  <div className="flex items-end">
-                    <Button type="button" onClick={() => void handleSaveMeta()} disabled={savingMeta}>
-                      {savingMeta ? <Loader2 className="size-4 animate-spin" /> : null}
-                      บันทึกควิซ
+                </div>
+                <div className="space-y-2 lg:w-56">
+                  <Label htmlFor="quiz-qcount">จำนวนข้อที่ให้ทำ</Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="ลดจำนวนข้อ"
+                      onClick={() => setQuestionCount((n) => Math.max(0, n - 1))}
+                    >
+                      <Minus className="size-4" />
+                    </Button>
+                    <Input
+                      id="quiz-qcount"
+                      type="number"
+                      min={0}
+                      className="text-center tabular-nums"
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(Number(e.target.value) || 0)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="เพิ่มจำนวนข้อ"
+                      onClick={() => setQuestionCount((n) => n + 1)}
+                    >
+                      <Plus className="size-4" />
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">ใส่ 0 เพื่อใช้ทุกข้อในคลัง</p>
+                </div>
               </div>
-            </AdminSection>
+            </section>
 
-            <AdminSection
-              title={`คลังคำถาม (${questions.length} ข้อ)`}
-              description={
-                questions.length > 0 && questionCount > 0 && questionCount < questions.length
-                  ? `สุ่มให้ทำ ${questionCount} ข้อ`
-                  : "เพิ่ม แก้ไข หรือลบโจทย์ได้ทุกข้อ"
-              }
-            >
+            <section className="rounded-2xl border border-border/70 bg-white">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4 sm:px-6">
+                <div>
+                  <h3 className="text-[15px] font-semibold tracking-tight">คลังคำถาม</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">กดที่คำถามเพื่อแก้ไข</p>
+                </div>
+                <div className="flex w-full items-center gap-2 sm:w-auto">
+                  <div className="relative flex-1 sm:w-64 sm:flex-none">
+                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="ค้นหาคำถาม"
+                      className="pl-9"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    disabled={!selectedId || creatingQuiz}
+                    onClick={() => {
+                      setEditing(null);
+                      setFormOpen(true);
+                    }}
+                  >
+                    <Plus className="size-4" />
+                    <span className="hidden sm:inline">เพิ่มคำถาม</span>
+                  </Button>
+                </div>
+              </div>
+              <div className="px-5 py-5 sm:px-6">
               {loadingQuestions || creatingQuiz ? (
                 <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" />
@@ -421,60 +610,80 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
                   }
                   deleting={deleting}
                 />
+                {visibleQuestions.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    ไม่พบคำถามที่ตรงกับ “{query}”
+                  </p>
+                ) : null}
                 <ul className="space-y-3">
-                  {questions.map((question, idx) => (
-                    <li key={question.id} className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
+                  {visibleQuestions.map(({ question, index: idx }) => (
+                    <li
+                      key={question.id}
+                      role="button"
+                      tabIndex={deleting ? undefined : 0}
+                      onClick={() => {
+                        if (deleting) return;
+                        setEditing(question);
+                        setFormOpen(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget || deleting) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setEditing(question);
+                          setFormOpen(true);
+                        }
+                      }}
+                      className={cn(
+                        "group cursor-pointer rounded-xl border bg-white p-4 text-left transition hover:border-primary/30 hover:shadow-[0_6px_18px_rgba(15,29,63,0.06)] sm:p-5",
+                        selection.selected.has(question.id)
+                          ? "border-primary/40 bg-sky-50/50"
+                          : "border-border/70"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
                         <AdminCheckbox
-                          className="mt-1.5"
+                          className="mt-1"
                           checked={selection.selected.has(question.id)}
                           onCheckedChange={() => selection.toggle(question.id)}
                           disabled={deleting}
                         />
+                        <span className="mt-0.5 shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
                         <div className="min-w-0 flex-1">
-                          <span className="inline-flex size-7 items-center justify-center rounded-xl bg-[#d4652b] text-xs font-semibold text-white">
-                            {idx + 1}
-                          </span>
-                          <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{question.prompt}</p>
-                          <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                          <p className="text-sm font-semibold leading-relaxed text-foreground">{question.prompt}</p>
+                          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                             {question.options.map((option, optionIndex) => (
-                              <li key={option.id} className="flex flex-wrap items-start gap-2">
-                                <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-secondary text-[11px] font-semibold text-foreground">
-                                  {["A", "B", "C", "D"][optionIndex] ?? optionIndex + 1}
+                              <li
+                                key={option.id}
+                                className="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-foreground/80"
+                              >
+                                <span className="mt-px text-xs font-semibold text-primary">
+                                  {OPTION_LETTERS[optionIndex] ?? optionIndex + 1}
                                 </span>
-                                <span className="min-w-0 flex-1">{option.label}</span>
-                                <AdminBadge tone="accent">
+                                <span className="min-w-0 flex-1 leading-snug">{option.label}</span>
+                                <span className="shrink-0 rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
                                   {optionHint(kind, option.score_map, clusters)}
-                                </AdminBadge>
+                                </span>
                               </li>
                             ))}
                           </ul>
                         </div>
-                        <div className="flex shrink-0 gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label="แก้ไข"
-                            onClick={() => {
-                              setEditing(question);
-                              setFormOpen(true);
-                            }}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
+                        <div className="flex shrink-0 opacity-60 transition group-hover:opacity-100">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             aria-label="ลบ"
                             disabled={deleting}
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setPendingDelete({
                                 ids: [question.id],
                                 label: question.prompt.slice(0, 80) || "คำถามนี้",
-                              })
-                            }
+                              });
+                            }}
                           >
                             <Trash2 className="size-4 text-red-600" />
                           </Button>
@@ -485,7 +694,8 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
                 </ul>
                 </>
               )}
-            </AdminSection>
+              </div>
+            </section>
           </>
         ) : null}
       </AdminPageFrame>

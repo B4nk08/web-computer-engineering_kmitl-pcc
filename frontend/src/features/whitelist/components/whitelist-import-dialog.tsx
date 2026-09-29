@@ -140,7 +140,7 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="admin-dialog-overlay fixed inset-0 z-50" />
-        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col outline-none">
+        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col p-5 outline-none">
           <div className="flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-lg font-semibold tracking-tight">

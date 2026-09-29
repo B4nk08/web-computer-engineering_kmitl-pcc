@@ -26,10 +26,10 @@ export const AUTH_THEME = {
 } as const;
 
 export const AUTH_COPY = {
-  loginWelcomeTitle: "ยินดีต้อนรับกลับ",
-  loginWelcomeSubtitle: "เข้าสู่ระบบเพื่อจัดการข้อมูลสาขาวิชาวิศวกรรมคอมพิวเตอร์",
-  registerWelcomeTitle: "ยินดีต้อนรับ",
-  registerWelcomeSubtitle: "สร้างบัญชีเพื่อเริ่มใช้งานเว็บไซต์สาขาวิชาวิศวกรรมคอมพิวเตอร์",
+  loginWelcomeTitle: "Welcome back",
+  loginWelcomeSubtitle: "Sign in to manage the Computer Engineering website",
+  registerWelcomeTitle: "Welcome",
+  registerWelcomeSubtitle: "Create an account to get started with Computer Engineering",
   loginTitle: "Sign in",
   registerTitle: "Create Account",
   registerHint: "use your email password",

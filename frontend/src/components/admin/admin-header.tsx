@@ -24,8 +24,8 @@ export function AdminHeader() {
   const title = isDashboard ? "Dashboard" : (current?.title ?? "Admin");
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-white/40 bg-white/70 px-4 backdrop-blur-xl sm:h-16 sm:px-6 lg:px-8">
-      <SidebarTrigger className="-ml-1 rounded-xl border border-border/80 bg-white shadow-sm hover:bg-white" />
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-white px-4 sm:h-16 sm:px-6 lg:px-8">
+      <SidebarTrigger className="-ml-1 rounded-lg border border-border bg-white hover:bg-muted" />
       <Breadcrumb>
         <BreadcrumbList className="text-sm">
           {isDashboard && !actionLabel ? (
