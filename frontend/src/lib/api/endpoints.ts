@@ -1,7 +1,6 @@
 export const endpoints = {
   health: "/health",
   auth: {
-    register: "/api/auth/register",
     login: "/api/auth/login",
     google: "/api/auth/google",
     me: "/api/auth/me",

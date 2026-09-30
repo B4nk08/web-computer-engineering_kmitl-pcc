@@ -3,7 +3,7 @@
 export const AUTH_THEME = {
   /** Desktop max — เล็กลงจาก 1417×822 */
   cardWidth: 1080,
-  /** สูงพอสำหรับฟอร์ม register โดยการ์ดขาว/น้ำเงินสูงเท่ากัน */
+  /** การ์ดขาว/น้ำเงินสูงเท่ากัน */
   cardHeight: 640,
   cardRadius: 20,
   panel: "#002250",
@@ -28,19 +28,12 @@ export const AUTH_THEME = {
 export const AUTH_COPY = {
   loginWelcomeTitle: "Welcome back",
   loginWelcomeSubtitle: "Sign in to manage the Computer Engineering website",
-  registerWelcomeTitle: "Welcome",
-  registerWelcomeSubtitle: "Create an account to get started with Computer Engineering",
   loginTitle: "Sign in",
-  registerTitle: "Create Account",
-  registerHint: "use your email password",
   forgotPassword: "Forgot password?",
   rememberMe: "Remember me",
   loginSubmit: "Login",
-  registerSubmit: "Sign Up",
   google: "Login With Google",
   or: "or",
-  loginSuccess: "เข้าสู่ระบบสำเร็จ กำลังพาไปหน้าหลัก...",
-  loginSuccessGoogle: "เข้าสู่ระบบด้วย Google สำเร็จ กำลังพาไปหน้าหลัก...",
-  registerSuccess: "สร้างบัญชีสำเร็จ ยินดีต้อนรับ! กำลังพาไปหน้าหลัก...",
-  registerSuccessGoogle: "สมัครด้วย Google สำเร็จ ยินดีต้อนรับ! กำลังพาไปหน้าหลัก...",
+  loginSuccess: "กำลังเข้าสู่ระบบ",
+  loginSuccessGoogle: "กำลังเข้าสู่ระบบ",
 } as const;

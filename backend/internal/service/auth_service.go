@@ -11,9 +11,8 @@ import (
 )
 
 // AuthService นิยาม use case ด้าน authentication
-// implementations แยกไฟล์: auth_register.go, auth_login.go, auth_google.go, auth_me.go, auth_helpers.go
+// implementations แยกไฟล์: auth_login.go, auth_google.go, auth_me.go, auth_helpers.go
 type AuthService interface {
-	Register(req dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(req dto.LoginRequest) (*dto.AuthResponse, error)
 	GoogleLogin(ctx context.Context, req dto.GoogleLoginRequest) (*dto.AuthResponse, error)
 	SyncUserRole(userID string) (*dto.UserResponse, error)

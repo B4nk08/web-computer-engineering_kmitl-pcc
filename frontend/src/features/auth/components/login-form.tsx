@@ -141,6 +141,7 @@ export function LoginForm({ googleEnabled = true }: { googleEnabled?: boolean })
           value={values.password}
           onChange={(v) => update("password", v)}
           variant="soft"
+          warnCapsLock
         />
       </div>
 
@@ -182,7 +183,6 @@ export function LoginForm({ googleEnabled = true }: { googleEnabled?: boolean })
       </div>
 
       <GoogleAuthButton
-        variant="login"
         enabled={googleEnabled && !success}
         onSuccess={(user) => finishAuth(user, AUTH_COPY.loginSuccessGoogle)}
         onError={(msg) => {

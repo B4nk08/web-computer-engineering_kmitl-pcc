@@ -52,7 +52,6 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 
 		auth := api.Group("/auth")
 		{
-			auth.POST("/register", deps.Auth.Register)
 			auth.POST("/login", deps.Auth.Login)
 			auth.POST("/token", deps.Auth.GetToken)
 			auth.POST("/get-token", deps.Auth.GetToken)

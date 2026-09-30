@@ -1,5 +1,4 @@
 export { login } from "./login";
-export { register } from "./register";
 export { loginWithGoogle } from "./google";
 export { fetchAuthToken } from "./get-token";
 export type { GetTokenResponseDto } from "./get-token";

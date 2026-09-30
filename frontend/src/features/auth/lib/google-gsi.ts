@@ -100,7 +100,7 @@ export function originNotAllowedMessage(): string {
   return `Google ปฏิเสธ origin นี้ — ไปที่ Google Cloud Console → Credentials → OAuth 2.0 Client → Authorized JavaScript origins แล้วเพิ่ม: ${origin}`;
 }
 
-/** ตั้ง handler รับ id_token (เปลี่ยนได้ตอนสลับ login/register) */
+/** ตั้ง handler รับ id_token  */
 export function setGoogleCredentialHandler(
   handler: ((idToken: string) => void) | null
 ) {

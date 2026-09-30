@@ -3,13 +3,6 @@ package dto
 
 import "github.com/kmitl-pcc/ce-web/backend/internal/models"
 
-// RegisterRequest สมัครสมาชิกด้วยอีเมล + รหัสผ่าน
-type RegisterRequest struct {
-	Email       string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required,min=8"`
-	DisplayName string `json:"display_name" binding:"required"`
-}
-
 // LoginRequest เข้าสู่ระบบด้วยอีเมล + รหัสผ่าน
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -30,7 +23,7 @@ type UserResponse struct {
 	Role        string `json:"role"`
 }
 
-// AuthResponse ผลลัพธ์หลัง login/register สำเร็จ
+// AuthResponse ผลลัพธ์หลัง login สำเร็จ
 type AuthResponse struct {
 	Token string       `json:"token"`
 	User  UserResponse `json:"user"`

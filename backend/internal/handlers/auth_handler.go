@@ -6,7 +6,7 @@ import (
 )
 
 // AuthHandler แปลง HTTP request ↔ auth service
-// implementations แยกไฟล์: auth_register.go, auth_login.go, auth_google.go, auth_me.go, auth_token.go
+// implementations แยกไฟล์: auth_login.go, auth_google.go, auth_me.go, auth_token.go
 type AuthHandler struct {
 	auth  service.AuthService
 	users repository.UserRepository

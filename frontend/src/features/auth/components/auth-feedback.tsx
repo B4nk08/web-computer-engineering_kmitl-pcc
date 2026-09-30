@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { AUTH_THEME } from "../constants";
 
 type AuthFeedbackProps = {
   error?: string | null;
@@ -8,21 +9,23 @@ type AuthFeedbackProps = {
   className?: string;
 };
 
-/** ข้อความ error (แดง) / success (เขียว) บนฟอร์ม auth */
+/** ข้อความ error (แดง) / สถานะกำลังเข้าสู่ระบบหลังสำเร็จ บนฟอร์ม auth */
 export function AuthFeedback({ error, success, className }: AuthFeedbackProps) {
   if (!error && !success) return null;
 
   if (success) {
     return (
-      <p
+      <div
         role="status"
-        className={cn(
-          "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800",
-          className
-        )}
+        className={cn("flex items-center justify-center gap-3 py-2 text-base font-medium", className)}
+        style={{ color: AUTH_THEME.title }}
       >
+        <span
+          className="size-5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden
+        />
         {success}
-      </p>
+      </div>
     );
   }
 

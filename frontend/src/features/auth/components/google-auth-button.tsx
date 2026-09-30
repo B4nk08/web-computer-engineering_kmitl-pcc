@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AUTH_THEME } from "../constants";
+import { AUTH_COPY, AUTH_THEME } from "../constants";
 import { isGoogleOAuthConfigured } from "../config/env";
 import { loginWithGoogle } from "../api";
 import {
@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 type GoogleAuthButtonProps = {
   onSuccess: (user: AuthUser) => void;
   onError: (message: string) => void;
-  variant?: "login" | "register";
   /** mount ปุ่มเฉพาะตอนฟอร์มนี้กำลังแสดง — กัน initialize/render ซ้ำ */
   enabled?: boolean;
   className?: string;
@@ -25,7 +24,6 @@ type GoogleAuthButtonProps = {
 export function GoogleAuthButton({
   onSuccess,
   onError,
-  variant = "register",
   enabled = true,
   className,
 }: GoogleAuthButtonProps) {
@@ -80,8 +78,8 @@ export function GoogleAuthButton({
             }
           },
           {
-            text: variant === "register" ? "signup_with" : "signin_with",
-            width: Math.max(240, Math.round(el.getBoundingClientRect().width) || 320),
+            text: "signin_with",
+            width: Math.max(220, Math.round(el.getBoundingClientRect().width) || 240),
           }
         );
         if (!cancelled) setReady(true);
@@ -111,7 +109,7 @@ export function GoogleAuthButton({
       if (el) el.innerHTML = "";
       setReady(false);
     };
-  }, [enabled, variant]);
+  }, [enabled]);
 
   if (!enabled) return null;
 
@@ -123,41 +121,34 @@ export function GoogleAuthButton({
     );
   }
 
-  const label =
-    variant === "register" ? "Sign up with Google" : "Continue with Google";
+  const label = AUTH_COPY.google;
 
   return (
-    <div
-      className={cn(
-        "group relative h-10 w-full transition",
-        className
-      )}
-    >
+    <div className={cn("group relative mx-auto h-12 w-fit min-w-[220px]", className)}>
       <div
-        className="pointer-events-none flex h-full w-full items-center justify-center gap-2 border bg-white text-sm font-medium transition group-hover:bg-[#f7f8fb]"
-        style={{
-          borderColor: "#C9D2E3",
-          borderRadius: 12,
-          color: AUTH_THEME.title,
-          boxShadow: "0 1px 2px rgba(0, 34, 80, 0.05)",
-        }}
+        className={cn(
+          "pointer-events-none flex h-full w-full items-center justify-center gap-3 text-[15px] font-semibold transition",
+          (loading || !ready) && "opacity-70"
+        )}
+        style={{ color: AUTH_THEME.title }}
       >
-        <GoogleMark />
-        <span>
-          {loading
-            ? "กำลังเข้าสู่ระบบ..."
-            : !ready
-              ? "กำลังโหลด Google..."
-              : label}
+        <span className="transition-transform duration-200 group-hover:-translate-x-0.5">
+          {loading ? "กำลังเข้าสู่ระบบ..." : !ready ? "กำลังโหลด Google..." : label}
+        </span>
+        <span className="inline-flex size-10 items-center justify-center rounded-full bg-white shadow-[0_3px_10px_rgba(0,34,80,0.18)] ring-1 ring-black/5 transition duration-200 group-hover:scale-105 group-hover:shadow-[0_6px_16px_rgba(0,34,80,0.24)]">
+          {loading ? (
+            <span className="size-4 animate-spin rounded-full border-2 border-[#4285F4]/25 border-t-[#4285F4]" />
+          ) : (
+            <GoogleMark />
+          )}
         </span>
       </div>
       <div
         ref={hostRef}
         className={cn(
-          "absolute inset-0 z-10 flex items-center justify-center overflow-hidden opacity-0",
+          "absolute inset-0 z-10 flex items-center justify-center overflow-hidden rounded-full opacity-0",
           (loading || !ready) && "pointer-events-none"
         )}
-        style={{ borderRadius: 12 }}
       />
     </div>
   );
@@ -165,7 +156,7 @@ export function GoogleAuthButton({
 
 function GoogleMark() {
   return (
-    <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
+    <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden>
       <path
         fill="#4285F4"
         d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.86 2.7-6.62z"
