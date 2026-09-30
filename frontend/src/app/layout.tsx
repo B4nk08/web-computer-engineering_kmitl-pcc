@@ -8,7 +8,7 @@ import { AuthProvider } from "@/features/auth";
  *
  * โครงสร้าง route:
  *   (site)/*   → เว็บสาธารณะ + Exit Exam (มี Navbar + Footer)
- *   (auth)/*   → login / register
+ *   (auth)/*   → login
  *   admin/*    → admin panel (sidebar ของตัวเอง)
  */
 

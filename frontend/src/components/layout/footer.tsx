@@ -13,6 +13,8 @@ const QUICK_LINKS = [
   { label: "ประกาศรับสมัคร", href: "/news" },
 ] as const;
 
+const DEVELOPERS = ["Titikorn Keekhor", "Ploychompu Loedpananon"] as const;
+
 /**
  * Footer — ท้ายเว็บสาธารณะ
  * โลโก้เดียวกับ Navbar (`/brand/logo-ce.png`) + ข้อมูลติดต่อวิทยาเขต + ลิงก์ด่วน
@@ -94,6 +96,12 @@ export function Footer() {
             ))}
           </ul>
         </div>
+      </div>
+
+      <div className="bg-[#c4c4c4]">
+        <p className="mx-auto max-w-[1400px] px-4 py-3 text-center text-xs text-white/80 md:px-8">
+          Developed by {DEVELOPERS.join(" | ")}
+        </p>
       </div>
     </footer>
   );

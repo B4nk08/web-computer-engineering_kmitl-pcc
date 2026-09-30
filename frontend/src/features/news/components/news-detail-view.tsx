@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { RequireMember } from "@/components/layout/require-member";
 import { getNews } from "../api";
 import { NewsBody } from "./news-body";
+import { NewsImage } from "./news-image";
 import type { NewsItem } from "../types";
 
 function formatDate(iso?: string | null) {
@@ -90,14 +91,7 @@ export function NewsDetailView({ id }: { id: string }) {
               {item.title}
             </h1>
 
-            {item.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="mt-8 aspect-[16/8] w-full object-cover"
-              />
-            ) : null}
+            {item.imageUrl ? <NewsImage src={item.imageUrl} alt={item.title} /> : null}
 
             <div className="mt-8 max-w-3xl border-t border-[var(--ink)]/15 pt-8">
               {item.body ? (

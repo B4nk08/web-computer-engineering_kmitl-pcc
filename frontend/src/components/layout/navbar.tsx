@@ -141,9 +141,7 @@ function NavDropdown({
         className={cn(
           "absolute top-full left-1/2 z-40 hidden w-max min-w-48 origin-top whitespace-nowrap -translate-x-1/2 space-y-1 rounded-2xl p-2 before:absolute before:inset-x-0 before:-top-3 before:h-3 before:content-[''] shadow-[0_16px_40px_rgba(5,12,32,0.35)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-150 md:block",
           "bg-[var(--navy-950)]/80 ring-1 ring-white/15",
-          open
-            ? "visible mt-2 opacity-100"
-            : "invisible mt-0 opacity-0",
+          open ? "visible mt-2 opacity-100" : "invisible mt-0 opacity-0",
         )}
       >
         {items.map((item) => (
