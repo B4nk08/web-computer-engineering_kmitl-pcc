@@ -14,7 +14,7 @@ import type { AuthUser } from "../types";
 import { cn } from "@/lib/utils";
 
 type GoogleAuthButtonProps = {
-  onSuccess: (user: AuthUser) => void;
+  onSuccess: (user: AuthUser, created: boolean) => void;
   onError: (message: string) => void;
   /** mount ปุ่มเฉพาะตอนฟอร์มนี้กำลังแสดง — กัน initialize/render ซ้ำ */
   enabled?: boolean;
@@ -63,8 +63,8 @@ export function GoogleAuthButton({
           async (idToken) => {
             setLoading(true);
             try {
-              const user = await loginWithGoogle({ id_token: idToken });
-              if (!cancelled) onSuccessRef.current(user);
+              const result = await loginWithGoogle({ id_token: idToken });
+              if (!cancelled) onSuccessRef.current(result.user, result.created);
             } catch (err) {
               if (!cancelled) {
                 onErrorRef.current(
@@ -78,7 +78,7 @@ export function GoogleAuthButton({
             }
           },
           {
-            text: "signin_with",
+            text: "continue_with",
             width: Math.max(220, Math.round(el.getBoundingClientRect().width) || 240),
           }
         );
@@ -124,7 +124,7 @@ export function GoogleAuthButton({
   const label = AUTH_COPY.google;
 
   return (
-    <div className={cn("group relative mx-auto h-12 w-fit min-w-[220px]", className)}>
+    <div className={cn("group relative mx-auto h-12 w-fit min-w-[240px]", className)}>
       <div
         className={cn(
           "pointer-events-none flex h-full w-full items-center justify-center gap-3 text-[15px] font-semibold transition",

@@ -25,8 +25,9 @@ type UserResponse struct {
 
 // AuthResponse ผลลัพธ์หลัง login สำเร็จ
 type AuthResponse struct {
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
+	Token   string       `json:"token"`
+	User    UserResponse `json:"user"`
+	Created bool         `json:"created"`
 }
 
 // NewUserResponse map จาก model → response

@@ -7,6 +7,11 @@ import type {
   WhitelistImportRowInput,
 } from "./types";
 
+/** รายชื่อทั้งหมดใน ce_whitelist */
+export async function listWhitelist(): Promise<WhitelistEntryDto[]> {
+  return apiClient<WhitelistEntryDto[]>(endpoints.whitelist.list);
+}
+
 /** เพิ่มรายชื่อทีละคนเข้า ce_whitelist */
 export async function createWhitelistEntry(
   input: CreateWhitelistInput

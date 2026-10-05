@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useAuth } from "@/features/auth";
 import { isStudentRole } from "@/config/staff-role";
 import { cn } from "@/lib/utils";
@@ -143,8 +144,7 @@ export function StudentsByYearListingView() {
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดรายชื่อ...</span>
+            <LoadingRow label="กำลังโหลดรายชื่อ..." />
           </div>
         ) : error === "forbidden" ? (
           <p className="text-sm text-[var(--ink-soft)]">

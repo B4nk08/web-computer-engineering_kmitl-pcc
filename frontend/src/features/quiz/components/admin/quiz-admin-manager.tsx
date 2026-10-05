@@ -567,7 +567,7 @@ export function QuizAdminManager({ kind }: { kind: QuizKind }) {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="ค้นหาคำถาม"
-                      className="pl-9"
+                      className="pl-10"
                     />
                   </div>
                   <Button

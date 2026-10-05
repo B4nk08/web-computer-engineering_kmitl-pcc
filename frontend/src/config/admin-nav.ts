@@ -7,6 +7,7 @@ import {
   Compass,
   FileQuestion,
   GraduationCap,
+  History,
   Newspaper,
   ScrollText,
   UserCog,
@@ -158,6 +159,13 @@ export const adminNavGroups: AdminNavGroup[] = [
     id: "system",
     label: "ตั้งค่าระบบ",
     items: [
+      {
+        title: "บันทึกการแก้ไข",
+        href: "/admin/activity",
+        description: "รายการที่เพิ่มหรือลบเนื้อหาและข่าวสารล่าสุด",
+        icon: History,
+        roles: ["admin", "teacher"],
+      },
       {
         title: "รายชื่อผู้เข้าใช้ระบบ",
         href: "/admin/whitelist",

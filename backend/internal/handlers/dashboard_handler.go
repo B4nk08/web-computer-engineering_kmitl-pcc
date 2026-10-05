@@ -19,12 +19,21 @@ func NewDashboardHandler(dashboard service.DashboardService) *DashboardHandler {
 }
 
 func (h *DashboardHandler) Get(c *gin.Context) {
-	item, err := h.dashboard.Get()
+	item, err := h.dashboard.Get(c.DefaultQuery("range", "7d"))
 	if err != nil {
 		httpx.Fail(c, http.StatusInternalServerError, "failed to load dashboard")
 		return
 	}
 	httpx.OK(c, item)
+}
+
+func (h *DashboardHandler) Logs(c *gin.Context) {
+	items, err := h.dashboard.ListLogs(80)
+	if err != nil {
+		httpx.Fail(c, http.StatusInternalServerError, "failed to load activity logs")
+		return
+	}
+	httpx.OK(c, items)
 }
 
 func actorFromContext(c *gin.Context) (name string, id *uuid.UUID) {

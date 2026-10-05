@@ -13,6 +13,8 @@ type WhitelistRepository interface {
 	FindByEmail(email string) (*models.CEWhitelist, error)
 	// FindByEmails หา entry หลายอีเมลพร้อมกัน (ใช้ตอน preview import)
 	FindByEmails(emails []string) ([]models.CEWhitelist, error)
+	// List รายชื่อทั้งหมด เรียงบทบาทแล้วตามชื่อ
+	List() ([]models.CEWhitelist, error)
 	// ListByRole รายการตาม role (เช่น student, teacher) เรียงชื่อ
 	ListByRole(role models.WhitelistRole) ([]models.CEWhitelist, error)
 	// ListStudents รายการนักศึกษา พร้อม filter optional
@@ -53,6 +55,12 @@ func (r *whitelistRepository) FindByEmails(emails []string) ([]models.CEWhitelis
 	}
 	var rows []models.CEWhitelist
 	err := r.db.Where("email IN ?", emails).Find(&rows).Error
+	return rows, err
+}
+
+func (r *whitelistRepository) List() ([]models.CEWhitelist, error) {
+	var rows []models.CEWhitelist
+	err := r.db.Order("role ASC, full_name ASC, email ASC").Find(&rows).Error
 	return rows, err
 }
 

@@ -1,49 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useAsyncData } from "@/lib/use-async-data";
 import { fetchCareers } from "../api";
 import { listCareerClusters, type CareerClusterDto } from "@/features/quiz/api";
 import type { CareerPath } from "../types";
 
-type State = {
-  data: CareerPath[];
-  clusters: CareerClusterDto[];
-  loading: boolean;
-  error: string | null;
-};
+export function useCareers() {
+  const { data, loading, error } = useAsyncData(
+    () =>
+      Promise.all([
+        fetchCareers(),
+        listCareerClusters().catch(() => [] as CareerClusterDto[]),
+      ]),
+    [[], []] as [CareerPath[], CareerClusterDto[]],
+    "โหลดเส้นทางอาชีพไม่สำเร็จ",
+  );
 
-export function useCareers(): State {
-  const [data, setData] = useState<CareerPath[]>([]);
-  const [clusters, setClusters] = useState<CareerClusterDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    Promise.all([fetchCareers(), listCareerClusters().catch(() => [] as CareerClusterDto[])])
-      .then(([rows, clusterRows]) => {
-        if (!alive) return;
-        setData(rows);
-        setClusters(clusterRows);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("โหลดเส้นทางอาชีพไม่สำเร็จ");
-        setData([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  return { data, clusters, loading, error };
+  return { data: data[0], clusters: data[1], loading, error };
 }
 
 export function groupCareersByCluster(

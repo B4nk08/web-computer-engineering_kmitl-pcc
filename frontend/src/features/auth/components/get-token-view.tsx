@@ -37,7 +37,7 @@ export function GetTokenView() {
       success: false,
       message: "ไม่ได้ login",
       error:
-        "ยังไม่มี session — ไป login ที่ /login แล้วกลับมาที่ /gettoken",
+        "ยังไม่มี session — ไป login ที่ /login แล้วกลับมาที่ /get-token",
     });
   }, [authLoading, user]);
 

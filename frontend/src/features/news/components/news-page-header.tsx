@@ -1,22 +1,10 @@
+import { formatThaiDate } from "@/lib/format-date";
 import type { NewsAudience } from "../types";
 
 const TITLES: Record<NewsAudience, string> = {
   external: "ประกาศรับสมัคร",
   internal: "ประกาศภายในสาขา",
 };
-
-function todayLabel() {
-  try {
-    return new Intl.DateTimeFormat("th-TH", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date());
-  } catch {
-    return "";
-  }
-}
 
 /**
  * หัวข้อหน้า News — แบบหนังสือพิมพ์ ไม่มีแท็บซ้ำกับเมนู
@@ -30,7 +18,7 @@ export function NewsPageHeader({ audience }: { audience: NewsAudience }) {
             News
           </p>
           <time className="text-right text-xs text-[var(--ink-soft)] sm:text-sm">
-            {todayLabel()}
+            {formatThaiDate(new Date(), "weekday")}
           </time>
         </div>
 

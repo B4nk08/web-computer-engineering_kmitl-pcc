@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
-  FilePlus2,
   FileQuestion,
-  FileX2,
   GraduationCap,
   Loader2,
   ScrollText,
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import {
   EXAM_COLOR,
   EXTERNAL_QUIZ_COLOR,
@@ -19,71 +19,11 @@ import {
   UsageTrendChart,
 } from "./usage-charts";
 import {
+  DASHBOARD_RANGES,
   fetchDashboard,
-  type DashboardActivityLog,
   type DashboardDto,
+  type DashboardRange,
 } from "./api";
-
-function formatWhen(iso: string) {
-  try {
-    return new Intl.DateTimeFormat("th-TH", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
-
-function todayLabel() {
-  return new Intl.DateTimeFormat("th-TH", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date());
-}
-
-function actionMeta(action: string) {
-  if (action === "delete") {
-    return {
-      label: "ลบข้อมูล",
-      className: "bg-rose-50 text-rose-800",
-      Icon: FileX2,
-    };
-  }
-  return {
-    label: "เพิ่มข้อมูล",
-    className: "bg-emerald-50 text-emerald-800",
-    Icon: FilePlus2,
-  };
-}
-
-function ActivityRow({ item }: { item: DashboardActivityLog }) {
-  const meta = actionMeta(item.action);
-  const Icon = meta.Icon;
-  const actor = item.actor_name?.trim() || "ระบบ";
-
-  return (
-    <li className="flex items-start gap-3 py-3.5 first:pt-0 last:pb-0">
-      <div className={`mt-0.5 rounded-xl p-2 ${meta.className}`}>
-        <Icon className="size-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground">
-          {actor}{" "}
-          <span className="font-normal text-muted-foreground">{meta.label}</span>
-        </p>
-        <p className="truncate text-sm text-muted-foreground">
-          {item.target_type}: {item.target_title}
-        </p>
-      </div>
-      <time className="shrink-0 text-xs text-muted-foreground">
-        {formatWhen(item.created_at)}
-      </time>
-    </li>
-  );
-}
 
 function StatCard({
   title,
@@ -115,33 +55,38 @@ function StatCard({
 export function AdminDashboard() {
   const { user } = useAuth();
   const [data, setData] = useState<DashboardDto | null>(null);
+  const [range, setRange] = useState<DashboardRange>("7d");
   const [loading, setLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const firstName = (user?.displayName || user?.email || "Staff").split(/\s+/)[0];
+  const rangeMeta = DASHBOARD_RANGES.find((item) => item.id === range) ?? DASHBOARD_RANGES[1];
+  const loaded = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
+    if (loaded.current) setChartLoading(true);
+    else setLoading(true);
     setError(null);
-    fetchDashboard()
+    fetchDashboard(range)
       .then((payload) => {
-        if (mounted) setData(payload);
+        if (!mounted) return;
+        loaded.current = true;
+        setData(payload);
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : "โหลดแดชบอร์ดไม่สำเร็จ"
-        );
+        setError(err instanceof ApiError ? err.message : "โหลดแดชบอร์ดไม่สำเร็จ");
       })
       .finally(() => {
-        if (mounted) setLoading(false);
+        if (!mounted) return;
+        setLoading(false);
+        setChartLoading(false);
       });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [range]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -149,10 +94,12 @@ export function AdminDashboard() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">แดชบอร์ด</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {firstName} · สรุป Quiz, Exit Exam และการแก้ไขข้อมูลเว็บ
+            {firstName} · สรุป Quiz และ Exit Exam
           </p>
         </div>
-        <p className="text-sm text-muted-foreground">{todayLabel()}</p>
+        <Link href="/admin/activity" className="text-sm font-medium text-[#1f4b82] hover:underline">
+          ดูบันทึกการแก้ไข
+        </Link>
       </div>
 
       {loading ? (
@@ -198,26 +145,43 @@ export function AdminDashboard() {
             />
           </div>
 
-          <div className="grid gap-4">
-            <article className="admin-card min-w-0 p-5 lg:p-6">
-              <div className="mb-4">
-                <h3 className="text-base font-semibold tracking-tight">การใช้งาน 7 วันล่าสุด</h3>
+          <article className="admin-card min-w-0 p-5 lg:p-6">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-base font-semibold tracking-tight">การใช้งาน</h3>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  Quiz ภายนอก / ภายในสาขา และ Exit Exam
+                  Quiz ภายนอก / ภายในสาขา และ Exit Exam · ตัวเลขการ์ดด้านบนเป็นยอดสะสมทั้งหมด
                 </p>
               </div>
+              <div className="flex flex-wrap gap-1 rounded-full bg-muted/70 p-1">
+                {DASHBOARD_RANGES.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setRange(item.id)}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-sm transition",
+                      range === item.id
+                        ? "bg-white font-medium text-[#1f4b82] shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={cn("transition-opacity", chartLoading && "opacity-50")}>
               {data.trend.every(
                 (point) =>
-                  point.external_quiz === 0 &&
-                  point.internal_quiz === 0 &&
-                  point.exam === 0
+                  point.external_quiz === 0 && point.internal_quiz === 0 && point.exam === 0,
               ) ? (
-                <p className="rounded-2xl border border-dashed border-border px-4 py-12 text-center text-sm text-muted-foreground">
-                  ยังไม่มีการเล่น Quiz หรือ Exit Exam ใน 7 วันที่ผ่านมา
+                <p className="rounded-2xl border border-dashed border-border px-4 py-16 text-center text-sm text-muted-foreground">
+                  {rangeMeta.empty}
                 </p>
               ) : (
                 <>
-                  <UsageTrendChart data={data.trend} />
+                  <UsageTrendChart data={data.trend} range={range} />
                   <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <span
@@ -243,28 +207,8 @@ export function AdminDashboard() {
                   </div>
                 </>
               )}
-            </article>
-
-            <article className="admin-card p-5 sm:p-6">
-              <div className="mb-4">
-                <h3 className="text-base font-semibold tracking-tight">บันทึกการแก้ไขเว็บ</h3>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  รายการที่เพิ่มหรือลบล่าสุด
-                </p>
-              </div>
-              {data.logs.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-                  ยังไม่มีบันทึกการเพิ่มหรือลบข้อมูล
-                </p>
-              ) : (
-                <ul className="divide-y divide-border/70">
-                  {data.logs.map((item) => (
-                    <ActivityRow key={`${item.action}-${item.id}`} item={item} />
-                  ))}
-                </ul>
-              )}
-            </article>
-          </div>
+            </div>
+          </article>
         </>
       ) : null}
     </div>

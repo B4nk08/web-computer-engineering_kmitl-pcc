@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { usePublishedNews } from "@/features/news/hooks/use-published-news";
 import type { NewsItem } from "@/features/news";
+import { SectionHeading } from "@/components/layout/section-heading";
+import { formatThaiDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { WaveDivider } from "./section-divider";
 
@@ -24,15 +26,6 @@ const GRID_COLS: Record<number, string> = {
 
 function newsDate(item: NewsItem) {
   return item.publishedAt || item.createdAt || "";
-}
-
-function formatDate(iso: string) {
-  if (!iso) return "";
-  try {
-    return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
 }
 
 function isRecent(iso: string) {
@@ -119,7 +112,7 @@ function NewsCard({
           ) : null}
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays className="size-3.5" aria-hidden />
-            {formatDate(date)}
+            {formatThaiDate(date)}
           </span>
         </div>
         <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-snug text-[var(--ink)] group-hover:text-[var(--navy-900)]">
@@ -155,23 +148,12 @@ export function LatestNewsSection() {
     <>
       <section className="bg-[var(--surface)] pt-12 pb-6 sm:pt-16 sm:pb-8">
         <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.14em] text-[var(--navy-900)]/70 uppercase">
-                Admissions News
-              </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
-                ประกาศล่าสุด
-              </h2>
-            </div>
-            <Link
-              href="/news"
-              className="group/all inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--navy-900)]/15 bg-white px-4 py-2 text-sm font-medium text-[var(--navy-900)] transition hover:bg-[var(--navy-900)] hover:text-white"
-            >
-              ดูทั้งหมด
-              <ArrowRight className="size-4 transition-transform group-hover/all:translate-x-0.5" aria-hidden />
-            </Link>
-          </div>
+          <SectionHeading
+            eyebrow="Admissions News"
+            title="ประกาศล่าสุด"
+            href="/news"
+            action="pill"
+          />
 
           <div className={cn("grid gap-5", GRID_COLS[items.length])}>
             {items.map((item, index) => (

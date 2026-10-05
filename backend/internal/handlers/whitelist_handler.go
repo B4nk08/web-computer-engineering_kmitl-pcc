@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kmitl-pcc/ce-web/backend/internal/dto"
+	"github.com/kmitl-pcc/ce-web/backend/internal/middleware"
 	"github.com/kmitl-pcc/ce-web/backend/internal/pkg/httpx"
 	"github.com/kmitl-pcc/ce-web/backend/internal/service"
 )
@@ -29,6 +30,16 @@ func NewWhitelistHandler(whitelist service.WhitelistService) *WhitelistHandler {
 	return &WhitelistHandler{whitelist: whitelist}
 }
 
+// List GET /api/whitelist — รายชื่อทั้งหมด
+func (h *WhitelistHandler) List(c *gin.Context) {
+	items, err := h.whitelist.List()
+	if err != nil {
+		httpx.Fail(c, http.StatusInternalServerError, "โหลดรายชื่อไม่สำเร็จ")
+		return
+	}
+	httpx.OK(c, items)
+}
+
 // Create POST /api/whitelist — เพิ่มรายชื่อทีละคน (JSON: email, full_name, role?)
 func (h *WhitelistHandler) Create(c *gin.Context) {
 	var req dto.WhitelistCreateRequest
@@ -37,7 +48,8 @@ func (h *WhitelistHandler) Create(c *gin.Context) {
 		return
 	}
 
-	item, err := h.whitelist.Create(req)
+	actorRole, _ := middleware.RoleFromContext(c)
+	item, err := h.whitelist.Create(actorRole, req)
 	if err != nil {
 		h.failWrite(c, err)
 		return
@@ -58,7 +70,8 @@ func (h *WhitelistHandler) ImportPreview(c *gin.Context) {
 		return
 	}
 
-	result, err := h.whitelist.Preview(rows)
+	actorRole, _ := middleware.RoleFromContext(c)
+	result, err := h.whitelist.Preview(actorRole, rows)
 	if err != nil {
 		httpx.Fail(c, http.StatusInternalServerError, "failed to preview import")
 		return
@@ -83,7 +96,8 @@ func (h *WhitelistHandler) ImportCommit(c *gin.Context) {
 		return
 	}
 
-	result, err := h.whitelist.Commit(req.Rows)
+	actorRole, _ := middleware.RoleFromContext(c)
+	result, err := h.whitelist.Commit(actorRole, req.Rows)
 	if err != nil {
 		httpx.Fail(c, http.StatusInternalServerError, "failed to import whitelist")
 		return
@@ -96,6 +110,8 @@ func (h *WhitelistHandler) failWrite(c *gin.Context, err error) {
 	case errors.Is(err, service.ErrWhitelistDuplicateEmail),
 		errors.Is(err, service.ErrWhitelistDuplicateStudentCode):
 		httpx.Fail(c, http.StatusConflict, "อีเมลหรือรหัสนักศึกษานี้มีอยู่ในรายชื่อแล้ว")
+	case errors.Is(err, service.ErrWhitelistTeacherForbidden):
+		httpx.Fail(c, http.StatusForbidden, err.Error())
 	case errors.Is(err, service.ErrWhitelistInvalidEmail),
 		errors.Is(err, service.ErrWhitelistNameRequired),
 		errors.Is(err, service.ErrWhitelistInvalidRole),

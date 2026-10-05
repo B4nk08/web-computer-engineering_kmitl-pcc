@@ -13,7 +13,7 @@ const QUICK_LINKS = [
   { label: "ประกาศรับสมัคร", href: "/news" },
 ] as const;
 
-const DEVELOPERS = ["Titikorn Keekhor", "Ploychompu Loedpananon"] as const;
+const DEVELOPERS = ["Ploychompu Loedpananon" ,"Titikorn Keekhor"] as const;
 
 /**
  * Footer — ท้ายเว็บสาธารณะ

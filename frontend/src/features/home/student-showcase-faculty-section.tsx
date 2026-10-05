@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { useStudentWorks, type StudentWork } from "@/features/about-us";
 import { useHomeStaff } from "./hooks/use-home-contents";
 import { ScrollRow } from "./scroll-row";
@@ -58,19 +58,7 @@ export function StudentShowcaseFacultySection() {
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
         {/* Student Showcase */}
         <div className="mb-16">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[var(--ink)] sm:text-2xl">Student Showcase</h2>
-            <Link
-              href="/about-us/student-works"
-              className="group/all text-sm font-medium text-[var(--accent)] underline-offset-4 transition hover:underline"
-            >
-              ดูทั้งหมด
-              <span className="inline-block transition-transform duration-200 group-hover/all:translate-x-0.5">
-                {" "}
-                →
-              </span>
-            </Link>
-          </div>
+          <SectionHeading title="Student Showcase" href="/about-us/student-works" />
           {showcase.loading ? (
             <p className="text-sm text-[var(--ink-soft)]">กำลังโหลด...</p>
           ) : showcase.data.length === 0 ? (
@@ -86,15 +74,7 @@ export function StudentShowcaseFacultySection() {
 
         {/* Faculty */}
         <div>
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[var(--ink)] sm:text-2xl">Faculty</h2>
-            <a
-              href="/faculty/facultyce"
-              className="text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline"
-            >
-              ดูทั้งหมด →
-            </a>
-          </div>
+          <SectionHeading title="Faculty" href="/faculty" />
           {staff.loading ? (
             <p className="text-sm text-[var(--ink-soft)]">กำลังโหลด...</p>
           ) : staff.data.length === 0 ? (

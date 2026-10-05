@@ -1,25 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Code2, Cpu, Database, Network } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { clusterTheme } from "@/config/cluster-theme";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { useCareers } from "@/features/about-us";
 import { cn } from "@/lib/utils";
 
-const CLUSTER_STYLE: Record<string, { icon: LucideIcon; tone: string; bar: string }> = {
-  software: { icon: Code2, tone: "bg-[#2f5fd6]/10 text-[#2f5fd6]", bar: "bg-[#2f5fd6]" },
-  iot: { icon: Cpu, tone: "bg-[#e07a3d]/12 text-[#c45f28]", bar: "bg-[#e07a3d]" },
-  network: { icon: Network, tone: "bg-[#0d9488]/10 text-[#0d9488]", bar: "bg-[#0d9488]" },
-  data: { icon: Database, tone: "bg-[var(--navy-900)]/10 text-[var(--navy-900)]", bar: "bg-[var(--navy-900)]" },
-};
-
 const MAX_CHIPS = 3;
-
-const FALLBACK_STYLE = {
-  icon: Code2,
-  tone: "bg-[var(--surface)] text-[var(--ink-soft)]",
-  bar: "bg-[var(--ink-soft)]",
-};
 
 /** กลุ่มสายงานจาก career_clusters — กดแล้วไปหน้าเส้นทางอาชีพ */
 export function CareerClustersSection() {
@@ -39,30 +27,15 @@ export function CareerClustersSection() {
   return (
     <section className="bg-white py-12 sm:py-16">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.14em] text-[var(--navy-900)]/70 uppercase">
-              Career Path
-            </p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
-              เรียนจบแล้วทำงานอะไรได้บ้าง
-            </h2>
-          </div>
-          <Link
-            href="/about-us/careers"
-            className="group/all shrink-0 text-sm font-medium text-[var(--accent)] underline-offset-4 hover:underline"
-          >
-            ดูทั้งหมด
-            <span className="inline-block transition-transform duration-200 group-hover/all:translate-x-0.5">
-              {" "}
-              →
-            </span>
-          </Link>
-        </div>
+        <SectionHeading
+          eyebrow="Career Path"
+          title="เรียนจบแล้วทำงานอะไรได้บ้าง"
+          href="/about-us/careers"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {sorted.map((cluster) => {
-            const style = CLUSTER_STYLE[cluster.code] ?? FALLBACK_STYLE;
+            const style = clusterTheme(cluster.code);
             const Icon = style.icon;
             const titles = titlesByCode[cluster.code] ?? [];
             const shown = titles.slice(0, MAX_CHIPS);

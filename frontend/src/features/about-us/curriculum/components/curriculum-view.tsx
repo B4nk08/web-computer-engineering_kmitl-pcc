@@ -1,7 +1,9 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useEffect, useState } from "react";
-import { Building2, ChevronDown, FileText, Loader2 } from "lucide-react";
+import { Building2, ChevronDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AboutUsDocMeta,
@@ -101,7 +103,7 @@ function CurriculumRow({
 /**
  * หน้า /about-us/beng — listing หลักสูตร กดแถวเพื่อขยายรายละเอียด
  */
-export function BengCurriculumView() {
+export function CurriculumView() {
   const { data, loading, error } = useCurricula();
   const [openId, setOpenId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -122,10 +124,7 @@ export function BengCurriculumView() {
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">
-              กำลังโหลดข้อมูลหลักสูตร...
-            </span>
+            <LoadingRow label="กำลังโหลดข้อมูลหลักสูตร..." />
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>

@@ -3,36 +3,9 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { clusterTheme } from "@/config/cluster-theme";
 import { cn } from "@/lib/utils";
 import { careerSalaryRows, type CareerPath } from "../types";
-
-const CLUSTER_LABEL: Record<string, string> = {
-  software: "Software",
-  iot: "IoT",
-  network: "Network",
-  data: "Data",
-};
-
-const CLUSTER_PANEL: Record<string, string> = {
-  software: "bg-[#eef2fb]",
-  iot: "bg-[#faf0e8]",
-  network: "bg-[#e8f5f3]",
-  data: "bg-[#eef0f5]",
-};
-
-const CLUSTER_ACCENT: Record<string, string> = {
-  software: "bg-[#2f5fd6]",
-  iot: "bg-[#e07a3d]",
-  network: "bg-[#0d9488]",
-  data: "bg-[var(--navy-900)]",
-};
-
-const CLUSTER_ACCENT_TEXT: Record<string, string> = {
-  software: "text-[#2f5fd6]",
-  iot: "text-[#c45f28]",
-  network: "text-[#0d9488]",
-  data: "text-[var(--navy-900)]",
-};
 
 /** แยกทักษะด้วยจุลภาค / บรรทัด — ไม่ตัดด้วย / เพื่อคงคำอย่าง React/Vue */
 function skillItems(raw: string): string[] {
@@ -59,16 +32,11 @@ export function CareerDetailModal({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
-  const groupLabel =
-    clusterLabel ||
-    CLUSTER_LABEL[item.clusterCode] ||
-    item.clusterCode ||
-    "Career";
-  const panel =
-    CLUSTER_PANEL[item.clusterCode] ?? "bg-[var(--surface)]";
-  const accent = CLUSTER_ACCENT[item.clusterCode] ?? "bg-[var(--ink-soft)]";
-  const accentText =
-    CLUSTER_ACCENT_TEXT[item.clusterCode] ?? "text-[var(--ink-soft)]";
+  const theme = clusterTheme(item.clusterCode);
+  const groupLabel = clusterLabel || theme.label || "Career";
+  const panel = theme.panel;
+  const accent = theme.bar;
+  const accentText = theme.text;
 
   useEffect(() => {
     const html = document.documentElement;

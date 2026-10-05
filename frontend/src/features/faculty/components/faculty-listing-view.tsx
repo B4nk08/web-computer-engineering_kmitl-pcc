@@ -1,7 +1,8 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
 import { useHomeStaff } from "@/features/home";
 import type { HomeStaffMember } from "@/features/home";
 import { FacultyDetailModal } from "./faculty-detail-modal";
@@ -50,7 +51,7 @@ function FacultyCard({
 }
 
 /**
- * หน้า /faculty/facultyce — listing คณาจารย์ กว้างเท่าหน้า About Us
+ * หน้า /faculty — listing คณาจารย์ กว้างเท่าหน้า About Us
  */
 export function FacultyListingView() {
   const { data, loading, error } = useHomeStaff();
@@ -63,8 +64,7 @@ export function FacultyListingView() {
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดบุคลากร...</span>
+            <LoadingRow label="กำลังโหลดบุคลากร..." />
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>

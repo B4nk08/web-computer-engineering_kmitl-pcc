@@ -23,6 +23,5 @@ type DashboardResponse struct {
 	InternalQuizPlays int64                   `json:"internal_quiz_plays"`
 	ExamStarted       int64                   `json:"exam_started"`
 	ExamSubmitted     int64                   `json:"exam_submitted"`
-	Trend             []DashboardTrendPoint   `json:"trend"`
-	Logs              []DashboardActivityLog  `json:"logs"`
+	Trend             []DashboardTrendPoint  `json:"trend"`
 }

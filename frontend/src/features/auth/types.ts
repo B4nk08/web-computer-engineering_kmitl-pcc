@@ -21,6 +21,7 @@ export type AuthUserDto = {
 export type AuthResponseDto = {
   token: string;
   user: AuthUserDto;
+  created?: boolean;
 };
 
 export type LoginInput = {

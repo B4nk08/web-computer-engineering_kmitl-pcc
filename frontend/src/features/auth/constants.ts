@@ -32,8 +32,9 @@ export const AUTH_COPY = {
   forgotPassword: "Forgot password?",
   rememberMe: "Remember me",
   loginSubmit: "Login",
-  google: "Login With Google",
+  google: "Continue with Google",
   or: "or",
   loginSuccess: "กำลังเข้าสู่ระบบ",
   loginSuccessGoogle: "กำลังเข้าสู่ระบบ",
+  googleSignUpSuccess: "สร้างบัญชีสำเร็จ กำลังเข้าสู่ระบบ",
 } as const;

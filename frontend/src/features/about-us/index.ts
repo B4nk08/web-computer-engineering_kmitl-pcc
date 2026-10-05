@@ -1,7 +1,7 @@
 export { AboutUsPageHeader } from "./components/about-us-page-header";
 
 export {
-  BengCurriculumView,
+  CurriculumView,
   fetchCurriculum,
   fetchCurricula,
   useCurriculum,

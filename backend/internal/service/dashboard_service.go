@@ -16,7 +16,8 @@ type ActivityRecorder interface {
 
 type DashboardService interface {
 	ActivityRecorder
-	Get() (*dto.DashboardResponse, error)
+	Get(rangeKey string) (*dto.DashboardResponse, error)
+	ListLogs(limit int) ([]dto.DashboardActivityLog, error)
 }
 
 type dashboardService struct {
@@ -41,7 +42,7 @@ func (s *dashboardService) RecordDelete(targetType, title, actorName string, act
 	})
 }
 
-func (s *dashboardService) Get() (*dto.DashboardResponse, error) {
+func (s *dashboardService) Get(rangeKey string) (*dto.DashboardResponse, error) {
 	kindCounts, err := s.dashboard.CountQuizAttemptsByKind()
 	if err != nil {
 		return nil, err
@@ -68,62 +69,10 @@ func (s *dashboardService) Get() (*dto.DashboardResponse, error) {
 		}
 	}
 
-	now := time.Now().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	since := today.AddDate(0, 0, -6)
-
-	quizDays, err := s.dashboard.CountQuizAttemptsByDay(since)
+	trend, err := s.usageTrend(rangeKey)
 	if err != nil {
 		return nil, err
 	}
-	examDays, err := s.dashboard.CountExamAttemptsByDay(since)
-	if err != nil {
-		return nil, err
-	}
-
-	trend := make([]dto.DashboardTrendPoint, 0, 7)
-	quizExt := map[string]int64{}
-	quizInt := map[string]int64{}
-	examMap := map[string]int64{}
-	for _, row := range quizDays {
-		key := row.Day.UTC().Format("2006-01-02")
-		if models.QuizKind(row.Kind) == models.QuizInternal {
-			quizInt[key] = row.Count
-		} else {
-			quizExt[key] += row.Count
-		}
-	}
-	for _, row := range examDays {
-		key := row.Day.UTC().Format("2006-01-02")
-		examMap[key] = row.Count
-	}
-	thLoc, err := time.LoadLocation("Asia/Bangkok")
-	if err != nil {
-		thLoc = time.FixedZone("ICT", 7*60*60)
-	}
-	months := []string{"ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."}
-	for i := 0; i < 7; i++ {
-		day := since.AddDate(0, 0, i)
-		key := day.Format("2006-01-02")
-		local := day.In(thLoc)
-		label := local.Format("2") + " " + months[local.Month()-1]
-		trend = append(trend, dto.DashboardTrendPoint{
-			Date:         label,
-			ExternalQuiz: quizExt[key],
-			InternalQuiz: quizInt[key],
-			Exam:         examMap[key],
-		})
-	}
-
-	creates, err := s.recentCreates(20)
-	if err != nil {
-		return nil, err
-	}
-	deletes, err := s.dashboard.ListDeleteLogs(20)
-	if err != nil {
-		return nil, err
-	}
-	logs := mergeLogs(creates, deletes, 20)
 
 	return &dto.DashboardResponse{
 		ExternalQuizPlays: externalQuiz,
@@ -131,8 +80,106 @@ func (s *dashboardService) Get() (*dto.DashboardResponse, error) {
 		ExamStarted:       examStarted,
 		ExamSubmitted:     examSubmitted,
 		Trend:             trend,
-		Logs:              logs,
 	}, nil
+}
+
+func (s *dashboardService) ListLogs(limit int) ([]dto.DashboardActivityLog, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 80
+	}
+	creates, err := s.recentCreates(limit)
+	if err != nil {
+		return nil, err
+	}
+	deletes, err := s.dashboard.ListDeleteLogs(limit)
+	if err != nil {
+		return nil, err
+	}
+	return mergeLogs(creates, deletes, limit), nil
+}
+
+func (s *dashboardService) usageTrend(rangeKey string) ([]dto.DashboardTrendPoint, error) {
+	bucket, points := trendWindow(rangeKey)
+	loc := bangkokLocation()
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+
+	var since time.Time
+	var end time.Time
+	var step func(time.Time) time.Time
+	if bucket == "hour" {
+		since = today
+		end = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, loc)
+		step = func(t time.Time) time.Time { return t.Add(time.Hour) }
+	} else {
+		since = today.AddDate(0, 0, -(points - 1))
+		end = today
+		step = func(t time.Time) time.Time { return t.AddDate(0, 0, 1) }
+	}
+
+	quizDays, err := s.dashboard.CountQuizAttemptsByBucket(since, bucket)
+	if err != nil {
+		return nil, err
+	}
+	examDays, err := s.dashboard.CountExamAttemptsByBucket(since, bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	quizExt := map[string]int64{}
+	quizInt := map[string]int64{}
+	examMap := map[string]int64{}
+	for _, row := range quizDays {
+		if models.QuizKind(row.Kind) == models.QuizInternal {
+			quizInt[row.Day] = row.Count
+		} else {
+			quizExt[row.Day] += row.Count
+		}
+	}
+	for _, row := range examDays {
+		examMap[row.Day] = row.Count
+	}
+
+	months := []string{"ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."}
+	trend := make([]dto.DashboardTrendPoint, 0, points)
+	for cursor := since; !cursor.After(end); cursor = step(cursor) {
+		var key, label string
+		if bucket == "hour" {
+			key = cursor.Format("2006-01-02 15:00")
+			label = cursor.Format("15:04")
+		} else {
+			key = cursor.Format("2006-01-02")
+			label = cursor.Format("2") + " " + months[cursor.Month()-1]
+		}
+		trend = append(trend, dto.DashboardTrendPoint{
+			Date:         label,
+			ExternalQuiz: quizExt[key],
+			InternalQuiz: quizInt[key],
+			Exam:         examMap[key],
+		})
+	}
+	return trend, nil
+}
+
+func trendWindow(rangeKey string) (bucket string, points int) {
+	switch rangeKey {
+	case "1d":
+		return "hour", 24
+	case "30d":
+		return "day", 30
+	case "90d":
+		return "day", 90
+	default:
+		return "day", 7
+	}
+}
+
+func bangkokLocation() *time.Location {
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		return time.FixedZone("ICT", 7*60*60)
+	}
+	return loc
 }
 
 func (s *dashboardService) recentCreates(limit int) ([]dto.DashboardActivityLog, error) {

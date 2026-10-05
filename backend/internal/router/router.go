@@ -68,6 +68,7 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		whitelist := api.Group("/whitelist")
 		whitelist.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
 		{
+			whitelist.GET("", deps.Whitelist.List)
 			whitelist.POST("", deps.Whitelist.Create)
 			whitelist.POST("/import/preview", deps.Whitelist.ImportPreview)
 			whitelist.POST("/import/commit", deps.Whitelist.ImportCommit)
@@ -155,6 +156,7 @@ func Setup(cfg config.Config, deps Dependencies) *gin.Engine {
 		dashboard.Use(middleware.RequireAuth(deps.Tokens), middleware.RequireRole("teacher", "admin"))
 		{
 			dashboard.GET("", deps.Dashboard.Get)
+			dashboard.GET("/logs", deps.Dashboard.Logs)
 		}
 	}
 

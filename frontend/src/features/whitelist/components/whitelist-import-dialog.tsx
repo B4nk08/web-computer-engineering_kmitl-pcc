@@ -2,8 +2,9 @@
 
 import { useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertCircle, CheckCircle2, Loader2, Upload, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { commitWhitelistImport, previewWhitelistImport } from "../api";
@@ -33,11 +34,14 @@ type WhitelistImportDialogProps = {
 };
 
 export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>({ kind: "select" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function resetAll() {
@@ -140,14 +144,19 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="admin-dialog-overlay fixed inset-0 z-50" />
-        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col p-5 outline-none">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="text-lg font-semibold tracking-tight">
-                นำเข้ารายชื่อจากไฟล์ CSV
+        <Dialog.Content className="admin-dialog-content fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden p-0 outline-none">
+          <div className="flex items-start gap-3 px-5 pt-5 pb-4">
+            <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-[#1f4b82]">
+              <FileSpreadsheet className="size-4" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <Dialog.Title className="text-[15px] font-semibold leading-snug text-[#1c2430]">
+                นำเข้ารายชื่อจากไฟล์
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-muted-foreground">
-                คอลัมน์ที่ต้องมี: email, full_name (หรือ name) — role ไม่บังคับ (เว้นว่าง = student)
+              <Dialog.Description className="mt-1 text-[13px] leading-relaxed text-[#5c6778]">
+                {isAdmin
+                  ? "ตรวจรายชื่อก่อนบันทึก แอดมินกำหนดบทบาทได้แค่ นักศึกษา และแอดมิน ช่องที่เว้นว่างจะเป็นนักศึกษา"
+                  : "ตรวจรายชื่อก่อนบันทึก บทบาทที่เว้นว่างจะเป็นนักศึกษา"}
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
@@ -155,7 +164,7 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="shrink-0"
+                className="h-8 w-8 shrink-0 rounded-lg text-[#5c6778] hover:bg-sky-50 hover:text-[#1f4b82]"
                 aria-label="ปิด"
                 disabled={busy}
               >
@@ -164,15 +173,49 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
             </Dialog.Close>
           </div>
 
-          <div className="mt-4 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5">
             {step.kind === "select" ? (
-              <div className="admin-dropzone">
-                <Upload className="size-8 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">เลือกไฟล์ .csv เพื่อตรวจสอบก่อนนำเข้า</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    ตัวอย่างหัวตาราง: email,full_name,role
-                  </p>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  void handleFile(e.dataTransfer.files?.[0]);
+                }}
+                className={cn(
+                  "flex flex-col items-center rounded-2xl border border-dashed px-6 py-10 text-center transition",
+                  dragging
+                    ? "border-[#1f4b82] bg-sky-50"
+                    : "border-[#c5d0e0] bg-[#f7f9fc]",
+                )}
+              >
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-[#1f4b82] shadow-sm ring-1 ring-black/5">
+                  {busy ? (
+                    <Loader2 className="size-5 animate-spin" />
+                  ) : (
+                    <Upload className="size-5" aria-hidden />
+                  )}
+                </span>
+                <p className="mt-4 text-sm font-semibold text-[#1c2430]">
+                  ลากไฟล์มาวาง หรือเลือกจากเครื่อง
+                </p>
+                <p className="mt-1 text-xs text-[#5c6778]">รองรับไฟล์ .csv</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                  {(isAdmin
+                    ? ["อีเมล", "ชื่อ-นามสกุล", "บทบาท: นักศึกษา หรือแอดมิน"]
+                    : ["อีเมล", "ชื่อ-นามสกุล", "บทบาท (ไม่บังคับ)"]
+                  ).map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[#1f4b82] ring-1 ring-[#1f4b82]/15"
+                    >
+                      {item}
+                    </span>
+                  ))}
                 </div>
                 <input
                   ref={inputRef}
@@ -186,11 +229,10 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
                 />
                 <Button
                   type="button"
-                  variant="outline"
+                  className="mt-5"
                   onClick={() => inputRef.current?.click()}
                   disabled={busy}
                 >
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : null}
                   เลือกไฟล์
                 </Button>
               </div>
@@ -303,7 +345,7 @@ export function WhitelistImportDialog({ onImported }: WhitelistImportDialogProps
             ) : null}
           </div>
 
-          <div className="mt-4 flex justify-end gap-2 border-t border-border pt-4">
+          <div className="mt-4 flex justify-end gap-2 border-t border-border px-5 py-4">
             {step.kind === "preview" ? (
               <>
                 <Button type="button" variant="outline" onClick={resetAll} disabled={busy}>

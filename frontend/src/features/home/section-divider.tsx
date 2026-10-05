@@ -1,3 +1,4 @@
+import { CLUSTER_THEME } from "@/config/cluster-theme";
 import { cn } from "@/lib/utils";
 
 type Tone = "white" | "surface";
@@ -42,10 +43,9 @@ export function DotDivider({ tone = "white" }: { tone?: Tone }) {
       <div className="mx-auto flex max-w-[1200px] items-center gap-4">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[var(--border)]" />
         <span className="flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-[#2f5fd6]" />
-          <span className="size-1.5 rounded-full bg-[#e07a3d]" />
-          <span className="size-1.5 rounded-full bg-[#0d9488]" />
-          <span className="size-1.5 rounded-full bg-[var(--navy-900)]" />
+          {(["software", "iot", "network", "data"] as const).map((code) => (
+            <span key={code} className={cn("size-1.5 rounded-full", CLUSTER_THEME[code].bar)} />
+          ))}
         </span>
         <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[var(--border)]" />
       </div>

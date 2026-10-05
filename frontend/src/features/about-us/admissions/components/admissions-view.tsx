@@ -1,8 +1,10 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AboutUsPageHeader } from "../../components/about-us-page-header";
 import { useAdmissionsList } from "../hooks/use-admissions";
@@ -218,10 +220,7 @@ export function AdmissionsView() {
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">
-              กำลังโหลด...
-            </span>
+            <LoadingRow label="กำลังโหลด..." />
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>

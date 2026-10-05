@@ -1,22 +1,16 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { RequireMember } from "@/components/layout/require-member";
 import { getNews } from "../api";
 import { NewsBody } from "./news-body";
 import { NewsImage } from "./news-image";
+import { formatThaiDate } from "@/lib/format-date";
 import type { NewsItem } from "../types";
-
-function formatDate(iso?: string | null) {
-  if (!iso) return "";
-  try {
-    return new Intl.DateTimeFormat("th-TH", { dateStyle: "long" }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
 
 export function NewsDetailView({ id }: { id: string }) {
   const [item, setItem] = useState<NewsItem | null>(null);
@@ -69,11 +63,12 @@ export function NewsDetailView({ id }: { id: string }) {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลด...</span>
+            <LoadingRow label="กำลังโหลด..." />
           </div>
         ) : error || !item ? (
-          <p className="text-sm text-[var(--ink-soft)]">{error ?? "ไม่พบข่าวสารนี้"}</p>
+          <p className="text-sm text-[var(--ink-soft)]">
+            {error ?? "ไม่พบข่าวสารนี้"}
+          </p>
         ) : (
           <article>
             <div className="flex items-baseline justify-between gap-4 border-b border-[var(--ink)] pb-2">
@@ -82,16 +77,20 @@ export function NewsDetailView({ id }: { id: string }) {
               </p>
               {(item.publishedAt || item.createdAt) && (
                 <time className="text-right text-xs text-[var(--ink-soft)] sm:text-sm">
-                  {formatDate(item.publishedAt || item.createdAt)}
+                  {formatThaiDate(item.publishedAt || item.createdAt, "long")}
                 </time>
               )}
             </div>
-            <p className="mt-4 text-sm font-medium text-[var(--ink-soft)]">{sectionLabel}</p>
+            <p className="mt-4 text-sm font-medium text-[var(--ink-soft)]">
+              {sectionLabel}
+            </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--ink)] sm:text-[40px] sm:leading-[1.15]">
               {item.title}
             </h1>
 
-            {item.imageUrl ? <NewsImage src={item.imageUrl} alt={item.title} /> : null}
+            {isInternal && item.imageUrl ? (
+              <NewsImage src={item.imageUrl} alt={item.title} />
+            ) : null}
 
             <div className="mt-8 max-w-3xl border-t border-[var(--ink)]/15 pt-8">
               {item.body ? (
@@ -100,7 +99,9 @@ export function NewsDetailView({ id }: { id: string }) {
                   className="text-sm leading-8 text-[var(--ink)] sm:text-[15px] sm:leading-8"
                 />
               ) : (
-                <p className="text-sm text-[var(--ink-soft)]">ไม่มีรายละเอียดเพิ่มเติม</p>
+                <p className="text-sm text-[var(--ink-soft)]">
+                  ไม่มีรายละเอียดเพิ่มเติม
+                </p>
               )}
             </div>
           </article>

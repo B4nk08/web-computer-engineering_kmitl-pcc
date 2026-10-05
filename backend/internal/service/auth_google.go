@@ -52,7 +52,12 @@ func (s *authService) GoogleLogin(ctx context.Context, req dto.GoogleLoginReques
 		if err := s.users.Create(user); err != nil {
 			return nil, err
 		}
-		return s.buildAuthResponse(user)
+		res, err := s.buildAuthResponse(user)
+		if err != nil {
+			return nil, err
+		}
+		res.Created = true
+		return res, nil
 	}
 
 	sub := payload.Sub

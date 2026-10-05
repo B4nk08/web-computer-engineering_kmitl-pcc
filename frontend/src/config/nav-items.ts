@@ -29,7 +29,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "About Us",
     items: [
       { label: "หลักสูตร", href: "/about-us/beng" },
-      { label: "คณาจารย์", href: "/faculty/facultyce" },
+      { label: "คณาจารย์", href: "/faculty" },
       { label: "กิจกรรม", href: "/about-us/activities" },
       { label: "ผลงานนักศึกษา", href: "/about-us/student-works" },
     ],

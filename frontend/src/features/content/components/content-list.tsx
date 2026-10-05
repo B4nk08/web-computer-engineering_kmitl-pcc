@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminBadge, AdminCheckbox, AdminEmptyState } from "@/components/admin";
 import { cn } from "@/lib/utils";
+import { formatThaiDate } from "@/lib/format-date";
 import type { ContentItem } from "../types";
 
 type ContentListProps = {
@@ -16,17 +17,6 @@ type ContentListProps = {
   onDelete?: (item: ContentItem) => void;
   deleting?: boolean;
 };
-
-function formatUpdatedAt(iso: string) {
-  try {
-    return new Intl.DateTimeFormat("th-TH", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
 
 function ContentListSkeleton() {
   return (
@@ -114,7 +104,7 @@ export function ContentList({
               <AdminBadge>ร่าง</AdminBadge>
             )}
             <span className="hidden w-36 shrink-0 text-right text-xs text-muted-foreground sm:block">
-              {formatUpdatedAt(item.updatedAt)}
+              {formatThaiDate(item.updatedAt, "datetime")}
             </span>
             <div className="flex shrink-0 items-center">
               {onDelete ? (

@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
-import { GetTokenView } from "@/features/auth/components/get-token-view";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Get Token | CE KMITL-PCC",
-  robots: { index: false, follow: false },
-};
-
-export default function GetTokenPage() {
-  return <GetTokenView />;
+/** เส้นทางเก่า /gettoken */
+export default function GetTokenRedirectPage() {
+  redirect("/get-token");
 }

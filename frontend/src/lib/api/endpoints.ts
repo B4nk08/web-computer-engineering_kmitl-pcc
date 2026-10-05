@@ -39,8 +39,10 @@ export const endpoints = {
     list: "/api/students",
   },
   dashboard: "/api/dashboard",
+  dashboardLogs: "/api/dashboard/logs",
   careerClusters: "/api/career-clusters",
   whitelist: {
+    list: "/api/whitelist",
     create: "/api/whitelist",
     importPreview: "/api/whitelist/import/preview",
     importCommit: "/api/whitelist/import/commit",

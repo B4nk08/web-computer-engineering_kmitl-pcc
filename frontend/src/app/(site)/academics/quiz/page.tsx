@@ -1,74 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { ApiError } from "@/lib/api";
-import {
-  isExternalQuizResult,
-  listQuizzes,
-  playQuiz,
-  submitQuizAttempt,
-} from "@/features/quiz/api";
-import type { ExternalQuizResultDto, QuizPlayDto } from "@/features/quiz/api";
+import { useState } from "react";
+import { LoadingRow } from "@/components/ui/loading-row";
+import { isExternalQuizResult, submitQuizAttempt } from "@/features/quiz/api";
+import type { ExternalQuizResultDto } from "@/features/quiz/api";
+import { useActiveQuiz } from "@/features/quiz/hooks/use-active-quiz";
+import { toPlayQuestions } from "@/features/quiz/play-questions";
 import { QuizFlow } from "@/features/quiz/quiz-flow";
 import { GeneralQuizResult } from "@/features/quiz/general-quiz-result";
-import type { PlayAnswers, PlayQuestion } from "@/features/quiz/types";
-
-function toPlayQuestions(quiz: QuizPlayDto): PlayQuestion[] {
-  return quiz.questions.map((question) => ({
-    id: question.id,
-    text: question.prompt,
-    choices: question.options.map((option) => ({
-      id: option.id,
-      text: option.label,
-    })),
-  }));
-}
+import type { PlayAnswers } from "@/features/quiz/types";
 
 export default function AcademicsQuizPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [quiz, setQuiz] = useState<QuizPlayDto | null>(null);
+  const { loading, error, quiz } = useActiveQuiz(
+    "external",
+    "ยังไม่มีแบบทดสอบวัดความพร้อมในระบบ",
+  );
   const [result, setResult] = useState<ExternalQuizResultDto | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    listQuizzes("external", { isActive: true })
-      .then((items) => {
-        const active = items[0];
-        if (!active) {
-          throw new Error("ยังไม่มีแบบทดสอบวัดความพร้อมในระบบ");
-        }
-        return playQuiz(active.id);
-      })
-      .then((data) => {
-        if (!alive) return;
-        if (data.questions.length === 0) {
-          throw new Error("ยังไม่มีคำถามในแบบทดสอบวัดความพร้อม");
-        }
-        setQuiz(data);
-      })
-      .catch((err) => {
-        if (!alive) return;
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : "โหลดแบบทดสอบไม่สำเร็จ",
-        );
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   async function handleSubmit(answers: PlayAnswers) {
     if (!quiz) return;
@@ -79,10 +26,7 @@ export default function AcademicsQuizPage() {
   if (loading) {
     return (
       <section className="flex min-h-svh flex-1 items-center justify-center">
-        <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-        <span className="ml-2 text-sm text-[var(--ink-soft)]">
-          กำลังโหลดแบบทดสอบ...
-        </span>
+        <LoadingRow label="กำลังโหลดแบบทดสอบ..." />
       </section>
     );
   }

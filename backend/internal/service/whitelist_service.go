@@ -25,6 +25,7 @@ var (
 	ErrWhitelistInvalidEmail         = errors.New("invalid email")
 	ErrWhitelistNameRequired         = errors.New("full_name is required")
 	ErrWhitelistInvalidRole          = errors.New("invalid role")
+	ErrWhitelistTeacherForbidden     = errors.New("แอดมินเพิ่มได้เฉพาะบทบาทนักศึกษาและแอดมิน")
 	ErrWhitelistInvalidStudentCode   = errors.New("invalid student_code")
 	ErrWhitelistDuplicateEmail       = errors.New("email already exists in ce_whitelist")
 	ErrWhitelistDuplicateStudentCode = errors.New("student_code already exists in ce_whitelist")
@@ -32,12 +33,14 @@ var (
 
 // WhitelistService จัดการรายชื่อ ce_whitelist (เพิ่มทีละคน + นำเข้าไฟล์ CSV แบบ preview/commit)
 type WhitelistService interface {
-	// Create เพิ่มรายชื่อทีละคน
-	Create(req dto.WhitelistCreateRequest) (dto.WhitelistEntryResponse, error)
+	// List รายชื่อทั้งหมดใน ce_whitelist
+	List() ([]dto.WhitelistEntryResponse, error)
+	// Create เพิ่มรายชื่อทีละคน actorRole คือบทบาทของคนที่กำลังเพิ่ม
+	Create(actorRole string, req dto.WhitelistCreateRequest) (dto.WhitelistEntryResponse, error)
 	// Preview ตรวจสอบแถวจากไฟล์ CSV เทียบกับข้อมูลที่มีอยู่ — ไม่เขียน DB
-	Preview(rows []dto.WhitelistImportRow) (dto.WhitelistImportPreviewResponse, error)
+	Preview(actorRole string, rows []dto.WhitelistImportRow) (dto.WhitelistImportPreviewResponse, error)
 	// Commit เขียนแถวที่เลือกไว้ (จากหน้า preview) ลง DB จริง
-	Commit(rows []dto.WhitelistImportRow) (dto.WhitelistImportResult, error)
+	Commit(actorRole string, rows []dto.WhitelistImportRow) (dto.WhitelistImportResult, error)
 }
 
 type whitelistService struct {
@@ -48,7 +51,19 @@ func NewWhitelistService(whitelist repository.WhitelistRepository) WhitelistServ
 	return &whitelistService{whitelist: whitelist}
 }
 
-func (s *whitelistService) Create(req dto.WhitelistCreateRequest) (dto.WhitelistEntryResponse, error) {
+func (s *whitelistService) List() ([]dto.WhitelistEntryResponse, error) {
+	rows, err := s.whitelist.List()
+	if err != nil {
+		return nil, err
+	}
+	items := make([]dto.WhitelistEntryResponse, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, whitelistEntryToResponse(row))
+	}
+	return items, nil
+}
+
+func (s *whitelistService) Create(actorRole string, req dto.WhitelistCreateRequest) (dto.WhitelistEntryResponse, error) {
 	email, err := normalizeWhitelistEmail(req.Email)
 	if err != nil {
 		return dto.WhitelistEntryResponse{}, err
@@ -59,7 +74,7 @@ func (s *whitelistService) Create(req dto.WhitelistCreateRequest) (dto.Whitelist
 		return dto.WhitelistEntryResponse{}, ErrWhitelistNameRequired
 	}
 
-	role, err := normalizeWhitelistRole(req.Role)
+	role, err := normalizeWhitelistRole(req.Role, actorRole)
 	if err != nil {
 		return dto.WhitelistEntryResponse{}, err
 	}
@@ -85,7 +100,7 @@ func (s *whitelistService) Create(req dto.WhitelistCreateRequest) (dto.Whitelist
 	return whitelistEntryToResponse(*entry), nil
 }
 
-func (s *whitelistService) Preview(rows []dto.WhitelistImportRow) (dto.WhitelistImportPreviewResponse, error) {
+func (s *whitelistService) Preview(actorRole string, rows []dto.WhitelistImportRow) (dto.WhitelistImportPreviewResponse, error) {
 	emails := make([]string, 0, len(rows))
 	for _, row := range rows {
 		email := strings.ToLower(strings.TrimSpace(row.Email))
@@ -133,7 +148,7 @@ func (s *whitelistService) Preview(rows []dto.WhitelistImportRow) (dto.Whitelist
 			continue
 		}
 
-		role, err := normalizeWhitelistRole(row.Role)
+		role, err := normalizeWhitelistRole(row.Role, actorRole)
 		if err != nil {
 			preview.Status = "error"
 			preview.Error = err.Error()
@@ -169,7 +184,7 @@ func (s *whitelistService) Preview(rows []dto.WhitelistImportRow) (dto.Whitelist
 	return dto.WhitelistImportPreviewResponse{Rows: previews, Summary: summary}, nil
 }
 
-func (s *whitelistService) Commit(rows []dto.WhitelistImportRow) (dto.WhitelistImportResult, error) {
+func (s *whitelistService) Commit(actorRole string, rows []dto.WhitelistImportRow) (dto.WhitelistImportResult, error) {
 	result := dto.WhitelistImportResult{}
 	if len(rows) == 0 {
 		return result, nil
@@ -193,7 +208,7 @@ func (s *whitelistService) Commit(rows []dto.WhitelistImportRow) (dto.WhitelistI
 			continue
 		}
 
-		role, err := normalizeWhitelistRole(row.Role)
+		role, err := normalizeWhitelistRole(row.Role, actorRole)
 		if err != nil {
 			result.Skipped++
 			result.Errors = append(result.Errors, fmt.Sprintf("line %d: %v", row.Line, err))
@@ -228,13 +243,16 @@ func (s *whitelistService) Commit(rows []dto.WhitelistImportRow) (dto.WhitelistI
 }
 
 // normalizeWhitelistRole ตรวจ/แปลง role ที่รับมา — เว้นว่างให้ default เป็น student
-func normalizeWhitelistRole(raw string) (string, error) {
+func normalizeWhitelistRole(raw string, actorRole string) (string, error) {
 	role := strings.ToLower(strings.TrimSpace(raw))
 	if role == "" {
 		return DefaultWhitelistRole, nil
 	}
 	if !allowedWhitelistRoles[role] {
 		return "", fmt.Errorf("%w: %q (ต้องเป็น student, teacher หรือ admin)", ErrWhitelistInvalidRole, raw)
+	}
+	if actorRole == "admin" && role == "teacher" {
+		return "", ErrWhitelistTeacherForbidden
 	}
 	return role, nil
 }

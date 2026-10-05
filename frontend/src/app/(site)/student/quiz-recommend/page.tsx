@@ -1,72 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { RequireMember } from "@/components/layout/require-member";
-import { ApiError } from "@/lib/api";
-import {
-  isInternalQuizResult,
-  listQuizzes,
-  playQuiz,
-  submitQuizAttempt,
-} from "@/features/quiz/api";
-import type { InternalQuizResultDto, QuizPlayDto } from "@/features/quiz/api";
+import { LoadingRow } from "@/components/ui/loading-row";
+import { isInternalQuizResult, submitQuizAttempt } from "@/features/quiz/api";
+import type { InternalQuizResultDto } from "@/features/quiz/api";
+import { useActiveQuiz } from "@/features/quiz/hooks/use-active-quiz";
+import { toPlayQuestions } from "@/features/quiz/play-questions";
 import { QuizFlow } from "@/features/quiz/quiz-flow";
 import { StudentQuizResult } from "@/features/quiz/student-quiz-result";
-import type { PlayAnswers, PlayQuestion } from "@/features/quiz/types";
-
-function toPlayQuestions(quiz: QuizPlayDto): PlayQuestion[] {
-  return quiz.questions.map((question) => ({
-    id: question.id,
-    text: question.prompt,
-    choices: question.options.map((option) => ({
-      id: option.id,
-      text: option.label,
-    })),
-  }));
-}
+import type { PlayAnswers } from "@/features/quiz/types";
 
 function InternalQuizRecommend() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [quiz, setQuiz] = useState<QuizPlayDto | null>(null);
+  const { loading, error, quiz } = useActiveQuiz(
+    "internal",
+    "ยังไม่มีแบบทดสอบแนะนำสายในระบบ",
+  );
   const [result, setResult] = useState<InternalQuizResultDto | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    listQuizzes("internal", { isActive: true })
-      .then((items) => {
-        const active = items[0];
-        if (!active) {
-          throw new Error("ยังไม่มีแบบทดสอบแนะนำสายในระบบ");
-        }
-        return playQuiz(active.id);
-      })
-      .then((data) => {
-        if (!alive) return;
-        setQuiz(data);
-      })
-      .catch((err) => {
-        if (!alive) return;
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : "โหลดแบบทดสอบไม่สำเร็จ",
-        );
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   async function handleSubmit(answers: PlayAnswers) {
     if (!quiz) return;
@@ -77,10 +27,7 @@ function InternalQuizRecommend() {
   if (loading) {
     return (
       <section className="flex min-h-svh flex-1 items-center justify-center">
-        <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-        <span className="ml-2 text-sm text-[var(--ink-soft)]">
-          กำลังโหลดแบบทดสอบ...
-        </span>
+        <LoadingRow label="กำลังโหลดแบบทดสอบ..." />
       </section>
     );
   }
@@ -100,8 +47,8 @@ function InternalQuizRecommend() {
       questions={toPlayQuestions(quiz)}
       introQuote="เรียนมาสักพักแล้ว แต่ยังไม่รู้จะไปทางไหนดี มารวมกันตรงนี้"
       introDescription={[
-        "ประมาณ 5–8 นาที เพื่อดูว่าคุณเอียงไปทางซอฟต์แวร์ IoT เครือข่าย หรือข้อมูล",
-        "ผลเป็นแนวทางจากคำตอบ ไม่ใช่การันตีอาชีพ ระบบจะแนะนำอาชีพตัวอย่างในกลุ่มที่ได้คะแนนสูงสุด",
+        "ใช้เวลาประมาณ 5–8 นาที ตอบตามที่คิด แล้วดูว่าคุณเข้ากับสายไหนมากที่สุด",
+        "ผลเป็นแค่แนวทาง จะมีตัวอย่างอาชีพในสายนั้นให้ดูต่อ ไม่ได้การันตีอาชีพ",
       ]}
       onSubmit={handleSubmit}
       renderResult={({ onRetake }) => (

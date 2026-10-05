@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { CurriculumProgram } from "@/features/about-us";
+import { useAsyncData } from "@/lib/use-async-data";
 import {
   fetchHomeActivities,
   fetchHomeCurriculum,
@@ -9,175 +9,28 @@ import {
   fetchHomeShowcase,
   fetchHomeStaff,
 } from "../api";
-import type {
-  HomeActivity,
-  HomeHeroMedia,
-  HomeShowcaseItem,
-  HomeStaffMember,
-} from "../types";
+import type { HomeActivity, HomeHeroMedia, HomeShowcaseItem, HomeStaffMember } from "../types";
 
-type AsyncState<T> = {
-  data: T[];
-  loading: boolean;
-  error: string | null;
-};
-
-export function useHomeStaff(): AsyncState<HomeStaffMember> {
-  const [data, setData] = useState<HomeStaffMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    fetchHomeStaff()
-      .then((rows) => {
-        if (!alive) return;
-        setData(rows);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("โหลดข้อมูลไม่สำเร็จ");
-        setData([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  return { data, loading, error };
+export function useHomeStaff() {
+  return useAsyncData(fetchHomeStaff, [] as HomeStaffMember[], "โหลดข้อมูลไม่สำเร็จ");
 }
 
-export function useHomeShowcase(): AsyncState<HomeShowcaseItem> {
-  const [data, setData] = useState<HomeShowcaseItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    fetchHomeShowcase()
-      .then((rows) => {
-        if (!alive) return;
-        setData(rows);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("โหลดข้อมูลไม่สำเร็จ");
-        setData([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  return { data, loading, error };
+export function useHomeShowcase() {
+  return useAsyncData(fetchHomeShowcase, [] as HomeShowcaseItem[], "โหลดข้อมูลไม่สำเร็จ");
 }
 
-export function useHomeActivities(): AsyncState<HomeActivity> {
-  const [data, setData] = useState<HomeActivity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    fetchHomeActivities()
-      .then((rows) => {
-        if (!alive) return;
-        setData(rows);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("โหลดกิจกรรมไม่สำเร็จ");
-        setData([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  return { data, loading, error };
+export function useHomeActivities() {
+  return useAsyncData(fetchHomeActivities, [] as HomeActivity[], "โหลดกิจกรรมไม่สำเร็จ");
 }
 
 export function useHomeCurriculum() {
-  const [data, setData] = useState<CurriculumProgram | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    fetchHomeCurriculum()
-      .then((row) => {
-        if (!alive) return;
-        setData(row);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("โหลดข้อมูลหลักสูตรไม่สำเร็จ");
-        setData(null);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  return { data, loading, error };
+  return useAsyncData(
+    fetchHomeCurriculum,
+    null as CurriculumProgram | null,
+    "โหลดข้อมูลหลักสูตรไม่สำเร็จ",
+  );
 }
 
 export function useHomeHeroMedia() {
-  const [data, setData] = useState<HomeHeroMedia | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    fetchHomeHeroMedia()
-      .then((row) => {
-        if (!alive) return;
-        setData(row);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("โหลดวิดีโอแนะนำไม่สำเร็จ");
-        setData(null);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  return { data, loading, error };
+  return useAsyncData(fetchHomeHeroMedia, null as HomeHeroMedia | null, "โหลดวิดีโอแนะนำไม่สำเร็จ");
 }

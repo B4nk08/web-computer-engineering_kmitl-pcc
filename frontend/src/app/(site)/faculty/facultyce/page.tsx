@@ -1,8 +1,6 @@
-import { FacultyListingView } from "@/features/faculty";
+import { redirect } from "next/navigation";
 
-/**
- * หน้าบุคลากร CE — ดึงจาก API type=staff
- */
-export default function FacultyCEPage() {
-  return <FacultyListingView />;
+/** เส้นทางเก่า /faculty/facultyce */
+export default function FacultyCeRedirectPage() {
+  redirect("/faculty");
 }

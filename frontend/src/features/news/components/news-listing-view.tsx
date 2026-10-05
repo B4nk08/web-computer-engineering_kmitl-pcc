@@ -1,23 +1,17 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import Link from "next/link";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { usePublishedNews } from "../hooks/use-published-news";
 import { NewsBody } from "./news-body";
 import { NewsPageHeader } from "./news-page-header";
+import { formatThaiDate } from "@/lib/format-date";
 import type { NewsAudience, NewsItem } from "../types";
 
 function newsDate(item: NewsItem) {
   return item.publishedAt || item.createdAt || "";
-}
-
-function formatDate(iso?: string | null) {
-  if (!iso) return "";
-  try {
-    return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
 }
 
 function sortNewest(items: NewsItem[]) {
@@ -38,7 +32,7 @@ function NewsRow({ item }: { item: NewsItem }) {
         dateTime={newsDate(item) || undefined}
         className="w-24 shrink-0 pt-0.5 text-xs font-medium text-[var(--ink-soft)] sm:w-28 sm:text-sm"
       >
-        {formatDate(newsDate(item)) || "—"}
+        {formatThaiDate(newsDate(item)) || "—"}
       </time>
       <div className="min-w-0 flex-1">
         <h3 className="text-sm font-semibold leading-snug text-[var(--ink)] group-hover:text-[var(--navy-900)] sm:text-[15px]">
@@ -63,7 +57,7 @@ function FeaturedAdmission({ item }: { item: NewsItem }) {
   return (
     <Link href={`/news/${item.id}`} className="group block">
       <p className="text-xs font-medium text-[var(--ink-soft)]">
-        {formatDate(newsDate(item))}
+        {formatThaiDate(newsDate(item))}
       </p>
       <h2 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-[var(--ink)] group-hover:text-[var(--navy-900)] sm:text-xl">
         {item.title}
@@ -72,14 +66,6 @@ function FeaturedAdmission({ item }: { item: NewsItem }) {
         <NewsBody
           text={item.body}
           className="mt-3 max-w-3xl text-sm leading-8 text-[var(--ink-soft)] sm:text-[15px] sm:leading-8"
-        />
-      ) : null}
-      {item.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.imageUrl}
-          alt=""
-          className="mt-5 aspect-[16/8] w-full object-cover"
         />
       ) : null}
     </Link>
@@ -114,8 +100,7 @@ export function NewsListingView({ audience }: { audience: NewsAudience }) {
       <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-10">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดประกาศ...</span>
+            <LoadingRow label="กำลังโหลดประกาศ..." />
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>

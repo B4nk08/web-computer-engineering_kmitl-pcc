@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminBadge, AdminCheckbox, AdminEmptyState } from "@/components/admin";
 import { cn } from "@/lib/utils";
+import { formatThaiDate } from "@/lib/format-date";
 import type { NewsItem } from "../types";
 
 type NewsListProps = {
@@ -16,17 +17,6 @@ type NewsListProps = {
   onDelete?: (item: NewsItem) => void;
   deleting?: boolean;
 };
-
-function formatUpdatedAt(iso: string) {
-  try {
-    return new Intl.DateTimeFormat("th-TH", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
 
 export function NewsList({
   items,
@@ -102,7 +92,7 @@ export function NewsList({
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{item.title}</p>
-              <p className="text-xs text-muted-foreground">{formatUpdatedAt(item.updatedAt)}</p>
+              <p className="text-xs text-muted-foreground">{formatThaiDate(item.updatedAt, "datetime")}</p>
             </div>
             {item.audience === "internal" ? (
               <AdminBadge tone="warning">ภายในสาขา</AdminBadge>

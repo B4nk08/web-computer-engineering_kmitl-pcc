@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { FacultyListingView } from "@/features/faculty";
 
-/** /faculty → หน้า Faculty CE */
-export default function FacultyIndexPage() {
-  redirect("/faculty/facultyce");
+/** หน้าคณาจารย์ — ดึงจาก API type=staff */
+export default function FacultyPage() {
+  return <FacultyListingView />;
 }

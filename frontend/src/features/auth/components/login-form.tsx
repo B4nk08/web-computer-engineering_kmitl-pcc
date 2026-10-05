@@ -184,7 +184,9 @@ export function LoginForm({ googleEnabled = true }: { googleEnabled?: boolean })
 
       <GoogleAuthButton
         enabled={googleEnabled && !success}
-        onSuccess={(user) => finishAuth(user, AUTH_COPY.loginSuccessGoogle)}
+        onSuccess={(user, created) =>
+          finishAuth(user, created ? AUTH_COPY.googleSignUpSuccess : AUTH_COPY.loginSuccessGoogle)
+        }
         onError={(msg) => {
           setSuccess(null);
           setError(msg);

@@ -1,11 +1,12 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Loader2,
   Search,
   X,
 } from "lucide-react";
@@ -273,8 +274,7 @@ export function StudentWorksListingView() {
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดผลงาน...</span>
+            <LoadingRow label="กำลังโหลดผลงาน..." />
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>

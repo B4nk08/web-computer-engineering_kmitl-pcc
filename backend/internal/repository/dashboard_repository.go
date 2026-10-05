@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,13 +20,13 @@ type ExamStatusCount struct {
 }
 
 type DailyKindCount struct {
-	Day   time.Time
+	Day   string
 	Kind  string
 	Count int64
 }
 
 type DailyCount struct {
-	Day   time.Time
+	Day   string
 	Count int64
 }
 
@@ -41,8 +42,8 @@ type ActivityLogRow struct {
 type DashboardRepository interface {
 	CountQuizAttemptsByKind() ([]QuizKindCount, error)
 	CountExamAttemptsByStatus() ([]ExamStatusCount, error)
-	CountQuizAttemptsByDay(since time.Time) ([]DailyKindCount, error)
-	CountExamAttemptsByDay(since time.Time) ([]DailyCount, error)
+	CountQuizAttemptsByBucket(since time.Time, bucket string) ([]DailyKindCount, error)
+	CountExamAttemptsByBucket(since time.Time, bucket string) ([]DailyCount, error)
 	RecentContentCreates(limit int) ([]ActivityLogRow, error)
 	RecentNewsCreates(limit int) ([]ActivityLogRow, error)
 	ListDeleteLogs(limit int) ([]models.AdminActivityLog, error)
@@ -76,10 +77,21 @@ func (r *dashboardRepository) CountExamAttemptsByStatus() ([]ExamStatusCount, er
 	return rows, err
 }
 
-func (r *dashboardRepository) CountQuizAttemptsByDay(since time.Time) ([]DailyKindCount, error) {
+func trendBucketSQL(bucket string) (trunc, layout string) {
+	if bucket == "hour" {
+		return "hour", "YYYY-MM-DD HH24:00"
+	}
+	return "day", "YYYY-MM-DD"
+}
+
+func (r *dashboardRepository) CountQuizAttemptsByBucket(since time.Time, bucket string) ([]DailyKindCount, error) {
+	trunc, layout := trendBucketSQL(bucket)
 	var rows []DailyKindCount
 	err := r.db.Table("quiz_attempts").
-		Select("date_trunc('day', quiz_attempts.completed_at) AS day, quizzes.kind AS kind, COUNT(*) AS count").
+		Select(fmt.Sprintf(
+			`to_char(date_trunc('%s', quiz_attempts.completed_at AT TIME ZONE 'Asia/Bangkok'), '%s') AS day, quizzes.kind AS kind, COUNT(*) AS count`,
+			trunc, layout,
+		)).
 		Joins("JOIN quizzes ON quizzes.id = quiz_attempts.quiz_id").
 		Where("quiz_attempts.completed_at >= ?", since).
 		Group("day, quizzes.kind").
@@ -88,10 +100,14 @@ func (r *dashboardRepository) CountQuizAttemptsByDay(since time.Time) ([]DailyKi
 	return rows, err
 }
 
-func (r *dashboardRepository) CountExamAttemptsByDay(since time.Time) ([]DailyCount, error) {
+func (r *dashboardRepository) CountExamAttemptsByBucket(since time.Time, bucket string) ([]DailyCount, error) {
+	trunc, layout := trendBucketSQL(bucket)
 	var rows []DailyCount
 	err := r.db.Table("exam_attempts").
-		Select("date_trunc('day', COALESCE(exam_attempts.submitted_at, exam_attempts.started_at)) AS day, COUNT(*) AS count").
+		Select(fmt.Sprintf(
+			`to_char(date_trunc('%s', COALESCE(exam_attempts.submitted_at, exam_attempts.started_at) AT TIME ZONE 'Asia/Bangkok'), '%s') AS day, COUNT(*) AS count`,
+			trunc, layout,
+		)).
 		Where("COALESCE(exam_attempts.submitted_at, exam_attempts.started_at) >= ?", since).
 		Group("day").
 		Order("day ASC").

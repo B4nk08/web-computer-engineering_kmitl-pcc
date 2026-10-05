@@ -1,7 +1,9 @@
 "use client";
 
+import { LoadingRow } from "@/components/ui/loading-row";
+
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { clusterTheme } from "@/config/cluster-theme";
 import type { CareerClusterDto } from "@/features/quiz/api";
 import { cn } from "@/lib/utils";
 import { AboutUsPageHeader } from "../../components/about-us-page-header";
@@ -17,14 +19,6 @@ const CLUSTER_HEADING_EN: Record<string, string> = {
   data: "Data",
 };
 
-/** สีแถบบนการ์ด — แยกตามกลุ่ม */
-const CLUSTER_BAR: Record<string, string> = {
-  software: "bg-[#2f5fd6]",
-  iot: "bg-[#e07a3d]",
-  network: "bg-[#0d9488]",
-  data: "bg-[var(--navy-900)]",
-};
-
 function clusterHeading(cluster: CareerClusterDto | null): string {
   if (!cluster) return "Other";
   const fromApi = cluster.name_en?.trim();
@@ -33,8 +27,7 @@ function clusterHeading(cluster: CareerClusterDto | null): string {
 }
 
 function clusterBar(code: string | undefined): string {
-  if (code && CLUSTER_BAR[code]) return CLUSTER_BAR[code];
-  return "bg-[var(--ink-soft)]";
+  return clusterTheme(code).bar;
 }
 
 function CareerCard({
@@ -105,8 +98,7 @@ export function CareersListingView() {
       <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-5 animate-spin text-[var(--navy-900)]" />
-            <span className="ml-2 text-sm text-[var(--ink-soft)]">กำลังโหลดเส้นทางอาชีพ...</span>
+            <LoadingRow label="กำลังโหลดเส้นทางอาชีพ..." />
           </div>
         ) : error ? (
           <p className="text-sm text-[var(--ink-soft)]">{error}</p>
